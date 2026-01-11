@@ -601,69 +601,18 @@
       </h2>
 
       <div class="gallery-grid">
-        <div class="gallery-card" data-index="0">
-          <img src="https://img.freepik.com/premium-photo/painting-man-with-beard-cat-room-generative-ai_901242-64934.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Engine Diagnostics">
-          <div class="card-overlay">
-            <div class="card-title">Abstract Expression</div>
-            <div class="card-subtitle">Bold forms and colors that convey ideas beyond structure.</div>
+        @forelse($artworkPhotos as $index => $artwork)
+          <div class="gallery-card" data-index="{{ $index }}">
+            <img src="{{ $artwork->image_url }}" alt="Artwork {{ $index + 1 }}" onerror="this.src='https://via.placeholder.com/400x400?text=Image+Not+Found'">
           </div>
-        </div>
-
-        <div class="gallery-card" data-index="1">
-          <img src="https://img.freepik.com/premium-vector/abstract-cello-player-vector-illustration-music-poster_16787-130.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Lift Service">
-          <div class="card-overlay">
-            <div class="card-title">Modern Portraits</div>
-            <div class="card-subtitle">Contemporary portraits capturing character, mood, and depth.</div>
+        @empty
+          <div class="col-12 text-center py-5">
+            <p class="text-muted" style="color: #9d8fb8; font-size: 1.2rem;">No artwork available yet.</p>
+            @if(auth()->check() && auth()->user()->is_artist)
+              <a href="{{ route('artist.portal') }}" class="btn btn-primary mt-3">Upload Artwork</a>
+            @endif
           </div>
-        </div>
-
-        <div class="gallery-card" data-index="2">
-          <img src="https://img.freepik.com/free-photo/one-young-woman-creates-vibrant-face-painting-generated-by-ai_188544-15402.jpg?t=st=1766584242~exp=1766587842~hmac=702f809de20c5e61a21fff50b0e547b0279d6ed71cf63d2a9c10b702f4b9e325&w=1060" alt="Tire Inspection">
-          <div class="card-overlay">
-            <div class="card-title">Visual Storytelling</div>
-            <div class="card-subtitle">Stories told through composition, color, and emotion.</div>
-          </div>
-        </div>
-
-        <div class="gallery-card" data-index="3">
-          <img src="https://img.freepik.com/premium-photo/painting-man-with-beard-colorful-jacket-generative-ai_901242-64935.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Precision Work">
-          <div class="card-overlay">
-            <div class="card-title">Creative Identity</div>
-            <div class="card-subtitle">Artwork designed to express individuality and artistic vision.</div>
-          </div>
-        </div>
-
-        <div class="gallery-card" data-index="4">
-          <img src="https://img.freepik.com/premium-photo/minimalist-vector-artwork-modern-artist_1141064-33620.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Expert Repairs">
-          <div class="card-overlay">
-            <div class="card-title">Emotion in Color</div>
-            <div class="card-subtitle">Vibrant palettes that bring feeling and energy to life.</div>
-          </div>
-        </div>
-
-        <div class="gallery-card" data-index="5">
-          <img src="https://img.freepik.com/free-photo/hawaii-illustration-retro-comic-style_23-2151771002.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Quality Check">
-          <div class="card-overlay">
-            <div class="card-title">Artistic Concepts</div>
-            <div class="card-subtitle">Thought-driven creations exploring ideas and imagination.</div>
-          </div>
-        </div>
-
-        <div class="gallery-card" data-index="6">
-          <img src="https://img.freepik.com/free-photo/digital-art-style-illustration-mental-health-day-awareness_23-2151813259.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Modern Equipment">
-          <div class="card-overlay">
-            <div class="card-title">Digital Fine Art</div>
-            <div class="card-subtitle">High-quality digital works crafted with artistic precision.</div>
-          </div>
-        </div>
-
-        <div class="gallery-card" data-index="7">
-          <img src="https://img.freepik.com/premium-photo/man-hoodie-is-standing-front-colorful-image_1103059-29944.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Vehicle Service">
-          <div class="card-overlay">
-            <div class="card-title">Creative Vision</div>
-            <div class="card-subtitle">Original ideas transformed into compelling visual art.</div>
-          </div>
-        </div>
+        @endforelse
       </div>
     </div>
 
@@ -831,12 +780,10 @@
     function updateModalContent() {
       const currentCard = galleryCards[currentIndex];
       const img = currentCard.querySelector('img');
-      const title = currentCard.querySelector('.card-title').textContent;
-      const subtitle = currentCard.querySelector('.card-subtitle').textContent;
 
       modalImage.src = img.src;
-      modalTitle.textContent = title;
-      modalSubtitle.textContent = subtitle;
+      modalTitle.textContent = 'Artwork ' + (currentIndex + 1);
+      modalSubtitle.textContent = '';
     }
 
     function showNext() {

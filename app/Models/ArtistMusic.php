@@ -58,4 +58,30 @@ class ArtistMusic extends Model
         }
         return null;
     }
+
+    // Relationships for analytics
+    public function streamStats()
+    {
+        return $this->hasMany(StreamStat::class, 'music_id');
+    }
+
+    public function downloadStats()
+    {
+        return $this->hasMany(DownloadStat::class, 'music_id');
+    }
+
+    public function earnings()
+    {
+        return $this->hasMany(ArtistEarning::class, 'music_id');
+    }
+
+    public function collaboration()
+    {
+        return $this->hasOne(TrackCollaboration::class, 'music_id');
+    }
+
+    public function isCollaborative()
+    {
+        return $this->collaboration !== null;
+    }
 }

@@ -108,6 +108,14 @@ Route::post('/blog/comment', [BlogController::class, 'commentStore'])->name('com
 Route::post('/contact/store', [ContactController::class, 'store'])->name('contact.store');
 Route::post('/newsletter/subscribe', [WebsiteController::class, 'subscribeNewsletter'])->name('newsletter.subscribe');
 
+// Public routes
+Route::get('referral/{code}', [\App\Http\Controllers\CreditController::class, 'referral'])->name('referral');
+Route::get('marketplace', [\App\Http\Controllers\MarketplaceController::class, 'index'])->name('marketplace.public.index');
+Route::get('marketplace/{id}', [\App\Http\Controllers\MarketplaceController::class, 'show'])->name('marketplace.public.show');
+Route::get('qa-sessions', [\App\Http\Controllers\FanInteractionController::class, 'qaSessions'])->name('qa-sessions.public.index');
+Route::get('qa-sessions/{id}', [\App\Http\Controllers\FanInteractionController::class, 'viewQaSession'])->name('qa-sessions.public.show');
+Route::get('previews', [\App\Http\Controllers\FanInteractionController::class, 'previews'])->name('previews.public.index');
+
 
 Route::get('/user-portal', [UserPortalController::class, 'index'])->name('user.portal');
 
@@ -129,6 +137,50 @@ Route::middleware(['artist'])->group(function () {
     Route::post('artist/artwork/upload', [ArtworkPhotoController::class, 'store'])->name('artist.artwork.upload');
     Route::get('artist/my-artwork', [ArtworkPhotoController::class, 'index'])->name('artist.my-artwork');
     Route::delete('artist/artwork/{id}', [ArtworkPhotoController::class, 'destroy'])->name('artist.artwork.delete');
+
+    // Artist Analytics Routes
+    Route::get('artist/analytics', [\App\Http\Controllers\Artist\ArtistAnalyticsController::class, 'index'])->name('artist.analytics.index');
+    Route::get('artist/analytics/export', [\App\Http\Controllers\Artist\ArtistAnalyticsController::class, 'export'])->name('artist.analytics.export');
+    Route::get('artist/analytics/demographics', [\App\Http\Controllers\Artist\ArtistAnalyticsController::class, 'demographics'])->name('artist.analytics.demographics');
+
+    // Artist Royalty & Payout Routes
+    Route::get('artist/royalty', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'index'])->name('artist.royalty.index');
+    Route::get('artist/royalty/earnings', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'earnings'])->name('artist.royalty.earnings');
+    Route::get('artist/royalty/payout-requests', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'payoutRequests'])->name('artist.royalty.payout-requests');
+    Route::post('artist/royalty/payout-request', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'requestPayout'])->name('artist.royalty.request-payout');
+    Route::get('artist/royalty/transactions', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'transactionHistory'])->name('artist.royalty.transactions');
+
+    // Artist Ad Revenue Routes
+    Route::get('artist/ad-revenue', [\App\Http\Controllers\Artist\ArtistAdRevenueController::class, 'index'])->name('artist.ad-revenue.index');
+
+    // Artist Fan Interaction Routes
+    Route::get('artist/qa-sessions', [\App\Http\Controllers\Artist\ArtistFanInteractionController::class, 'qaSessions'])->name('artist.qa-sessions');
+    Route::get('artist/qa-sessions/create', [\App\Http\Controllers\Artist\ArtistFanInteractionController::class, 'createQaSession'])->name('artist.qa-sessions.create');
+    Route::post('artist/qa-sessions', [\App\Http\Controllers\Artist\ArtistFanInteractionController::class, 'storeQaSession'])->name('artist.qa-sessions.store');
+    Route::get('artist/qa-sessions/{id}/questions', [\App\Http\Controllers\Artist\ArtistFanInteractionController::class, 'questions'])->name('artist.qa-sessions.questions');
+    Route::post('artist/qa-questions/{id}/answer', [\App\Http\Controllers\Artist\ArtistFanInteractionController::class, 'answerQuestion'])->name('artist.qa-questions.answer');
+    Route::get('artist/previews', [\App\Http\Controllers\Artist\ArtistFanInteractionController::class, 'previews'])->name('artist.previews');
+    Route::get('artist/previews/create', [\App\Http\Controllers\Artist\ArtistFanInteractionController::class, 'createPreview'])->name('artist.previews.create');
+    Route::post('artist/previews', [\App\Http\Controllers\Artist\ArtistFanInteractionController::class, 'storePreview'])->name('artist.previews.store');
+    Route::get('artist/previews/{id}', [\App\Http\Controllers\Artist\ArtistFanInteractionController::class, 'viewPreview'])->name('artist.previews.show');
+
+    // Artist Marketplace Routes
+    Route::get('artist/marketplace', [\App\Http\Controllers\Artist\ArtistMarketplaceController::class, 'index'])->name('artist.marketplace.index');
+    Route::get('artist/marketplace/create', [\App\Http\Controllers\Artist\ArtistMarketplaceController::class, 'create'])->name('artist.marketplace.create');
+    Route::post('artist/marketplace', [\App\Http\Controllers\Artist\ArtistMarketplaceController::class, 'store'])->name('artist.marketplace.store');
+    Route::get('artist/marketplace/{id}/edit', [\App\Http\Controllers\Artist\ArtistMarketplaceController::class, 'edit'])->name('artist.marketplace.edit');
+    Route::put('artist/marketplace/{id}', [\App\Http\Controllers\Artist\ArtistMarketplaceController::class, 'update'])->name('artist.marketplace.update');
+    Route::get('artist/marketplace/sales', [\App\Http\Controllers\Artist\ArtistMarketplaceController::class, 'sales'])->name('artist.marketplace.sales');
+    Route::get('artist/marketplace/collaboration-requests', [\App\Http\Controllers\Artist\ArtistMarketplaceController::class, 'collaborationRequests'])->name('artist.marketplace.collaboration-requests');
+    Route::post('artist/marketplace/collaboration-requests/{id}/respond', [\App\Http\Controllers\Artist\ArtistMarketplaceController::class, 'respondToCollaboration'])->name('artist.marketplace.collaboration-respond');
+
+    // Track Collaboration Routes
+    Route::get('artist/collaborations', [\App\Http\Controllers\Artist\TrackCollaborationController::class, 'index'])->name('artist.collaborations.index');
+    Route::get('artist/music/{id}/collaboration/create', [\App\Http\Controllers\Artist\TrackCollaborationController::class, 'create'])->name('artist.collaborations.create');
+    Route::post('artist/music/{id}/collaboration', [\App\Http\Controllers\Artist\TrackCollaborationController::class, 'store'])->name('artist.collaborations.store');
+    Route::get('artist/collaborations/{id}', [\App\Http\Controllers\Artist\TrackCollaborationController::class, 'show'])->name('artist.collaborations.show');
+    Route::post('artist/collaborations/{collaborationId}/splits/{splitId}/approve', [\App\Http\Controllers\Artist\TrackCollaborationController::class, 'approveSplit'])->name('artist.collaborations.approve-split');
+    Route::post('artist/collaborations/{id}/reject', [\App\Http\Controllers\Artist\TrackCollaborationController::class, 'rejectCollaboration'])->name('artist.collaborations.reject');
 });
 
 // Location Form Route
@@ -208,7 +260,21 @@ Route::get('payout-history', function () {
 
 // all-artwork page
 Route::get('all-artwork', function () {
-    return view('frontend.all-artwork');
+    $artworkPhotos = [];
+    
+    // If user is authenticated and is an artist, show their artwork only
+    if (auth()->check() && auth()->user()->is_artist) {
+        $artworkPhotos = \App\Models\ArtworkPhoto::where('driver_id', auth()->id())
+            ->latest('created_at')
+            ->get();
+    } else {
+        // Show all public artwork or empty if not authenticated
+        $artworkPhotos = \App\Models\ArtworkPhoto::with('user')
+            ->latest('created_at')
+            ->get();
+    }
+    
+    return view('frontend.all-artwork', compact('artworkPhotos'));
 })->name('all-artwork');
 
 // Digital Artist Agreement page
@@ -292,6 +358,42 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('email/verify/{id}/{hash}', [AuthController::class, 'verification_verify'])->middleware(['signed'])->name('verification.verify');
     Route::get('email/verify', [AuthController::class, 'verification_notice'])->name('verification.notice');
     Route::post('email/verification-notification', [AuthController::class, 'verification_send'])->middleware(['throttle:2,1'])->name('verification.send');
+
+    // Notification Routes
+    Route::get('notifications/preferences', [\App\Http\Controllers\NotificationController::class, 'preferences'])->name('notifications.preferences');
+    Route::post('notifications/preferences', [\App\Http\Controllers\NotificationController::class, 'updatePreferences'])->name('notifications.preferences.update');
+    Route::get('notifications/history', [\App\Http\Controllers\NotificationController::class, 'history'])->name('notifications.history');
+
+    // Legal Documents Routes
+    Route::get('legal-documents', [\App\Http\Controllers\LegalDocumentController::class, 'index'])->name('legal-documents.index');
+    Route::get('legal-documents/{slug}', [\App\Http\Controllers\LegalDocumentController::class, 'show'])->name('legal-documents.show');
+    Route::post('legal-documents/accept', [\App\Http\Controllers\LegalDocumentController::class, 'accept'])->name('legal-documents.accept');
+
+    // Gift Subscriptions Routes
+    Route::get('gift-subscriptions', [\App\Http\Controllers\GiftSubscriptionController::class, 'index'])->name('gift-subscriptions.index');
+    Route::get('gift-subscriptions/create', [\App\Http\Controllers\GiftSubscriptionController::class, 'create'])->name('gift-subscriptions.create');
+    Route::post('gift-subscriptions', [\App\Http\Controllers\GiftSubscriptionController::class, 'store'])->name('gift-subscriptions.store');
+    Route::post('gift-subscriptions/{id}/activate', [\App\Http\Controllers\GiftSubscriptionController::class, 'activate'])->name('gift-subscriptions.activate');
+
+    // Credits Routes
+    Route::get('credits', [\App\Http\Controllers\CreditController::class, 'index'])->name('credits.index');
+    Route::post('credits/purchase', [\App\Http\Controllers\CreditController::class, 'purchase'])->name('credits.purchase');
+    Route::post('credits/redeem', [\App\Http\Controllers\CreditController::class, 'redeem'])->name('credits.redeem');
+
+    // Fan Interaction Routes
+    Route::get('qa-sessions', [\App\Http\Controllers\FanInteractionController::class, 'qaSessions'])->name('qa-sessions.index');
+    Route::get('qa-sessions/{id}', [\App\Http\Controllers\FanInteractionController::class, 'viewQaSession'])->name('qa-sessions.show');
+    Route::post('qa-sessions/{id}/ask', [\App\Http\Controllers\FanInteractionController::class, 'askQuestion'])->name('qa-sessions.ask');
+    Route::post('qa-questions/{id}/upvote', [\App\Http\Controllers\FanInteractionController::class, 'upvoteQuestion'])->name('qa-questions.upvote');
+    Route::get('previews', [\App\Http\Controllers\FanInteractionController::class, 'previews'])->name('previews.index');
+
+    // Marketplace Routes
+    Route::get('marketplace', [\App\Http\Controllers\MarketplaceController::class, 'index'])->name('marketplace.index');
+    Route::get('marketplace/{id}', [\App\Http\Controllers\MarketplaceController::class, 'show'])->name('marketplace.show');
+    Route::post('marketplace/{id}/purchase', [\App\Http\Controllers\MarketplaceController::class, 'purchase'])->name('marketplace.purchase');
+    Route::get('marketplace/purchase/{id}/confirmation', [\App\Http\Controllers\MarketplaceController::class, 'purchaseConfirmation'])->name('marketplace.purchase-confirmation');
+    Route::post('marketplace/purchases/{id}/review', [\App\Http\Controllers\MarketplaceController::class, 'review'])->name('marketplace.review');
+    Route::post('marketplace/{id}/request-collaboration', [\App\Http\Controllers\MarketplaceController::class, 'requestCollaboration'])->name('marketplace.request-collaboration');
 
 });
 
@@ -486,6 +588,66 @@ Route::delete('contacts/{id}', [AdminContactController::class, 'destroy'])->name
     Route::put('ads/{id}', [AdminAdController::class, 'update'])->name('ads.update');
     Route::delete('ads/{id}', [AdminAdController::class, 'destroy'])->name('ads.destroy');
     Route::post('ads/{id}/toggle-visibility', [AdminAdController::class, 'toggleVisibility'])->name('ads.toggleVisibility');
+
+    // Artist Analytics Routes
+    Route::get('analytics', [\App\Http\Controllers\Admin\AdminArtistAnalyticsController::class, 'index'])->name('analytics.index');
+    Route::get('analytics/{id}', [\App\Http\Controllers\Admin\AdminArtistAnalyticsController::class, 'show'])->name('analytics.show');
+    Route::get('analytics/export', [\App\Http\Controllers\Admin\AdminArtistAnalyticsController::class, 'export'])->name('analytics.export');
+
+    // Royalty & Payout Routes
+    Route::get('royalty', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'index'])->name('royalty.index');
+    Route::get('royalty/payout-requests', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'payoutRequests'])->name('royalty.payout-requests');
+    Route::post('royalty/payout/{id}/approve', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'approvePayout'])->name('royalty.payout.approve');
+    Route::post('royalty/payout/{id}/reject', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'rejectPayout'])->name('royalty.payout.reject');
+    Route::get('royalty/report', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'generateReport'])->name('royalty.report');
+
+    // Notification Management Routes
+    Route::get('notifications/templates', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'templates'])->name('notifications.templates');
+    Route::get('notifications/templates/create', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'createTemplate'])->name('notifications.templates.create');
+    Route::post('notifications/templates', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'storeTemplate'])->name('notifications.templates.store');
+    Route::get('notifications/templates/{id}/edit', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'editTemplate'])->name('notifications.templates.edit');
+    Route::put('notifications/templates/{id}', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'updateTemplate'])->name('notifications.templates.update');
+    Route::delete('notifications/templates/{id}', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'deleteTemplate'])->name('notifications.templates.delete');
+    Route::get('notifications/logs', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'logs'])->name('notifications.logs');
+
+    // Legal Documents Routes
+    Route::get('legal-documents', [\App\Http\Controllers\Admin\AdminLegalDocumentController::class, 'index'])->name('legal-documents.index');
+    Route::get('legal-documents/create', [\App\Http\Controllers\Admin\AdminLegalDocumentController::class, 'create'])->name('legal-documents.create');
+    Route::post('legal-documents', [\App\Http\Controllers\Admin\AdminLegalDocumentController::class, 'store'])->name('legal-documents.store');
+    Route::get('legal-documents/{id}/edit', [\App\Http\Controllers\Admin\AdminLegalDocumentController::class, 'edit'])->name('legal-documents.edit');
+    Route::put('legal-documents/{id}', [\App\Http\Controllers\Admin\AdminLegalDocumentController::class, 'update'])->name('legal-documents.update');
+    Route::get('legal-documents/{id}/versions', [\App\Http\Controllers\Admin\AdminLegalDocumentController::class, 'versions'])->name('legal-documents.versions');
+    Route::delete('legal-documents/{id}', [\App\Http\Controllers\Admin\AdminLegalDocumentController::class, 'delete'])->name('legal-documents.delete');
+
+    // Ad Revenue Routes
+    Route::get('ad-revenue', [\App\Http\Controllers\Admin\AdminAdRevenueController::class, 'index'])->name('ad-revenue.index');
+    Route::get('ad-revenue/impressions', [\App\Http\Controllers\Admin\AdminAdRevenueController::class, 'impressions'])->name('ad-revenue.impressions');
+    Route::post('ad-revenue/calculate', [\App\Http\Controllers\Admin\AdminAdRevenueController::class, 'calculateRevenue'])->name('ad-revenue.calculate');
+    Route::post('ad-revenue/{id}/mark-paid', [\App\Http\Controllers\Admin\AdminAdRevenueController::class, 'markPaid'])->name('ad-revenue.mark-paid');
+
+    // Credits Management Routes
+    Route::get('credits', [\App\Http\Controllers\Admin\AdminCreditController::class, 'index'])->name('credits.index');
+    Route::get('credits/transactions', [\App\Http\Controllers\Admin\AdminCreditController::class, 'transactions'])->name('credits.transactions');
+    Route::get('credits/redemptions', [\App\Http\Controllers\Admin\AdminCreditController::class, 'redemptions'])->name('credits.redemptions');
+    Route::get('credits/referrals', [\App\Http\Controllers\Admin\AdminCreditController::class, 'referrals'])->name('credits.referrals');
+    Route::post('credits/{userId}/adjust', [\App\Http\Controllers\Admin\AdminCreditController::class, 'adjustCredits'])->name('credits.adjust');
+
+    // Sponsored Playlists Routes
+    Route::get('sponsored-playlists/partnerships', [\App\Http\Controllers\Admin\AdminSponsoredPlaylistController::class, 'partnerships'])->name('sponsored-playlists.partnerships');
+    Route::get('sponsored-playlists/partnerships/create', [\App\Http\Controllers\Admin\AdminSponsoredPlaylistController::class, 'createPartnership'])->name('sponsored-playlists.partnerships.create');
+    Route::post('sponsored-playlists/partnerships', [\App\Http\Controllers\Admin\AdminSponsoredPlaylistController::class, 'storePartnership'])->name('sponsored-playlists.partnerships.store');
+    Route::get('sponsored-playlists/playlists', [\App\Http\Controllers\Admin\AdminSponsoredPlaylistController::class, 'playlists'])->name('sponsored-playlists.playlists');
+    Route::get('sponsored-playlists/playlists/create', [\App\Http\Controllers\Admin\AdminSponsoredPlaylistController::class, 'createPlaylist'])->name('sponsored-playlists.playlists.create');
+    Route::post('sponsored-playlists/playlists', [\App\Http\Controllers\Admin\AdminSponsoredPlaylistController::class, 'storePlaylist'])->name('sponsored-playlists.playlists.store');
+    Route::post('sponsored-playlists/playlists/{id}/add-music', [\App\Http\Controllers\Admin\AdminSponsoredPlaylistController::class, 'addMusicToPlaylist'])->name('sponsored-playlists.playlists.add-music');
+    Route::get('sponsored-playlists/collaborations', [\App\Http\Controllers\Admin\AdminSponsoredPlaylistController::class, 'collaborations'])->name('sponsored-playlists.collaborations');
+    Route::get('sponsored-playlists/collaborations/create', [\App\Http\Controllers\Admin\AdminSponsoredPlaylistController::class, 'createCollaboration'])->name('sponsored-playlists.collaborations.create');
+    Route::post('sponsored-playlists/collaborations', [\App\Http\Controllers\Admin\AdminSponsoredPlaylistController::class, 'storeCollaboration'])->name('sponsored-playlists.collaborations.store');
+
+    // Collaboration Revenue Routes
+    Route::get('collaborations/distributions', [\App\Http\Controllers\Admin\AdminCollaborationRevenueController::class, 'distributions'])->name('collaborations.distributions');
+    Route::post('collaborations/calculate-revenue', [\App\Http\Controllers\Admin\AdminCollaborationRevenueController::class, 'calculateRevenue'])->name('collaborations.calculate-revenue');
+    Route::post('collaborations/mark-paid', [\App\Http\Controllers\Admin\AdminCollaborationRevenueController::class, 'markPaid'])->name('collaborations.mark-paid');
 
 });
 

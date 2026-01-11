@@ -1140,7 +1140,7 @@ a .payout-btn {
                     <div class="upload-icon">📁</div>
                     <div class="upload-text">Drag & drop your files here or</div>
                         <div class="upload-subtext">Support for multiple files (JPEG, PNG, GIF, WebP)</div>
-                        <input type="file" id="fileInput" name="images[]" accept="image/*" multiple style="display: none;" />
+                        <input type="file" id="fileInput" name="images[]" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/avif" multiple style="display: none;" />
                     <button type="button" class="browse-btn" onclick="document.getElementById('fileInput').click();">
                         Browse Files
                     </button>
@@ -1166,45 +1166,15 @@ a .payout-btn {
                 </div>
 
                 <div class="gallery-grid">
-                <div class="gallery-item gallery-item22" data-index="0">
-                    <img src="https://img.freepik.com/premium-photo/creative-realistic-smart-painting-old-middle-aged-man-with-blue-brush-aig_31965-485022.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Engine Diagnostics">
-                    <div class="gallery-overlay">
-                    <div class="gallery-title">Cover Artwork</div>
-                    <div class="gallery-subtitle">Official cover images used for singles, albums, and featured releases.</div>
-                    </div>
-                </div>
-
-                <div class="gallery-item gallery-item22" data-index="1">
-                    <img src="https://img.freepik.com/free-photo/digital-art-portrait-person-listening-music-headphones_23-2151065130.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Lift Service">
-                    <div class="gallery-overlay">
-                    <div class="gallery-title">Promotional Visual</div>
-                    <div class="gallery-subtitle">Marketing visuals created to promote tracks, releases, and campaigns.</div>
-                    </div>
-                </div>
-
-                <div class="gallery-item gallery-item22" data-index="2">
-                    <img src="https://img.freepik.com/free-photo/digital-art-portrait-person-listening-music-headphones_23-2151065134.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Tire Services">
-                    <div class="gallery-overlay">
-                    <div class="gallery-title">Album Art / Release Cover</div>
-                    <div class="gallery-subtitle">Primary artwork representing full albums, EPs, or official releases.</div>
-                    </div>
-                </div>
-
-                <div class="gallery-item gallery-item22" data-index="3">
-                    <img src="https://img.freepik.com/premium-photo/painting-featuring-mans-face-against-colorful-backdrop_401395-6019.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Precision Work">
-                    <div class="gallery-overlay">
-                    <div class="gallery-title">Profile Artwork</div>
-                    <div class="gallery-subtitle">Visuals used to personalize and brand your artist profile.</div>
-                    </div>
-                </div>
-
-                <div class="gallery-item gallery-item22" data-index="4">
-                    <img src="https://img.freepik.com/premium-photo/man-with-colorful-stained-glass-pattern-his-face_900706-8051.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Expert Repairs">
-                    <div class="gallery-overlay">
-                    <div class="gallery-title">Event Poster / Banner</div>
-                    <div class="gallery-subtitle">Artwork designed for live shows, events, tours, and announcements.</div>
-                    </div>
-                </div>
+                    @forelse($artworkPhotos as $index => $artwork)
+                        <div class="gallery-item gallery-item22" data-index="{{ $index }}">
+                            <img src="{{ $artwork->image_url }}" alt="Artwork {{ $index + 1 }}" onerror="this.src='https://via.placeholder.com/400x400?text=Image+Not+Found'">
+                        </div>
+                    @empty
+                        <div class="col-12 text-center py-5">
+                            <p class="text-muted">No artwork uploaded yet. Upload your first artwork above!</p>
+                        </div>
+                    @endforelse
                 </div>
                 <div>
                 <a href="/all-artwork">
@@ -1382,6 +1352,179 @@ a .payout-btn {
 
 
 
+
+        <!-- Track Collaboration Section -->
+        <section class="collaboration-section py-5" style="background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="collaboration-header text-center mb-5">
+                            <h2 style="color: #fbfbfb; font-size: 2.5rem; margin-bottom: 15px;">Track Collaborations & Revenue Split</h2>
+                            <p style="color: #b8a8d0; font-size: 1.1rem;">Manage collaborative tracks and split ownership percentages for fair revenue distribution</p>
+                        </div>
+
+                        <!-- Create Collaboration Form -->
+                        <div class="collaboration-card mb-4" style="background: rgba(45, 27, 78, 0.6); border: 1px solid rgba(183, 148, 246, 0.3); border-radius: 15px; padding: 30px; margin-bottom: 30px;">
+                            <h3 style="color: #fbfbfb; margin-bottom: 20px; font-size: 1.8rem;">
+                                <i class="fas fa-users" style="margin-right: 10px; color: #b794f6;"></i>
+                                Create New Collaboration
+                            </h3>
+                            
+                            <form id="collaborationForm" method="POST" action="">
+                                @csrf
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label style="color: #b8a8d0; margin-bottom: 8px; display: block;">Select Track *</label>
+                                        <select name="music_id" id="collaboration_music_id" class="form-control" required style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(183, 148, 246, 0.3); color: #fbfbfb; padding: 12px; border-radius: 8px;">
+                                            <option value="">-- Select a track --</option>
+                                            @foreach($musics as $music)
+                                                <option value="{{ $music->id }}" data-has-collab="{{ $music->collaboration ? '1' : '0' }}">
+                                                    {{ $music->name }} 
+                                                    @if($music->collaboration)
+                                                        <span style="color: #b794f6;">(Has Collaboration)</span>
+                                                    @endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label style="color: #b8a8d0; margin-bottom: 8px; display: block;">Collaboration Type *</label>
+                                        <select name="collaboration_type" id="collaboration_type" class="form-control" required style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(183, 148, 246, 0.3); color: #fbfbfb; padding: 12px; border-radius: 8px;">
+                                            <option value="collaboration">Collaboration</option>
+                                            <option value="feature">Feature</option>
+                                            <option value="remix">Remix</option>
+                                            <option value="producer">Producer</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Collaborators Section -->
+                                <div class="collaborators-container">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <label style="color: #b8a8d0; font-size: 1.1rem; font-weight: 600;">Collaborators & Ownership Split</label>
+                                        <button type="button" class="btn btn-sm" id="addCollaboratorBtn" style="background: #b794f6; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer;">
+                                            <i class="fas fa-plus"></i> Add Collaborator
+                                        </button>
+                                    </div>
+
+                                    <div id="collaboratorsList">
+                                        <!-- Collaborators will be added dynamically here -->
+                                    </div>
+
+                                    <div class="ownership-summary mt-3" style="background: rgba(183, 148, 246, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(183, 148, 246, 0.3);">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <strong style="color: #b794f6;">Primary Artist (You):</strong>
+                                                <span id="primaryArtistOwnership" style="color: #fbfbfb; font-size: 1.2rem; font-weight: bold; margin-left: 10px;">100%</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong style="color: #b794f6;">Total Collaborators Share:</strong>
+                                                <span id="totalCollaboratorsShare" style="color: #fbfbfb; font-size: 1.2rem; font-weight: bold; margin-left: 10px;">0%</span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <div id="ownershipStatus" style="color: #f1c40f; font-weight: 600;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-center mt-4">
+                                    <button type="submit" class="btn" id="submitCollaborationBtn" style="background: linear-gradient(135deg, #b794f6, #9d50bb); color: white; border: none; padding: 12px 40px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                        <i class="fas fa-save"></i> Create Collaboration
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Existing Collaborations -->
+                        <div class="collaborations-list">
+                            <h3 style="color: #fbfbfb; margin-bottom: 25px; font-size: 1.8rem;">
+                                <i class="fas fa-list" style="margin-right: 10px; color: #b794f6;"></i>
+                                My Collaborations
+                            </h3>
+
+                            @forelse($collaborations as $collaboration)
+                                <div class="collaboration-item mb-4" style="background: rgba(45, 27, 78, 0.6); border: 1px solid rgba(183, 148, 246, 0.3); border-radius: 15px; padding: 25px;">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h4 style="color: #fbfbfb; margin-bottom: 10px;">
+                                                <i class="fas fa-music" style="color: #b794f6; margin-right: 10px;"></i>
+                                                {{ $collaboration->music->name }}
+                                            </h4>
+                                            <div style="color: #b8a8d0; margin-bottom: 15px;">
+                                                <span class="badge" style="background: rgba(183, 148, 246, 0.3); color: #b794f6; padding: 5px 12px; border-radius: 20px; margin-right: 10px;">
+                                                    {{ ucfirst($collaboration->collaboration_type) }}
+                                                </span>
+                                                <span class="badge" style="background: {{ $collaboration->status === 'active' ? 'rgba(0, 242, 254, 0.3)' : 'rgba(241, 196, 15, 0.3)' }}; color: {{ $collaboration->status === 'active' ? '#00f2fe' : '#f1c40f' }}; padding: 5px 12px; border-radius: 20px;">
+                                                    {{ ucfirst($collaboration->status) }}
+                                                </span>
+                                            </div>
+                                            
+                                            <!-- Ownership Splits -->
+                                            <div class="ownership-splits mt-3">
+                                                <h5 style="color: #b794f6; font-size: 1rem; margin-bottom: 10px;">Ownership Distribution:</h5>
+                                                <div class="row">
+                                                    @foreach($collaboration->ownershipSplits as $split)
+                                                        <div class="col-md-6 mb-2">
+                                                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: rgba(183, 148, 246, 0.1); border-radius: 6px;">
+                                                                <span style="color: #fbfbfb;">
+                                                                    {{ $split->artist->name }}
+                                                                    @if($split->is_primary)
+                                                                        <span style="color: #b794f6;">(Primary)</span>
+                                                                    @endif
+                                                                </span>
+                                                                <span style="color: #b794f6; font-weight: bold; font-size: 1.1rem;">
+                                                                    {{ number_format($split->ownership_percentage, 2) }}%
+                                                                </span>
+                                                            </div>
+                                                            @if(!$split->is_primary && !$split->approved_by_artist && $split->artist_id === auth()->id())
+                                                                <form method="POST" action="{{ route('artist.collaborations.approve-split', ['collaborationId' => $collaboration->id, 'splitId' => $split->id]) }}" style="display: inline; margin-top: 5px;">
+                                                                    @csrf
+                                                                    <button type="submit" class="btn btn-sm" style="background: #00f2fe; color: #0f0c29; border: none; padding: 5px 15px; border-radius: 5px; font-size: 0.85rem;">
+                                                                        Approve
+                                                                    </button>
+                                                                </form>
+                                                            @endif
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4 text-end">
+                                            <!-- Revenue Summary -->
+                                            @php
+                                                $userRevenue = $collaboration->revenueDistributions->where('artist_id', auth()->id())->sum('artist_share_after_split');
+                                                $userOwnership = $collaboration->ownershipSplits->where('artist_id', auth()->id())->first()->ownership_percentage ?? 0;
+                                            @endphp
+                                            <div style="background: rgba(0, 242, 254, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(0, 242, 254, 0.3);">
+                                                <div style="color: #b8a8d0; font-size: 0.9rem; margin-bottom: 5px;">Your Ownership</div>
+                                                <div style="color: #00f2fe; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;">
+                                                    {{ number_format($userOwnership, 2) }}%
+                                                </div>
+                                                <div style="color: #b8a8d0; font-size: 0.9rem; margin-bottom: 5px;">Total Earnings</div>
+                                                <div style="color: #fbfbfb; font-size: 1.3rem; font-weight: bold;">
+                                                    ${{ number_format($userRevenue, 2) }}
+                                                </div>
+                                            </div>
+                                            
+                                            <a href="{{ route('artist.collaborations.show', $collaboration->id) }}" class="btn mt-3" style="background: rgba(183, 148, 246, 0.3); color: #b794f6; border: 1px solid rgba(183, 148, 246, 0.5); padding: 8px 20px; border-radius: 6px; text-decoration: none; display: inline-block; width: 100%;">
+                                                View Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-5" style="background: rgba(45, 27, 78, 0.6); border: 1px solid rgba(183, 148, 246, 0.3); border-radius: 15px; padding: 40px;">
+                                    <i class="fas fa-users" style="font-size: 3rem; color: #b794f6; margin-bottom: 20px; opacity: 0.5;"></i>
+                                    <p style="color: #b8a8d0; font-size: 1.1rem;">No collaborations yet. Create your first collaboration above!</p>
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <script>
             document.addEventListener("DOMContentLoaded", function () {
@@ -1956,12 +2099,10 @@ a .payout-btn {
                 function updateArtworkModalContent() {
                     const currentItem = artworkGalleryItems[artworkCurrentIndex];
                     const img = currentItem.querySelector('img');
-                    const title = currentItem.querySelector('.gallery-title');
-                    const subtitle = currentItem.querySelector('.gallery-subtitle');
 
                     if (img) artworkModalImage.src = img.src;
-                    if (title) artworkModalTitle.textContent = title.textContent;
-                    if (subtitle) artworkModalSubtitle.textContent = subtitle.textContent;
+                    if (artworkModalTitle) artworkModalTitle.textContent = 'Artwork ' + (artworkCurrentIndex + 1);
+                    if (artworkModalSubtitle) artworkModalSubtitle.textContent = '';
                 }
 
                 function showNextArtwork() {
@@ -2131,6 +2272,171 @@ a .payout-btn {
                     closeModall();
                 }
             });
+
+            // ============================================
+            // TRACK COLLABORATION MANAGEMENT
+            // ============================================
+            
+            let collaboratorCount = 0;
+            const artistsList = @json(\App\Models\User::where('is_artist', true)->where('id', '!=', auth()->id())->get(['id', 'name', 'email']));
+
+            // Add Collaborator Button
+            document.getElementById('addCollaboratorBtn')?.addEventListener('click', function() {
+                addCollaboratorRow();
+            });
+
+            // Update form action when music is selected
+            document.getElementById('collaboration_music_id')?.addEventListener('change', function() {
+                const musicId = this.value;
+                const form = document.getElementById('collaborationForm');
+                if (musicId && form) {
+                    form.action = `/artist/music/${musicId}/collaboration`;
+                }
+                
+                // Check if track already has collaboration
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption.dataset.hasCollab === '1') {
+                    alert('This track already has a collaboration. Please select another track.');
+                    this.value = '';
+                    form.action = '';
+                }
+            });
+
+            function addCollaboratorRow() {
+                collaboratorCount++;
+                const container = document.getElementById('collaboratorsList');
+                
+                const row = document.createElement('div');
+                row.className = 'collaborator-row mb-3';
+                row.id = `collaborator_${collaboratorCount}`;
+                row.style.cssText = 'background: rgba(183, 148, 246, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(183, 148, 246, 0.3);';
+                
+                row.innerHTML = `
+                    <div class="row align-items-end">
+                        <div class="col-md-5">
+                            <label style="color: #b8a8d0; margin-bottom: 8px; display: block;">Artist *</label>
+                            <select name="artists[${collaboratorCount}][artist_id]" class="form-control collaborator-artist-select" required style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(183, 148, 246, 0.3); color: #fbfbfb; padding: 10px; border-radius: 6px;">
+                                <option value="">-- Select Artist --</option>
+                                ${artistsList.map(artist => `<option value="${artist.id}">${artist.name} (${artist.email})</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label style="color: #b8a8d0; margin-bottom: 8px; display: block;">Ownership % *</label>
+                            <input type="number" name="artists[${collaboratorCount}][ownership_percentage]" 
+                                   class="form-control ownership-input" 
+                                   step="0.01" min="0" max="100" 
+                                   required 
+                                   style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(183, 148, 246, 0.3); color: #fbfbfb; padding: 10px; border-radius: 6px;"
+                                   class="ownership-input-dynamic">
+                        </div>
+                        <div class="col-md-3">
+                            <label style="color: #b8a8d0; margin-bottom: 8px; display: block;">Role</label>
+                            <input type="text" name="artists[${collaboratorCount}][role]" 
+                                   placeholder="e.g., Featured Artist"
+                                   style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(183, 148, 246, 0.3); color: #fbfbfb; padding: 10px; border-radius: 6px; width: 100%;">
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm remove-collaborator" 
+                                    onclick="removeCollaborator(${collaboratorCount})"
+                                    style="background: rgba(255, 75, 43, 0.3); color: #ff4b2b; border: 1px solid rgba(255, 75, 43, 0.5); padding: 10px; border-radius: 6px; cursor: pointer; width: 100%;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(row);
+                
+                // Add event listener to the new input
+                const newInput = row.querySelector('.ownership-input-dynamic');
+                if (newInput) {
+                    newInput.addEventListener('input', updateOwnershipSummary);
+                    newInput.addEventListener('change', updateOwnershipSummary);
+                }
+                
+                updateOwnershipSummary();
+            }
+
+
+            // Make functions globally accessible
+            window.updateOwnershipSummary = function() {
+                const ownershipInputs = document.querySelectorAll('.ownership-input');
+                let totalCollaboratorsShare = 0;
+                
+                ownershipInputs.forEach(input => {
+                    const value = parseFloat(input.value) || 0;
+                    totalCollaboratorsShare += value;
+                });
+
+                const primaryArtistOwnership = 100 - totalCollaboratorsShare;
+                
+                const totalShareEl = document.getElementById('totalCollaboratorsShare');
+                const primaryOwnershipEl = document.getElementById('primaryArtistOwnership');
+                const statusDiv = document.getElementById('ownershipStatus');
+                const submitBtn = document.getElementById('submitCollaborationBtn');
+                
+                if (totalShareEl) totalShareEl.textContent = totalCollaboratorsShare.toFixed(2) + '%';
+                if (primaryOwnershipEl) primaryOwnershipEl.textContent = primaryArtistOwnership.toFixed(2) + '%';
+                
+                if (statusDiv && submitBtn) {
+                    if (Math.abs(totalCollaboratorsShare - 100) < 0.01) {
+                        statusDiv.innerHTML = '<i class="fas fa-check-circle" style="color: #00f2fe;"></i> <span style="color: #00f2fe;">Perfect! Total ownership is 100%</span>';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    } else if (totalCollaboratorsShare > 100) {
+                        statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #ff4b2b;"></i> <span style="color: #ff4b2b;">Total ownership exceeds 100%! Please adjust percentages.</span>';
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                    } else {
+                        statusDiv.innerHTML = '<i class="fas fa-info-circle" style="color: #f1c40f;"></i> <span style="color: #f1c40f;">Remaining: ' + primaryArtistOwnership.toFixed(2) + '% will be assigned to you (Primary Artist)</span>';
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                    }
+                }
+            };
+
+            window.removeCollaborator = function(id) {
+                const row = document.getElementById(`collaborator_${id}`);
+                if (row) {
+                    row.remove();
+                    updateOwnershipSummary();
+                }
+            };
+
+            // Form submission
+            document.getElementById('collaborationForm')?.addEventListener('submit', function(e) {
+                const musicId = document.getElementById('collaboration_music_id').value;
+                if (!musicId) {
+                    e.preventDefault();
+                    alert('Please select a track first.');
+                    return false;
+                }
+
+                const totalShare = parseFloat(document.getElementById('totalCollaboratorsShare').textContent);
+                if (totalShare > 100) {
+                    e.preventDefault();
+                    alert('Total ownership percentage cannot exceed 100%.');
+                    return false;
+                }
+
+                if (collaboratorCount === 0) {
+                    e.preventDefault();
+                    alert('Please add at least one collaborator.');
+                    return false;
+                }
+            });
+
+            // Add event listeners to all ownership inputs (event delegation)
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('ownership-input') || e.target.classList.contains('ownership-input-dynamic')) {
+                    updateOwnershipSummary();
+                }
+            });
+
+            // Initialize ownership summary
+            setTimeout(() => {
+                updateOwnershipSummary();
+            }, 100);
             //withdrawal payment popup js
         </script>
 

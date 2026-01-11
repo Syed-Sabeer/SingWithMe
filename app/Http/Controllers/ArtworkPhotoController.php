@@ -14,7 +14,7 @@ class ArtworkPhotoController extends Controller
     {
         $request->validate([
             'images' => 'required|array|min:1',
-            'images.*' => 'file|mimes:jpeg,jpg,png,gif,webp|max:10240', 
+            'images.*' => 'file|mimes:jpeg,jpg,png,gif,webp,avif|max:10240', 
         ]);
 
         $uploadedImages = [];
