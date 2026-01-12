@@ -496,8 +496,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    if (playPauseButton) {
-        playPauseButton.addEventListener('click', togglePlayback);
+    // Use MusicPlayer instance if available
+    if (window.MusicPlayer && window.MusicPlayer.playPauseButton) {
+        // Already set up in MusicPlayer.init()
+    } else {
+        // Fallback for standalone playPauseButton
+        const playPauseButton = document.querySelector('.play-pause-button');
+        if (playPauseButton) {
+            playPauseButton.addEventListener('click', togglePlayback);
+        }
     }
     
     // Event listeners para cliques nas barras de progresso e volume

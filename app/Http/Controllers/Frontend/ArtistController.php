@@ -56,7 +56,35 @@ class ArtistController extends Controller
             ->orderBy('monthly_fee')
             ->get();
         
-        return view("frontend.artist.artisit-portal", compact('faqs', 'artworkPhotos', 'musics', 'collaborations', 'artistsList', 'artist_plans'));
+        // Get current user's active artist subscription
+        $currentArtistSubscription = null;
+        $currentArtistPlan = null;
+        $hasUnlimitedUploads = false;
+        $songsPerMonth = null;
+        
+        if (Auth::check() && Auth::user()->is_artist) {
+            $currentArtistSubscription = Auth::user()->activeArtistSubscription;
+            if ($currentArtistSubscription) {
+                $currentArtistPlan = $currentArtistSubscription->subscriptionPlan;
+                if ($currentArtistPlan) {
+                    $hasUnlimitedUploads = (bool) $currentArtistPlan->is_unlimited_uploads;
+                    $songsPerMonth = $currentArtistPlan->songs_per_month;
+                }
+            }
+        }
+        
+        return view("frontend.artist.artisit-portal", compact(
+            'faqs', 
+            'artworkPhotos', 
+            'musics', 
+            'collaborations', 
+            'artistsList', 
+            'artist_plans',
+            'currentArtistSubscription',
+            'currentArtistPlan',
+            'hasUnlimitedUploads',
+            'songsPerMonth'
+        ));
     }
   
 

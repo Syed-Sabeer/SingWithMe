@@ -122,6 +122,289 @@
     background-color: #9f54f5 !important;
 }
 
+/* Artist Subscription Popup Styles */
+.artist-subscription-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999999;
+    display: none;
+}
+
+.artist-subscription-popup.active {
+    display: block;
+}
+
+.artist-subscription-popup .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.artist-subscription-popup .popup {
+    background: linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 100%);
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(183, 148, 246, 0.3);
+}
+
+.artist-subscription-popup .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.artist-subscription-popup .popup-title {
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.artist-subscription-popup .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s;
+}
+
+.artist-subscription-popup .close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.artist-subscription-popup .plan-info {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(183, 148, 246, 0.1);
+    border-radius: 15px;
+}
+
+.artist-subscription-popup .plan-info h3 {
+    color: white;
+    font-size: 1.5rem;
+    margin: 0 0 10px 0;
+}
+
+.artist-subscription-popup .plan-price {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #b379f5;
+    margin: 0 0 8px 0;
+}
+
+.artist-subscription-popup .plan-period {
+    font-size: 1rem;
+    color: rgba(229, 209, 250, 0.8);
+    margin: 0;
+}
+
+.artist-subscription-popup .payment-methods {
+    margin-bottom: 30px;
+}
+
+.artist-subscription-popup .payment-methods h4 {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.artist-subscription-popup .payment-method {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border: 2px solid rgba(229, 209, 250, 0.3);
+    border-radius: 15px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.artist-subscription-popup .payment-method:hover {
+    border-color: rgba(229, 209, 250, 0.6);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.artist-subscription-popup .payment-method.selected {
+    border-color: #1db954;
+    background: rgba(29, 185, 84, 0.1);
+    box-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
+}
+
+.artist-subscription-popup .payment-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-right: 20px;
+}
+
+.artist-subscription-popup .payment-icon.stripe {
+    background: linear-gradient(135deg, #635bff 0%, #4f46e5 100%);
+    color: white;
+}
+
+.artist-subscription-popup .payment-icon.google-pay {
+    background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+    color: white;
+}
+
+.artist-subscription-popup .payment-icon.apple-pay {
+    background: linear-gradient(135deg, #000000 0%, #333333 100%);
+    color: white;
+}
+
+.artist-subscription-popup .payment-icon.paypal {
+    background: linear-gradient(135deg, #0070ba 0%, #009cde 100%);
+    color: white;
+}
+
+.artist-subscription-popup .payment-icon.square {
+    background: linear-gradient(135deg, #00a86b 0%, #00d4aa 100%);
+    color: white;
+}
+
+.artist-subscription-popup .payment-info h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 5px 0;
+}
+
+.artist-subscription-popup .payment-info p {
+    font-size: 0.9rem;
+    color: rgba(229, 209, 250, 0.7);
+    margin: 0;
+}
+
+.artist-subscription-popup .payment-form {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.artist-subscription-popup .form-group {
+    margin-bottom: 15px;
+}
+
+.artist-subscription-popup .form-group label {
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.artist-subscription-popup .subscription-terms {
+    margin: 25px 0;
+}
+
+.artist-subscription-popup .checkbox-container {
+    display: flex;
+    align-items: center;
+    color: rgba(229, 209, 250, 0.9);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.artist-subscription-popup .checkbox-container input[type="checkbox"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.artist-subscription-popup .terms-link {
+    color: #b794f6;
+    text-decoration: underline;
+}
+
+.artist-subscription-popup .popup-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.artist-subscription-popup .btn-cancel,
+.artist-subscription-popup .btn-confirm {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.artist-subscription-popup .btn-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.artist-subscription-popup .btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.artist-subscription-popup .btn-confirm {
+    background: linear-gradient(135deg, #b794f6, #9d50bb);
+    color: white;
+}
+
+.artist-subscription-popup .btn-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(183, 148, 246, 0.4);
+}
+
+.artist-subscription-popup .stripe-card-element,
+.artist-subscription-popup .square-card-element {
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.artist-subscription-popup .stripe-card-errors,
+.artist-subscription-popup .square-card-errors,
+.artist-subscription-popup .payment-errors {
+    color: #ef4444;
+    font-size: 0.85rem;
+    margin-top: 10px;
+}
+
 /* Error icon styling */
 .swal2-error {
     border-color: #dc3545 !important;
@@ -704,6 +987,17 @@ a .payout-btn {
             <div class="container">
                 <!-- Stats Overview -->
                 <div class="stats-grid">
+                    @php
+                        // Get wallet and earnings data
+                        $wallet = \App\Models\ArtistWallet::getOrCreateForArtist(auth()->id());
+                        $totalStreams = \App\Models\StreamStat::where('artist_id', auth()->id())->where('is_complete', true)->count();
+                        $totalEarnings = $wallet->total_earned;
+                        $availableBalance = $wallet->available_balance;
+                        $lastPayout = \App\Models\PayoutRequest::where('artist_id', auth()->id())
+                            ->where('status', 'completed')
+                            ->latest('processed_at')
+                            ->first();
+                    @endphp
                     <div class="stat-card">
                         <div class="stats-icon">
                             <h2>Total Streams</h2>
@@ -712,7 +1006,7 @@ a .payout-btn {
                             </lord-icon>
                         </div>
                         <div>
-                            <p>3.2M</p>
+                            <p>{{ $totalStreams >= 1000000 ? number_format($totalStreams / 1000000, 1) . 'M' : ($totalStreams >= 1000 ? number_format($totalStreams / 1000, 1) . 'K' : number_format($totalStreams)) }}</p>
                         </div>
                     </div>
                     <div class="stat-card">
@@ -723,18 +1017,23 @@ a .payout-btn {
                             </lord-icon>
                         </div>
                         <div>
-                            <p>$45,230</p>
+                            <p>${{ number_format($totalEarnings, 2) }}</p>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stats-icon">
-                            <h2>Pending Payout</h2>
+                            <h2>Available Balance</h2>
                             <lord-icon src="https://cdn.lordicon.com/dhzbkemf.json" trigger="loop"
                                 colors="primary:#7166ee,secondary:#110a5c">
                             </lord-icon>
                         </div>
                         <div>
-                            <p>$4,500</p>
+                            <p>${{ number_format($availableBalance, 2) }}</p>
+                            @if($availableBalance >= 50)
+                                <small style="color: #1db954;">Ready for payout</small>
+                            @else
+                                <small style="color: #ffc107;">Min $50 required</small>
+                            @endif
                         </div>
                     </div>
                     <div class="stat-card">
@@ -745,9 +1044,17 @@ a .payout-btn {
                             </lord-icon>
                         </div>
                         <div>
-                            <p>June 15, 2025</p>
-
+                            <p>{{ $lastPayout ? $lastPayout->processed_at->format('M d, Y') : 'No payouts yet' }}</p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Royalty Dashboard Link -->
+                <div class="row mb-4">
+                    <div class="col-12 text-center">
+                        <a href="{{ route('artist.royalty.index') }}" class="btn" style="background: linear-gradient(135deg, #b794f6, #9d50bb); color: white; padding: 15px 40px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 1.1rem; display: inline-block;">
+                            <i class="fas fa-chart-line"></i> View Full Royalty Dashboard
+                        </a>
                     </div>
                 </div>
 
@@ -1026,6 +1333,30 @@ a .payout-btn {
                 <form method="POST" action="{{ route('artist.music.upload') }}" enctype="multipart/form-data" id="uploadForm">
                     @csrf
                     
+                    @if(isset($currentArtistPlan) && $currentArtistPlan)
+                        @php
+                            $currentMonthStart = now()->startOfMonth();
+                            $currentMonthEnd = now()->endOfMonth();
+                            $uploadsThisMonth = \App\Models\ArtistMusic::where('driver_id', auth()->id())
+                                ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
+                                ->count();
+                            $uploadLimit = $hasUnlimitedUploads ? null : ($songsPerMonth ?? 3);
+                        @endphp
+                        <div class="row justify-content-center mb-3">
+                            <div class="col-md-8">
+                                <div class="alert alert-info" style="background: rgba(183, 148, 246, 0.2); border: 1px solid rgba(183, 148, 246, 0.5); color: #fbfbfb; padding: 15px; border-radius: 8px; text-align: center;">
+                                    @if($hasUnlimitedUploads)
+                                        <strong>Unlimited Uploads</strong> - You can upload as many songs as you want this month.
+                                    @else
+                                        <strong>Upload Limit:</strong> {{ $uploadsThisMonth }}/{{ $uploadLimit }} songs this month
+                                        @if($uploadsThisMonth >= $uploadLimit)
+                                            <br><span style="color: #ff6b6b;">⚠️ You've reached your monthly limit. Upgrade to upload more!</span>
+                                        @endif
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                    
                     <div class="row justify-content-center mb-4">
                         <div class="col-md-8">
@@ -1234,7 +1565,7 @@ a .payout-btn {
                                             <li class="music-list-box {{ $index === 0 ? 'current_play' : '' }}">
                                             <div class="songs-name">
                                                 <div class="back-img"
-                                                        style="background-image: url({{ $music->thumbnail_image_url ?: asset('FrontendAssets/images/default-music.jpg') }});">
+                                                        style="background-image: url({{ $music->thumbnail_image_url ?: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5NdXNpYzwvdGV4dD48L3N2Zz4=' }});">
                                                 </div>
                                                 <h3 class="h3-title">
                                                         {{ $music->name }}
@@ -1252,7 +1583,7 @@ a .payout-btn {
                                         <li class="music-list-box">
                                             <div class="songs-name">
                                                 <div class="back-img"
-                                                        style="background-image: url({{asset('FrontendAssets/images/default-music.jpg')}});">
+                                                        style="background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5NdXNpYzwvdGV4dD48L3N2Zz4=');">
                                                     </div>
                                                     <h3 class="h3-title">
                                                         No music uploaded yet
@@ -1327,7 +1658,7 @@ a .payout-btn {
                                     <h2 class="music-name">{{ $topMusic->name ?? 'No Music' }}</h2>
                                     <p class="music-artist">{{ auth()->user()->name }}</p>
                                 </div>
-                                <audio id="audio1" data-id="{{ $topMusic->id ?? 'default' }}" src="{{ $topMusic->music_file_url ?? asset('FrontendAssets/songs/default-music.mp3') }}"></audio>
+                                <audio id="audio1" data-id="{{ $topMusic->id ?? 'default' }}" src="{{ $topMusic->music_file_url ?? '#' }}"></audio>
                                 <div class="music-progress">
                                     <div id="progress-bar" class="music-progress-bar"></div>
                                     <div class="music-progress__time">
@@ -1669,9 +2000,9 @@ a .payout-btn {
                                         </ul>
 
                                         <div class="text-center mt-4">
-                                            <a href="/service/artisit-subscription" class="btn" style="background: {{ $isPopular ? 'linear-gradient(135deg, #b794f6, #9d50bb)' : 'rgba(183, 148, 246, 0.3)' }}; color: white; border: 1px solid rgba(183, 148, 246, 0.5); padding: 12px 30px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: 600; width: 100%;">
+                                            <button onclick="openArtistPortalSubscriptionPopup('{{ $plan->id }}', '{{ $plan->plan_name }}', '{{ $plan->monthly_fee }}', 'per month')" class="btn" style="background: {{ $isPopular ? 'linear-gradient(135deg, #b794f6, #9d50bb)' : 'rgba(183, 148, 246, 0.3)' }}; color: white; border: 1px solid rgba(183, 148, 246, 0.5); padding: 12px 30px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: 600; width: 100%; cursor: pointer;">
                                                 {{ $plan->monthly_fee > 0 ? 'Subscribe Now' : 'Get Started' }}
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -1806,6 +2137,17 @@ a .payout-btn {
                 }
 
                 // Form submission with AJAX and SweetAlert
+                // Check upload limits before form submission
+                @if(isset($currentArtistPlan) && $currentArtistPlan)
+                    const uploadLimit = {{ $uploadLimit ?: 'null' }};
+                    const uploadsThisMonth = {{ $uploadsThisMonth }};
+                    const hasUnlimitedUploads = {{ $hasUnlimitedUploads ? 'true' : 'false' }};
+                @else
+                    const uploadLimit = 3; // Default free tier
+                    const uploadsThisMonth = {{ isset($uploadsThisMonth) ? $uploadsThisMonth : 0 }};
+                    const hasUnlimitedUploads = false;
+                @endif
+
                 const uploadForm = document.getElementById("uploadForm");
                 if (uploadForm) {
                     console.log("Setting up form submission handler");
@@ -1842,6 +2184,22 @@ a .payout-btn {
                                 confirmButtonText: 'OK'
                             });
                             return false;
+                        }
+                        
+                        // Check upload limit
+                        if (!hasUnlimitedUploads && uploadLimit !== null) {
+                            if (uploadsThisMonth >= uploadLimit) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Upload Limit Reached',
+                                    html: `You have reached your monthly upload limit of ${uploadLimit} songs.<br><br>Current uploads this month: ${uploadsThisMonth}/${uploadLimit}<br><br>Please upgrade your plan to upload more songs.`,
+                                    confirmButtonColor: '#9f54f5',
+                                    background: '#1a1a1a',
+                                    color: 'white',
+                                    confirmButtonText: 'OK'
+                                });
+                                return false;
+                            }
                         }
                         
                         if (thumbnailFile === 0) {
@@ -1956,7 +2314,7 @@ a .payout-btn {
                             {{ $music->id }}: {
                                 name: "{{ $music->name }}",
                                 artist: "{{ auth()->user()->name }}",
-                                src: "{{ $music->music_file_url ?: asset('FrontendAssets/songs/default-music.mp3') }}"
+                                src: "{{ $music->music_file_url ?: '#' }}"
                             },
                         @endforeach
                     };
@@ -2603,10 +2961,458 @@ a .payout-btn {
             //withdrawal payment popup js
         </script>
 
+        <!-- Artist Subscription Purchase Popup -->
+        <div class="artist-subscription-popup" id="artistPortalSubscriptionPopup">
+            <div class="overlay" onclick="closeArtistPortalSubscriptionPopup(event)">
+                <div class="popup" onclick="event.stopPropagation()">
+                    <div class="popup-header">
+                        <h2 class="popup-title">Purchase Artist Subscription</h2>
+                        <button class="close-btn" onclick="closeArtistPortalSubscriptionPopup()">&times;</button>
+                    </div>
+
+                    <div class="subscription-details">
+                        <div class="plan-info">
+                            <h3 id="selectedArtistPortalPlanName">Pro Artist</h3>
+                            <div class="plan-price" id="selectedArtistPortalPlanPrice">£9.99</div>
+                            <div class="plan-period" id="selectedArtistPortalPlanPeriod">per month</div>
+                        </div>
+
+                        <div class="payment-methods">
+                            <h4>Choose Payment Method</h4>
+                            
+                            <div class="payment-method" onclick="selectArtistPortalPaymentMethod(this, 'stripe')">
+                                <div class="payment-icon stripe">S</div>
+                                <div class="payment-info">
+                                    <h3>Stripe</h3>
+                                    <p>Pay securely with Stripe</p>
+                                </div>
+                            </div>
+
+                            <div class="payment-method" onclick="selectArtistPortalPaymentMethod(this, 'google-pay')">
+                                <div class="payment-icon google-pay">G</div>
+                                <div class="payment-info">
+                                    <h3>Google Pay</h3>
+                                    <p>Quick and secure payment via Stripe</p>
+                                </div>
+                            </div>
+
+                            <div class="payment-method" onclick="selectArtistPortalPaymentMethod(this, 'apple-pay')">
+                                <div class="payment-icon apple-pay">AP</div>
+                                <div class="payment-info">
+                                    <h3>Apple Pay</h3>
+                                    <p>Pay with Touch ID or Face ID via Stripe</p>
+                                </div>
+                            </div>
+
+                            <div class="payment-method" onclick="selectArtistPortalPaymentMethod(this, 'paypal')">
+                                <div class="payment-icon paypal">P</div>
+                                <div class="payment-info">
+                                    <h3>PayPal</h3>
+                                    <p>Pay with your PayPal account</p>
+                                </div>
+                            </div>
+
+                            <div class="payment-method" onclick="selectArtistPortalPaymentMethod(this, 'square')">
+                                <div class="payment-icon square">Sq</div>
+                                <div class="payment-info">
+                                    <h3>Square</h3>
+                                    <p>Secure payment processing</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stripe Payment Form (Hidden by default) -->
+                        <div id="artist-portal-stripe-payment-form" class="payment-form" style="display: none;">
+                            <div class="form-group">
+                                <label>Card Details</label>
+                                <div id="artist-portal-stripe-card-element" class="stripe-card-element">
+                                    <!-- Stripe Elements will create form elements here -->
+                                </div>
+                                <div id="artist-portal-stripe-card-errors" class="stripe-card-errors"></div>
+                            </div>
+                        </div>
+
+                        <!-- PayPal Payment Button (Hidden by default) -->
+                        <div id="artist-portal-paypal-payment-button" class="payment-form" style="display: none;">
+                            <div id="artist-portal-paypal-button-container"></div>
+                        </div>
+
+                        <!-- Google Pay Payment Form (Hidden by default) -->
+                        <div id="artist-portal-google-pay-payment-form" class="payment-form" style="display: none;">
+                            <div class="form-group">
+                                <label>Google Pay</label>
+                                <div id="artist-portal-google-pay-button-container" class="google-pay-container">
+                                    <!-- Google Pay button will be rendered here -->
+                                </div>
+                                <div id="artist-portal-google-pay-errors" class="payment-errors"></div>
+                            </div>
+                        </div>
+
+                        <!-- Apple Pay Payment Form (Hidden by default) -->
+                        <div id="artist-portal-apple-pay-payment-form" class="payment-form" style="display: none;">
+                            <div class="form-group">
+                                <label>Apple Pay</label>
+                                <div class="payment-info-text">
+                                    <p>Apple Pay will be processed securely through Stripe. Click "Purchase Now" to proceed.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Square Payment Form (Hidden by default) -->
+                        <div id="artist-portal-square-payment-form" class="payment-form" style="display: none;">
+                            <div class="form-group">
+                                <label>Card Details</label>
+                                <div class="square-card-container">
+                                    <div id="artist-portal-square-card-element" class="square-card-element">
+                                        <p style="text-align: center; color: #666; padding: 20px;">Loading card input...</p>
+                                    </div>
+                                    <div id="artist-portal-square-card-errors" class="square-card-errors"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="subscription-terms">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="agreeArtistPortalTerms" required>
+                                <span class="checkmark"></span>
+                                I agree to the <a href="#" class="terms-link">Terms of Service</a> and <a href="#" class="terms-link">Privacy Policy</a>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="popup-actions">
+                        <button class="btn-cancel" onclick="closeArtistPortalSubscriptionPopup()">Cancel</button>
+                        <button class="btn-confirm" onclick="purchaseArtistPortalSubscription()">Purchase Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://js.stripe.com/v3/"></script>
+        <script src="https://www.paypal.com/sdk/js?client-id={{ env('PAYPAL_CLIENT_ID', 'YOUR_CLIENT_ID') }}&currency=GBP"></script>
+        <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+        <script>
+        let selectedArtistPortalPlan = null;
+        let selectedArtistPortalPaymentMethod = null;
+        let artistPortalStripe = null;
+        let artistPortalStripeCardElement = null;
+        let artistPortalPaypalButtons = null;
+        let artistPortalSquareCard = null;
+
+        // Initialize Stripe
+        document.addEventListener('DOMContentLoaded', function() {
+            const stripeKey = '{{ env("STRIPE_KEY", "") }}';
+            if (stripeKey) {
+                artistPortalStripe = Stripe(stripeKey);
+            }
+        });
+
+        function openArtistPortalSubscriptionPopup(planId, planTitle, planPrice, planDuration) {
+            selectedArtistPortalPlan = planId;
+            selectedArtistPortalPaymentMethod = null;
+            
+            const popup = document.getElementById('artistPortalSubscriptionPopup');
+            const planName = document.getElementById('selectedArtistPortalPlanName');
+            const priceEl = document.getElementById('selectedArtistPortalPlanPrice');
+            const periodEl = document.getElementById('selectedArtistPortalPlanPeriod');
+            
+            // Reset payment method selection
+            document.querySelectorAll('#artistPortalSubscriptionPopup .payment-method').forEach(method => {
+                method.classList.remove('selected');
+            });
+            
+            // Hide all payment forms
+            document.querySelectorAll('#artistPortalSubscriptionPopup .payment-form').forEach(form => {
+                form.style.display = 'none';
+            });
+            
+            // Reset terms checkbox
+            document.getElementById('agreeArtistPortalTerms').checked = false;
+            
+            // Update plan details
+            planName.textContent = planTitle;
+            if (planPrice == '0' || planPrice == 0) {
+                priceEl.textContent = 'Free';
+                periodEl.textContent = 'forever';
+            } else {
+                priceEl.textContent = '£' + parseFloat(planPrice).toFixed(2);
+                periodEl.textContent = planDuration;
+            }
+            
+            popup.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeArtistPortalSubscriptionPopup(event) {
+            if (event && event.target !== event.currentTarget) return;
+            
+            const popup = document.getElementById('artistPortalSubscriptionPopup');
+            popup.classList.remove('active');
+            document.body.style.overflow = '';
+            
+            selectedArtistPortalPlan = null;
+            selectedArtistPortalPaymentMethod = null;
+        }
+
+        function selectArtistPortalPaymentMethod(element, method) {
+            // Remove selection from all payment methods
+            document.querySelectorAll('#artistPortalSubscriptionPopup .payment-method').forEach(m => {
+                m.classList.remove('selected');
+            });
+            
+            // Hide all payment forms
+            document.querySelectorAll('#artistPortalSubscriptionPopup .payment-form').forEach(form => {
+                form.style.display = 'none';
+            });
+            
+            // Add selection to clicked method
+            element.classList.add('selected');
+            selectedArtistPortalPaymentMethod = method;
+            
+            // Show appropriate payment form
+            if (method === 'stripe') {
+                showArtistPortalStripeForm();
+            } else if (method === 'paypal') {
+                showArtistPortalPayPalForm();
+            } else if (method === 'google-pay') {
+                showArtistPortalGooglePayForm();
+            } else if (method === 'apple-pay') {
+                showArtistPortalApplePayForm();
+            } else if (method === 'square') {
+                showArtistPortalSquareForm();
+            }
+        }
+
+        function showArtistPortalStripeForm() {
+            const stripeForm = document.getElementById('artist-portal-stripe-payment-form');
+            stripeForm.style.display = 'block';
+            
+            if (!artistPortalStripeCardElement && artistPortalStripe) {
+                const elements = artistPortalStripe.elements();
+                artistPortalStripeCardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#424770',
+                        },
+                    },
+                });
+                
+                artistPortalStripeCardElement.mount('#artist-portal-stripe-card-element');
+                
+                artistPortalStripeCardElement.on('change', function(event) {
+                    const displayError = document.getElementById('artist-portal-stripe-card-errors');
+                    if (event.error) {
+                        displayError.textContent = event.error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                });
+            }
+        }
+
+        function showArtistPortalPayPalForm() {
+            const paypalForm = document.getElementById('artist-portal-paypal-payment-button');
+            paypalForm.style.display = 'block';
+            
+            if (!artistPortalPaypalButtons && typeof paypal !== 'undefined') {
+                const planPriceEl = document.getElementById('selectedArtistPortalPlanPrice');
+                const planPriceText = planPriceEl.textContent.replace('£', '').replace('Free', '0');
+                const planPrice = parseFloat(planPriceText) || 0;
+                
+                artistPortalPaypalButtons = paypal.Buttons({
+                    createOrder: function(data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: {
+                                    value: planPrice.toString()
+                                }
+                            }]
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        return actions.order.capture().then(function(details) {
+                            processArtistPortalPaymentWithMethod('paypal', details.id);
+                        });
+                    },
+                    onError: function(err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'PayPal Error',
+                            text: 'PayPal payment failed: ' + err.message
+                        });
+                    }
+                });
+                
+                artistPortalPaypalButtons.render('#artist-portal-paypal-button-container');
+            }
+        }
+
+        function showArtistPortalGooglePayForm() {
+            document.getElementById('artist-portal-google-pay-payment-form').style.display = 'block';
+        }
+
+        function showArtistPortalApplePayForm() {
+            document.getElementById('artist-portal-apple-pay-payment-form').style.display = 'block';
+        }
+
+        function showArtistPortalSquareForm() {
+            document.getElementById('artist-portal-square-payment-form').style.display = 'block';
+        }
+
+        async function purchaseArtistPortalSubscription() {
+            if (!selectedArtistPortalPlan || selectedArtistPortalPlan === 'free') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Plan',
+                    text: 'Please select a valid plan'
+                });
+                return;
+            }
+            
+            if (!selectedArtistPortalPaymentMethod) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Payment Method Required',
+                    text: 'Please select a payment method'
+                });
+                return;
+            }
+            
+            if (!document.getElementById('agreeArtistPortalTerms').checked) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Terms Required',
+                    text: 'Please agree to the terms and conditions'
+                });
+                return;
+            }
+            
+            // Handle different payment methods
+            if (selectedArtistPortalPaymentMethod === 'stripe') {
+                await processArtistPortalStripePayment();
+            } else if (selectedArtistPortalPaymentMethod === 'paypal') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Complete PayPal Payment',
+                    text: 'Please complete the PayPal payment above'
+                });
+                return;
+            } else if (selectedArtistPortalPaymentMethod === 'google-pay' || selectedArtistPortalPaymentMethod === 'apple-pay') {
+                await processArtistPortalPaymentWithMethod(selectedArtistPortalPaymentMethod);
+            } else if (selectedArtistPortalPaymentMethod === 'square') {
+                await processArtistPortalSquarePayment();
+            } else {
+                await processArtistPortalPaymentWithMethod(selectedArtistPortalPaymentMethod);
+            }
+        }
+
+        async function processArtistPortalStripePayment() {
+            if (!artistPortalStripe || !artistPortalStripeCardElement) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Stripe Error',
+                    text: 'Stripe not initialized'
+                });
+                return;
+            }
+            
+            try {
+                const { paymentMethod, error } = await artistPortalStripe.createPaymentMethod({
+                    type: 'card',
+                    card: artistPortalStripeCardElement,
+                });
+                
+                if (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Card Error',
+                        text: 'Card error: ' + error.message
+                    });
+                    return;
+                }
+                
+                await processArtistPortalPaymentWithMethod('stripe', paymentMethod.id);
+            } catch (error) {
+                console.error('Stripe payment error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Payment Failed',
+                    text: 'Payment failed: ' + error.message
+                });
+            }
+        }
+
+        async function processArtistPortalSquarePayment() {
+            await processArtistPortalPaymentWithMethod('square', 'mock_token');
+        }
+
+        async function processArtistPortalPaymentWithMethod(method, paymentMethodId = null) {
+            try {
+                const planNameEl = document.getElementById('selectedArtistPortalPlanName');
+                const planPriceEl = document.getElementById('selectedArtistPortalPlanPrice');
+                const planPriceText = planPriceEl.textContent.replace('£', '').replace('Free', '0');
+                const planPrice = parseFloat(planPriceText) || 0;
+                
+                const paymentMethodNames = {
+                    'stripe': 'Stripe',
+                    'google-pay': 'Google Pay (via Stripe)',
+                    'apple-pay': 'Apple Pay (via Stripe)',
+                    'paypal': 'PayPal',
+                    'square': 'Square'
+                };
+                
+                const response = await fetch('{{ route("api.artist-subscription.purchase") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        plan_id: selectedArtistPortalPlan,
+                        plan_type: planNameEl.textContent.toLowerCase().replace(/\s+/g, '-'),
+                        price: planPrice,
+                        duration: 30,
+                        payment_method: method,
+                        payment_method_name: paymentMethodNames[method] || method,
+                        payment_method_id: paymentMethodId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Artist subscription purchased successfully!',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        closeArtistPortalSubscriptionPopup();
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Purchase Failed',
+                        text: data.message || 'Failed to purchase subscription'
+                    });
+                }
+            } catch (error) {
+                console.error('Subscription purchase error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to purchase subscription. Please try again.'
+                });
+            }
+        }
+        </script>
+
         
 
     
 
         
 
-    
+     

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MonthlyPlay;
 use App\Models\ArtistMusic;
+use App\Models\StreamStat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -55,8 +56,26 @@ class MonthlyPlayController extends Controller
                 'artist' => $music->artist
             ]);
 
-            // Increment play count
+            // Increment play count in monthly_plays table
             $monthlyPlay = MonthlyPlay::incrementPlay($userId, $musicId);
+
+            // Also log to stream_stats table for royalty calculation
+            // Mark as complete if stream duration is significant (e.g., > 30 seconds)
+            $streamDuration = $request->get('stream_duration', 0);
+            $isComplete = $streamDuration >= 30; // Consider complete if 30+ seconds
+
+            StreamStat::create([
+                'music_id' => $musicId,
+                'artist_id' => $music->driver_id,
+                'user_id' => $userId,
+                'stream_duration' => $streamDuration,
+                'ip_address' => $request->ip(),
+                'is_complete' => $isComplete,
+                'streamed_at' => now(),
+            ]);
+
+            // Increment listeners count on the music track
+            $music->increment('listeners');
 
             return response()->json([
                 'success' => true,
@@ -67,7 +86,8 @@ class MonthlyPlayController extends Controller
                     'month' => $monthlyPlay->month,
                     'year' => $monthlyPlay->year,
                     'music_name' => $music->name,
-                    'artist' => $music->artist
+                    'artist' => $music->user->name ?? 'Unknown',
+                    'stream_logged' => true,
                 ]
             ]);
 

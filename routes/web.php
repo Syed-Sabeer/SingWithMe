@@ -120,6 +120,11 @@ Route::get('previews', [\App\Http\Controllers\FanInteractionController::class, '
 
 Route::get('/user-portal', [UserPortalController::class, 'index'])->name('user.portal');
 
+// Artist subscription purchase route (web route for CSRF protection)
+Route::post('/api/artist-subscription/purchase', [\App\Http\Controllers\Frontend\PlaylistController::class, 'purchaseArtistSubscription'])
+    ->middleware(['auth'])
+    ->name('api.artist-subscription.purchase');
+
 
 Route::get('/service/musicvideo', [ServiceController::class, 'musicvideo'])->name('service.musicvideo');
 Route::get('/service/royalty-collection', [ServiceController::class, 'royaltycollection'])->name('service.royaltycollection');
@@ -150,6 +155,9 @@ Route::middleware(['artist'])->group(function () {
     Route::get('artist/royalty/payout-requests', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'payoutRequests'])->name('artist.royalty.payout-requests');
     Route::post('artist/royalty/payout-request', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'requestPayout'])->name('artist.royalty.request-payout');
     Route::get('artist/royalty/transactions', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'transactionHistory'])->name('artist.royalty.transactions');
+    Route::get('artist/royalty/export/csv', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'exportEarningsCSV'])->name('artist.royalty.export.csv');
+    Route::get('artist/royalty/export/pdf', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'exportRoyaltyReportPDF'])->name('artist.royalty.export.pdf');
+    Route::get('artist/royalty/per-track', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'perTrackEarnings'])->name('artist.royalty.per-track');
 
     // Artist Ad Revenue Routes
     Route::get('artist/ad-revenue', [\App\Http\Controllers\Artist\ArtistAdRevenueController::class, 'index'])->name('artist.ad-revenue.index');
@@ -608,6 +616,9 @@ Route::delete('contacts/{id}', [AdminContactController::class, 'destroy'])->name
     Route::get('royalty/payout-requests', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'payoutRequests'])->name('royalty.payout-requests');
     Route::post('royalty/payout/{id}/approve', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'approvePayout'])->name('royalty.payout.approve');
     Route::post('royalty/payout/{id}/reject', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'rejectPayout'])->name('royalty.payout.reject');
+    Route::post('royalty/payout/{id}/complete', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'completePayout'])->name('royalty.payout.complete');
+    Route::post('royalty/set-platform-revenue', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'setPlatformRevenue'])->name('royalty.set-platform-revenue');
+    Route::post('royalty/calculate', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'calculateRoyalties'])->name('royalty.calculate');
     Route::get('royalty/report', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'generateReport'])->name('royalty.report');
 
     // Notification Management Routes

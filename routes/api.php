@@ -79,8 +79,13 @@ Route::post('/notify', [NotificationController::class, 'sendNotification']);
 // Public API routes (no authentication required)
 Route::get('/music/search', [PlaylistController::class, 'searchMusic']);
 Route::get('/music/all', [PlaylistController::class, 'getAllSongs']);
-Route::post('/subscription/purchase', [PlaylistController::class, 'purchaseSubscription']);
-Route::get('/subscription/current', [PlaylistController::class, 'getUserSubscription']);
+
+// Subscription routes - require authentication via web middleware
+Route::middleware(['web'])->group(function () {
+    Route::post('/subscription/purchase', [PlaylistController::class, 'purchaseSubscription'])->middleware('auth');
+    Route::get('/subscription/current', [PlaylistController::class, 'getUserSubscription'])->middleware('auth');
+    Route::post('/artist-subscription/purchase', [PlaylistController::class, 'purchaseArtistSubscription'])->middleware('auth');
+});
 
 // Test routes
 Route::get('/test', function () {

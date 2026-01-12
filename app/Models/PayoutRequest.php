@@ -32,7 +32,6 @@ class PayoutRequest extends Model
         'available_balance' => 'decimal:2',
         'requested_at' => 'datetime',
         'processed_at' => 'datetime',
-        'account_details' => 'array',
     ];
 
     public function artist()

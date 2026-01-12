@@ -7,6 +7,8 @@ use App\Models\PayoutRequest;
 use App\Models\RoyaltyCalculation;
 use App\Models\TransactionHistory;
 use App\Models\User;
+use App\Models\ArtistWallet;
+use App\Models\PayoutHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -78,19 +80,81 @@ class AdminRoyaltyController extends Controller
             return back()->with('error', 'Payout request cannot be approved.');
         }
 
+        // Verify wallet has sufficient balance
+        $wallet = ArtistWallet::getOrCreateForArtist($payoutRequest->artist_id);
+        if ($wallet->available_balance < $payoutRequest->requested_amount) {
+            return back()->with('error', 'Artist wallet has insufficient balance.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Deduct from wallet
+            $wallet->deduct($payoutRequest->requested_amount);
+
+            // Update payout request
+            $payoutRequest->update([
+                'status' => 'processing',
+                'approved_by' => auth()->id(),
+                'admin_notes' => $request->admin_notes,
+                'processed_at' => now(),
+            ]);
+
+            // Create payout history record
+            PayoutHistory::create([
+                'payout_request_id' => $payoutRequest->id,
+                'artist_id' => $payoutRequest->artist_id,
+                'amount' => $payoutRequest->requested_amount,
+                'currency' => $payoutRequest->currency,
+                'payout_method' => $payoutRequest->payout_method,
+                'status' => 'processing',
+                'processed_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Payout request approved and wallet deducted. Payment processing can now proceed.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error approving payout: ' . $e->getMessage());
+        }
+    }
+
+    public function completePayout($id, Request $request)
+    {
+        $payoutRequest = PayoutRequest::findOrFail($id);
+
+        if ($payoutRequest->status !== 'processing') {
+            return back()->with('error', 'Payout request must be in processing status.');
+        }
+
         $payoutRequest->update([
-            'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'admin_notes' => $request->admin_notes,
+            'status' => 'completed',
             'processed_at' => now(),
         ]);
 
-        return back()->with('success', 'Payout request approved successfully.');
+        // Update payout history
+        $payoutHistory = PayoutHistory::where('payout_request_id', $payoutRequest->id)->first();
+        if ($payoutHistory) {
+            $payoutHistory->update([
+                'status' => 'completed',
+                'transaction_id' => $request->transaction_id,
+                'completed_at' => now(),
+            ]);
+        }
+
+        return back()->with('success', 'Payout marked as completed.');
     }
 
     public function rejectPayout($id, Request $request)
     {
         $payoutRequest = PayoutRequest::findOrFail($id);
+
+        // If it was already processing and wallet was deducted, refund it
+        if ($payoutRequest->status === 'processing') {
+            $wallet = ArtistWallet::getOrCreateForArtist($payoutRequest->artist_id);
+            $wallet->increment('available_balance', $payoutRequest->requested_amount);
+            $wallet->decrement('total_paid_out', $payoutRequest->requested_amount);
+        }
 
         $payoutRequest->update([
             'status' => 'rejected',
@@ -99,6 +163,59 @@ class AdminRoyaltyController extends Controller
         ]);
 
         return back()->with('success', 'Payout request rejected.');
+    }
+
+    /**
+     * Set platform revenue for a specific period
+     */
+    public function setPlatformRevenue(Request $request)
+    {
+        $request->validate([
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2020',
+            'revenue' => 'required|numeric|min:0',
+            'revenue_source' => 'nullable|in:subscriptions,ads,purchases,other',
+        ]);
+
+        $platformRevenue = \App\Models\PlatformRevenueTracking::updateOrCreate(
+            [
+                'period_month' => $request->month,
+                'period_year' => $request->year,
+            ],
+            [
+                'total_platform_revenue' => $request->revenue,
+                'revenue_source' => $request->revenue_source ?? 'subscriptions',
+                'status' => 'confirmed',
+            ]
+        );
+
+        return back()->with('success', "Platform revenue set to $" . number_format($request->revenue, 2) . " for " . 
+            \Carbon\Carbon::create($request->year, $request->month, 1)->format('F Y'));
+    }
+
+    /**
+     * Calculate royalties for a specific period
+     */
+    public function calculateRoyalties(Request $request)
+    {
+        $request->validate([
+            'month' => 'required|integer|between:1,12',
+            'year' => 'required|integer|min:2020',
+        ]);
+
+        try {
+            $royaltyService = new \App\Services\RoyaltyCalculationService();
+            $calculations = $royaltyService->calculateRoyaltiesForPeriod(
+                $request->month,
+                $request->year
+            );
+
+            return back()->with('success', 'Royalties calculated successfully for ' . 
+                \Carbon\Carbon::create($request->year, $request->month, 1)->format('F Y') . 
+                '. Processed ' . count($calculations) . ' artists.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error calculating royalties: ' . $e->getMessage());
+        }
     }
 
     public function generateReport(Request $request)

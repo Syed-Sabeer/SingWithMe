@@ -3961,6 +3961,73 @@ INSERT INTO `artist_subscription_plans` (`plan_name`, `plan_slug`, `monthly_fee`
 ('Pro Artist', 'pro-artist', 9.99, 'GBP', 'Semi-professional creators seeking more exposure', 'Ideal for artists looking to grow their audience and get featured', NULL, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 2),
 ('Certified Creator', 'certified-creator', 19.99, 'GBP', 'Established artists focusing on branding & monetization', 'Premium package for professional artists with advanced features', NULL, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3);
 
+-- --------------------------------------------------------
+-- Artist Subscriptions Table
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `artist_subscriptions` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT 'Artist user ID',
+  `artist_subscription_plan_id` bigint(20) UNSIGNED NOT NULL COMMENT 'Reference to artist_subscription_plans.id',
+  `subscription_date` timestamp NOT NULL DEFAULT current_timestamp(),
+  `subscription_duration` int(11) NOT NULL DEFAULT 30 COMMENT 'Duration in days',
+  `payment_method` varchar(50) DEFAULT NULL,
+  `payment_id` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_artist_subscription_plan_id` (`artist_subscription_plan_id`),
+  KEY `idx_subscription_date` (`subscription_date`),
+  CONSTRAINT `fk_artist_subscriptions_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_artist_subscriptions_plan` FOREIGN KEY (`artist_subscription_plan_id`) REFERENCES `artist_subscription_plans` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+-- Platform Revenue Tracking Table
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `platform_revenue_tracking` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `period_month` int(11) NOT NULL COMMENT '1-12 for month',
+  `period_year` int(11) NOT NULL COMMENT 'Year (e.g., 2025)',
+  `total_platform_revenue` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Total revenue from subscriptions/ads',
+  `total_platform_streams` bigint(20) NOT NULL DEFAULT 0 COMMENT 'Total streams across all content',
+  `total_platform_downloads` bigint(20) NOT NULL DEFAULT 0 COMMENT 'Total downloads across all content',
+  `currency` varchar(3) NOT NULL DEFAULT 'USD',
+  `revenue_source` enum('subscriptions','ads','purchases','other') NOT NULL DEFAULT 'subscriptions',
+  `status` enum('pending','confirmed','finalized') NOT NULL DEFAULT 'pending',
+  `finalized_at` timestamp NULL DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_period` (`period_month`, `period_year`),
+  KEY `idx_period` (`period_month`, `period_year`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+-- Artist Wallet Table (for tracking available balance)
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `artist_wallets` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `artist_id` bigint(20) UNSIGNED NOT NULL,
+  `available_balance` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Available balance for payout',
+  `pending_balance` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Pending earnings not yet processed',
+  `total_earned` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Total lifetime earnings',
+  `total_paid_out` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Total amount paid out',
+  `currency` varchar(3) NOT NULL DEFAULT 'USD',
+  `last_updated` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_artist_wallet` (`artist_id`),
+  KEY `idx_artist_id` (`artist_id`),
+  CONSTRAINT `fk_artist_wallets_user` FOREIGN KEY (`artist_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

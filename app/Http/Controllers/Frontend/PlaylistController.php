@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\UserPlaylist;
 use App\Models\UserCollection;
 use App\Models\UserSubscription;
+use App\Models\ArtistSubscription;
+use App\Models\ArtistSubscriptionPlan;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -773,6 +775,104 @@ class PlaylistController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to purchase subscription: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Purchase artist subscription
+     */
+    public function purchaseArtistSubscription(Request $request)
+    {
+        try {
+            $userId = auth()->id();
+            if (!$userId) {
+                $userId = 1; // For testing purposes
+                \Log::info('Using default user ID for testing: ' . $userId);
+            }
+
+            $request->validate([
+                'plan_id' => 'required|integer|exists:artist_subscription_plans,id',
+                'plan_type' => 'required|string',
+                'price' => 'required|numeric|min:0',
+                'duration' => 'required|integer|min:1',
+                'payment_method' => 'required|string|in:stripe,google-pay,apple-pay,paypal,square',
+                'payment_method_name' => 'nullable|string',
+                'payment_method_id' => 'nullable|string' // For Stripe payment method ID
+            ]);
+
+            $user = User::find($userId);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            // Check if user is an artist
+            if (!$user->is_artist) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only artists can purchase artist subscriptions'
+                ], 403);
+            }
+
+            // Process payment
+            $paymentService = new PaymentService();
+            $paymentResult = $paymentService->processPayment(
+                $request->payment_method,
+                $request->price,
+                'GBP',
+                $request->payment_method_id
+            );
+
+            if (!$paymentResult['success']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment failed: ' . ($paymentResult['error'] ?? 'Unknown error')
+                ], 400);
+            }
+
+            // Use the plan_id from request
+            $subscriptionPlanId = $request->plan_id;
+
+            // Create subscription record in artist_subscriptions table
+            $subscription = ArtistSubscription::create([
+                'user_id' => $userId,
+                'artist_subscription_plan_id' => $subscriptionPlanId,
+                'subscription_date' => now(),
+                'subscription_duration' => $request->duration, // Duration in days
+                'payment_method' => $request->payment_method,
+                'payment_id' => $paymentResult['transaction_id'] ?? null
+            ]);
+
+            // Calculate subscription end date
+            $endDate = now()->addDays($request->duration);
+
+            // Return success response
+            return response()->json([
+                'success' => true,
+                'message' => 'Artist subscription purchased successfully',
+                'subscription' => [
+                    'id' => $subscription->id,
+                    'subscription_plan_id' => $subscriptionPlanId,
+                    'plan_type' => $request->plan_type,
+                    'price' => $request->price,
+                    'duration' => $request->duration,
+                    'payment_method' => $request->payment_method,
+                    'payment_method_name' => $request->payment_method_name ?? $request->payment_method,
+                    'payment_transaction_id' => $paymentResult['transaction_id'] ?? null,
+                    'start_date' => $subscription->subscription_date->format('Y-m-d H:i:s'),
+                    'end_date' => $endDate->format('Y-m-d H:i:s'),
+                    'days_remaining' => $request->duration
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Artist subscription purchase error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to purchase artist subscription: ' . $e->getMessage()
             ], 500);
         }
     }

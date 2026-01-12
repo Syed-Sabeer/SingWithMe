@@ -97,6 +97,74 @@ class User  extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Referral::class, 'referrer_id');
     }
 
+    public function artistSubscription()
+    {
+        return $this->hasOne(ArtistSubscription::class)->latest('subscription_date');
+    }
+
+    public function artistSubscriptions()
+    {
+        return $this->hasMany(ArtistSubscription::class);
+    }
+
+    /**
+     * Get active artist subscription
+     */
+    public function getActiveArtistSubscriptionAttribute()
+    {
+        return $this->artistSubscriptions()
+            ->where('subscription_date', '<=', now())
+            ->whereRaw('DATE_ADD(subscription_date, INTERVAL subscription_duration DAY) >= NOW()')
+            ->with('subscriptionPlan')
+            ->latest('subscription_date')
+            ->first();
+    }
+
+    /**
+     * Check if user has access to a specific artist feature
+     */
+    public function hasArtistFeature($feature)
+    {
+        $subscription = $this->activeArtistSubscription;
+        
+        if (!$subscription || !$subscription->subscriptionPlan) {
+            return false;
+        }
+        
+        $plan = $subscription->subscriptionPlan;
+        
+        // Features that should always be accessible (as per user request)
+        $alwaysAccessible = [
+            'profile_customization',
+            'isrc_codes',
+            'royalty_tracking'
+        ];
+        
+        if (in_array($feature, $alwaysAccessible)) {
+            return true;
+        }
+        
+        // Map feature names to plan attributes
+        $featureMap = [
+            'unlimited_uploads' => 'is_unlimited_uploads',
+            'featured_rotation' => 'is_featured_rotation',
+            'priority_search' => 'is_priority_search',
+            'custom_banner' => 'is_custom_banner',
+            'early_access_insights' => 'is_early_access_insights',
+            'certified_badge' => 'is_certified_badge',
+            'showcase_placement' => 'is_showcase_placement',
+            'playlist_highlighted' => 'is_playlist_highlighted',
+            'advanced_analytics' => 'is_advanced_analytics',
+            'showcase_invitations' => 'is_showcase_invitations',
+        ];
+        
+        if (isset($featureMap[$feature])) {
+            return (bool) $plan->{$featureMap[$feature]};
+        }
+        
+        return false;
+    }
+
     public function giftSubscriptionsSent()
     {
         return $this->hasMany(GiftSubscription::class, 'gifter_id');
@@ -130,6 +198,33 @@ class User  extends Authenticatable implements MustVerifyEmail
     public function exclusivePreviews()
     {
         return $this->hasMany(ExclusivePreview::class, 'artist_id');
+    }
+
+    public function artistWallet()
+    {
+        return $this->hasOne(ArtistWallet::class, 'artist_id');
+    }
+
+    public function artistEarnings()
+    {
+        return $this->hasMany(ArtistEarning::class, 'artist_id');
+    }
+
+    public function payoutRequests()
+    {
+        return $this->hasMany(PayoutRequest::class, 'artist_id');
+    }
+
+    /**
+     * Get wallet balance (convenience method)
+     */
+    public function getWalletBalanceAttribute()
+    {
+        if (!$this->is_artist) {
+            return 0;
+        }
+        $wallet = $this->artistWallet;
+        return $wallet ? $wallet->available_balance : 0;
     }
 
     public static function generateUniqueConnectionCode()
