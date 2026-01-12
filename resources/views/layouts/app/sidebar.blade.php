@@ -152,7 +152,8 @@
                     <use href="{{asset('AdminAssets/svg/icon-sprite.svg#fill-user')}}"></use>
                   </svg><span class="lan-3">Subscriptions & Customers</span></a>
                 <ul class="sidebar-submenu">
-                  <li><a class="lan-4" href="{{route('admin.subscription.index')}}">Subscription Plans</a></li>
+                  <li><a class="lan-4" href="{{route('admin.subscription.index')}}">User Subscription Plans</a></li>
+                  <li><a class="lan-4" href="{{route('admin.artist-subscription-plans.index')}}">Artist Subscription Plans</a></li>
                   <li><a class="lan-4" href="{{route('admin.customer.index')}}">Customers</a></li>
                 </ul>
               </li>                 

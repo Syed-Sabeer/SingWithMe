@@ -11,9 +11,18 @@ class UserPortalController extends Controller
 {
 
     public function index(){
-        $user_subscription_plans = UserSubscriptionPlan::all();
+        // Get all active user subscription plans, ordered by price
+        $user_subscription_plans = UserSubscriptionPlan::orderByRaw('CAST(price AS DECIMAL(10,2)) ASC')->get();
+        
+        // Get current user's subscription if logged in
+        $currentSubscription = null;
+        if (auth()->check()) {
+            $currentSubscription = \App\Models\UserSubscription::where('user_id', auth()->id())
+                ->latest('usersubscription_date')
+                ->first();
+        }
 
-        return view('frontend.user.user-portal', compact('user_subscription_plans'));
+        return view('frontend.user.user-portal', compact('user_subscription_plans', 'currentSubscription'));
     }
 
 }

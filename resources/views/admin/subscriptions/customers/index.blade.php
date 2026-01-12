@@ -53,11 +53,11 @@
                               <th> <span class="c-o-light f-w-600">Offline</span></th>
                               <th> <span class="c-o-light f-w-600">High Quality</span></th>
                               <th> <span class="c-o-light f-w-600">Unlimited Playlist</span></th>
+                              <th> <span class="c-o-light f-w-600">Playlist Limit</span></th>
+                              <th> <span class="c-o-light f-w-600">Offline Limit</span></th>
                               <th> <span class="c-o-light f-w-600">Exclusive Content</span></th>
-                              <th> <span class="c-o-light f-w-600">Priority Support</span></th>
-                              <th> <span class="c-o-light f-w-600">Family Plan</span></th>
-                              <th> <span class="c-o-light f-w-600">Family Limit</span></th>
-                              <th> <span class="c-o-light f-w-600">Parental Control</span></th>
+                              <th> <span class="c-o-light f-w-600">Tip Artists</span></th>
+                              <th> <span class="c-o-light f-w-600">Supporter Badge</span></th>
                               <th> <span class="c-o-light f-w-600">Actions</span></th>
 
                             </tr>
@@ -103,8 +103,20 @@
                               </td>
                               <td>
                                 <span class="badge {{ $subscription->is_unlimitedplaylist ? 'bg-success' : 'bg-secondary' }}">
-                                  {{ $subscription->is_unlimitedplaylist ? 'Yes' : 'No' }}
+                                  {{ $subscription->is_unlimitedplaylist ? 'Unlimited' : 'Limited' }}
                                 </span>
+                              </td>
+                              <td>
+                                <p class="c-o-light">{{ $subscription->playlist_limit ?? ($subscription->is_unlimitedplaylist ? 'Unlimited' : 'N/A') }}</p>
+                              </td>
+                              <td>
+                                <p class="c-o-light">
+                                  @if($subscription->is_offline)
+                                    {{ $subscription->offline_download_limit ? $subscription->offline_download_limit . ' songs' : 'Unlimited' }}
+                                  @else
+                                    N/A
+                                  @endif
+                                </p>
                               </td>
                               <td>
                                 <span class="badge {{ $subscription->is_exclusivecontent ? 'bg-success' : 'bg-secondary' }}">
@@ -112,21 +124,13 @@
                                 </span>
                               </td>
                               <td>
-                                <span class="badge {{ $subscription->is_prioritysupport ? 'bg-success' : 'bg-secondary' }}">
-                                  {{ $subscription->is_prioritysupport ? 'Yes' : 'No' }}
+                                <span class="badge {{ $subscription->is_tip_artists ? 'bg-success' : 'bg-secondary' }}">
+                                  {{ $subscription->is_tip_artists ? 'Yes' : 'No' }}
                                 </span>
                               </td>
                               <td>
-                                <span class="badge {{ $subscription->is_family ? 'bg-success' : 'bg-secondary' }}">
-                                  {{ $subscription->is_family ? 'Yes' : 'No' }}
-                                </span>
-                              </td>
-                              <td>
-                                <p class="c-o-light">{{ $subscription->family_limit ?? 'N/A' }}</p>
-                              </td>
-                              <td>
-                                <span class="badge {{ $subscription->is_parentalcontrol ? 'bg-success' : 'bg-secondary' }}">
-                                  {{ $subscription->is_parentalcontrol ? 'Yes' : 'No' }}
+                                <span class="badge {{ $subscription->is_supporter_badge ? 'bg-success' : 'bg-secondary' }}">
+                                  {{ $subscription->is_supporter_badge ? 'Yes' : 'No' }}
                                 </span>
                               </td>
 

@@ -19,6 +19,7 @@ class ArtistController extends Controller
         $artworkPhotos = [];
         $musics = [];
         $collaborations = [];
+        $artistsList = [];
         
         if (Auth::check() && Auth::user()->is_artist) {
             $artworkPhotos = ArtworkPhoto::where('driver_id', Auth::id())
@@ -28,6 +29,7 @@ class ArtistController extends Controller
             
             // Get all music tracks for collaboration management
             $musics = \App\Models\ArtistMusic::where('driver_id', Auth::id())
+                ->with('collaboration')
                 ->latest('created_at')
                 ->get();
             
@@ -41,9 +43,20 @@ class ArtistController extends Controller
             }])
             ->latest()
             ->get();
+            
+            // Get all artists for collaboration dropdown (excluding current user)
+            $artistsList = \App\Models\User::where('is_artist', true)
+                ->where('id', '!=', Auth::id())
+                ->get(['id', 'name', 'email']);
         }
         
-        return view("frontend.artist.artisit-portal", compact('faqs', 'artworkPhotos', 'musics', 'collaborations'));
+        // Get artist subscription plans for display
+        $artist_plans = \App\Models\ArtistSubscriptionPlan::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('monthly_fee')
+            ->get();
+        
+        return view("frontend.artist.artisit-portal", compact('faqs', 'artworkPhotos', 'musics', 'collaborations', 'artistsList', 'artist_plans'));
     }
   
 

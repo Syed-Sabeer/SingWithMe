@@ -30,27 +30,35 @@ class AdminSubscriptionController extends Controller
                 'is_unlimitedstreaming' => 'nullable|boolean',
                 'is_ads' => 'nullable|boolean',
                 'is_offline' => 'nullable|boolean',
+                'offline_download_limit' => 'nullable|integer|min:0',
                 'is_highquality' => 'nullable|boolean',
                 'is_unlimitedplaylist' => 'nullable|boolean',
+                'playlist_limit' => 'nullable|integer|min:0',
                 'is_exclusivecontent' => 'nullable|boolean',
                 'is_prioritysupport' => 'nullable|boolean',
                 'is_family' => 'nullable|boolean',
                 'family_limit' => 'nullable|integer|min:1',
                 'is_parentalcontrol' => 'nullable|boolean',
+                'is_tip_artists' => 'nullable|boolean',
+                'is_personalized_recommendations' => 'nullable|boolean',
+                'is_supporter_badge' => 'nullable|boolean',
+                'is_trending_access' => 'nullable|boolean',
             ]);
 
             $validatedData = $request->only([
                 'title', 'price', 'duration', 'duration_months', 'is_unlimitedstreaming', 'is_ads', 
-                'is_offline', 'is_highquality', 'is_unlimitedplaylist', 
-                'is_exclusivecontent', 'is_prioritysupport', 'is_family', 
-                'family_limit', 'is_parentalcontrol'
+                'is_offline', 'offline_download_limit', 'is_highquality', 'is_unlimitedplaylist', 
+                'playlist_limit', 'is_exclusivecontent', 'is_prioritysupport', 'is_family', 
+                'family_limit', 'is_parentalcontrol', 'is_tip_artists', 'is_personalized_recommendations',
+                'is_supporter_badge', 'is_trending_access'
             ]);
 
             // Convert checkbox values to boolean
             $booleanFields = [
                 'is_unlimitedstreaming', 'is_ads', 'is_offline', 'is_highquality',
                 'is_unlimitedplaylist', 'is_exclusivecontent', 'is_prioritysupport',
-                'is_family', 'is_parentalcontrol'
+                'is_family', 'is_parentalcontrol', 'is_tip_artists', 'is_personalized_recommendations',
+                'is_supporter_badge', 'is_trending_access'
             ];
 
             foreach ($booleanFields as $field) {
@@ -60,6 +68,21 @@ class AdminSubscriptionController extends Controller
             // Set family_limit to null if is_family is 0
             if ($validatedData['is_family'] == 0) {
                 $validatedData['family_limit'] = null;
+            }
+
+            // Set offline_download_limit to null if is_offline is 0
+            if (!isset($validatedData['is_offline']) || $validatedData['is_offline'] == 0) {
+                $validatedData['offline_download_limit'] = null;
+            } else {
+                // If offline is enabled but no limit specified, set to null (unlimited)
+                if (empty($request->input('offline_download_limit'))) {
+                    $validatedData['offline_download_limit'] = null;
+                }
+            }
+
+            // Set playlist_limit to null if is_unlimitedplaylist is 1
+            if (isset($validatedData['is_unlimitedplaylist']) && $validatedData['is_unlimitedplaylist'] == 1) {
+                $validatedData['playlist_limit'] = null;
             }
 
             Log::info('Validated Subscription data:', $validatedData);
@@ -92,13 +115,19 @@ class AdminSubscriptionController extends Controller
                 'is_unlimitedstreaming' => 'nullable|boolean',
                 'is_ads' => 'nullable|boolean',
                 'is_offline' => 'nullable|boolean',
+                'offline_download_limit' => 'nullable|integer|min:0',
                 'is_highquality' => 'nullable|boolean',
                 'is_unlimitedplaylist' => 'nullable|boolean',
+                'playlist_limit' => 'nullable|integer|min:0',
                 'is_exclusivecontent' => 'nullable|boolean',
                 'is_prioritysupport' => 'nullable|boolean',
                 'is_family' => 'nullable|boolean',
                 'family_limit' => 'nullable|integer|min:1',
                 'is_parentalcontrol' => 'nullable|boolean',
+                'is_tip_artists' => 'nullable|boolean',
+                'is_personalized_recommendations' => 'nullable|boolean',
+                'is_supporter_badge' => 'nullable|boolean',
+                'is_trending_access' => 'nullable|boolean',
             ]);
 
             $subscription = UserSubscriptionPlan::findOrFail($id);
@@ -108,13 +137,16 @@ class AdminSubscriptionController extends Controller
                 'price' => $request->price,
                 'duration' => $request->duration,
                 'duration_months' => $request->duration_months,
+                'offline_download_limit' => $request->input('offline_download_limit'),
+                'playlist_limit' => $request->input('playlist_limit'),
             ];
 
             // Convert checkbox values to boolean
             $booleanFields = [
                 'is_unlimitedstreaming', 'is_ads', 'is_offline', 'is_highquality',
                 'is_unlimitedplaylist', 'is_exclusivecontent', 'is_prioritysupport',
-                'is_family', 'is_parentalcontrol'
+                'is_family', 'is_parentalcontrol', 'is_tip_artists', 'is_personalized_recommendations',
+                'is_supporter_badge', 'is_trending_access'
             ];
 
             foreach ($booleanFields as $field) {
@@ -126,6 +158,21 @@ class AdminSubscriptionController extends Controller
                 $updateData['family_limit'] = null;
             } else {
                 $updateData['family_limit'] = $request->family_limit;
+            }
+
+            // Set offline_download_limit to null if is_offline is 0
+            if (!isset($updateData['is_offline']) || $updateData['is_offline'] == 0) {
+                $updateData['offline_download_limit'] = null;
+            } else {
+                // If offline is enabled but no limit specified, set to null (unlimited)
+                if (empty($request->input('offline_download_limit'))) {
+                    $updateData['offline_download_limit'] = null;
+                }
+            }
+
+            // Set playlist_limit to null if is_unlimitedplaylist is 1
+            if (isset($updateData['is_unlimitedplaylist']) && $updateData['is_unlimitedplaylist'] == 1) {
+                $updateData['playlist_limit'] = null;
             }
 
             $subscription->update($updateData);

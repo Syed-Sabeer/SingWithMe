@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\AdminShareYourMusicController;
 use App\Http\Controllers\Admin\AdminContactPageController;
 use App\Http\Controllers\Admin\AdminSubscriptionPlanController;
 use App\Http\Controllers\Admin\AdminSubscriptionController;
+use App\Http\Controllers\Admin\AdminArtistSubscriptionPlanController;
 use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminGiftController;
 use App\Http\Controllers\Admin\AdminServiceMusicVideoController;
@@ -522,6 +523,14 @@ Route::delete('service/artistsubscription/{id}', [AdminServiceArtistSubscription
     Route::get('subscription/{id}/edit', [AdminSubscriptionController::class, 'edit'])->name('subscription.edit');
     Route::put('subscription/{id}', [AdminSubscriptionController::class, 'update'])->name('subscription.update');
     Route::delete('subscription/{id}', [AdminSubscriptionController::class, 'destroy'])->name('subscription.destroy');
+
+    // Artist Subscription Plans Routes
+    Route::get('artist-subscription-plans', [AdminArtistSubscriptionPlanController::class, 'index'])->name('artist-subscription-plans.index');
+    Route::get('artist-subscription-plans/add', [AdminArtistSubscriptionPlanController::class, 'add'])->name('artist-subscription-plans.add');
+    Route::post('artist-subscription-plans/store', [AdminArtistSubscriptionPlanController::class, 'store'])->name('artist-subscription-plans.store');
+    Route::get('artist-subscription-plans/{id}/edit', [AdminArtistSubscriptionPlanController::class, 'edit'])->name('artist-subscription-plans.edit');
+    Route::put('artist-subscription-plans/{id}', [AdminArtistSubscriptionPlanController::class, 'update'])->name('artist-subscription-plans.update');
+    Route::delete('artist-subscription-plans/{id}', [AdminArtistSubscriptionPlanController::class, 'destroy'])->name('artist-subscription-plans.destroy');
 
     // Customer Routes
     Route::get('customer', [AdminCustomerController::class, 'index'])->name('customer.index');

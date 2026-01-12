@@ -106,11 +106,17 @@
 
                                 <div class="col-md-6">
                                   <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="is_offline" id="is_offline" value="1" {{ old('is_offline', $subscription->is_offline) ? 'checked' : '' }}>
+                                    <input class="form-check-input" type="checkbox" name="is_offline" id="is_offline" value="1" {{ old('is_offline', $subscription->is_offline) ? 'checked' : '' }} onchange="toggleOfflineFields()">
                                     <label class="form-check-label" for="is_offline">
-                                      Offline Access
+                                      Offline Downloads
                                     </label>
                                   </div>
+                                </div>
+
+                                <div class="col-md-6" id="offline_download_limit_field" style="display: {{ old('is_offline', $subscription->is_offline) ? 'block' : 'none' }};">
+                                  <label class="form-label" for="offline_download_limit">Offline Download Limit</label>
+                                  <input class="form-control" name="offline_download_limit" id="offline_download_limit" type="number" placeholder="e.g., 100 (leave blank for unlimited)" value="{{ old('offline_download_limit', $subscription->offline_download_limit) }}" min="0">
+                                  <small class="form-text text-muted">Leave blank for unlimited downloads</small>
                                 </div>
 
                                 <div class="col-md-6">
@@ -124,11 +130,17 @@
 
                                 <div class="col-md-6">
                                   <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="is_unlimitedplaylist" id="is_unlimitedplaylist" value="1" {{ old('is_unlimitedplaylist', $subscription->is_unlimitedplaylist) ? 'checked' : '' }}>
+                                    <input class="form-check-input" type="checkbox" name="is_unlimitedplaylist" id="is_unlimitedplaylist" value="1" {{ old('is_unlimitedplaylist', $subscription->is_unlimitedplaylist) ? 'checked' : '' }} onchange="togglePlaylistFields()">
                                     <label class="form-check-label" for="is_unlimitedplaylist">
                                       Unlimited Playlists
                                     </label>
                                   </div>
+                                </div>
+
+                                <div class="col-md-6" id="playlist_limit_field" style="display: {{ !old('is_unlimitedplaylist', $subscription->is_unlimitedplaylist) ? 'block' : 'none' }};">
+                                  <label class="form-label" for="playlist_limit">Playlist Limit</label>
+                                  <input class="form-control" name="playlist_limit" id="playlist_limit" type="number" placeholder="e.g., 3" value="{{ old('playlist_limit', $subscription->playlist_limit) }}" min="0">
+                                  <small class="form-text text-muted">Only applicable if unlimited playlists is unchecked</small>
                                 </div>
 
                                 <div class="col-md-6">
@@ -172,6 +184,47 @@
                                   </div>
                                 </div>
 
+                                <div class="col-12">
+                                  <hr>
+                                  <h6 class="mb-3">Premium Features (Super Listener)</h6>
+                                </div>
+
+                                <div class="col-md-6">
+                                  <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_tip_artists" id="is_tip_artists" value="1" {{ old('is_tip_artists', $subscription->is_tip_artists) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_tip_artists">
+                                      Tip Artists Directly
+                                    </label>
+                                  </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                  <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_personalized_recommendations" id="is_personalized_recommendations" value="1" {{ old('is_personalized_recommendations', $subscription->is_personalized_recommendations) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_personalized_recommendations">
+                                      Personalized Weekly Recommendations
+                                    </label>
+                                  </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                  <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_supporter_badge" id="is_supporter_badge" value="1" {{ old('is_supporter_badge', $subscription->is_supporter_badge) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_supporter_badge">
+                                      Supporter Badge on Profile
+                                    </label>
+                                  </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                  <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_trending_access" id="is_trending_access" value="1" {{ old('is_trending_access', $subscription->is_trending_access ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_trending_access">
+                                      Access to Trending & Featured Creators
+                                    </label>
+                                  </div>
+                                </div>
+
                                 <div class="col-md-6">
                                   <button class="btn btn-primary f-w-500" type="submit">Update</button>
                                 </div>
@@ -206,9 +259,35 @@ function toggleFamilyFields() {
     }
 }
 
-// Check on page load if family is already checked
+function toggleOfflineFields() {
+    const isOfflineChecked = document.getElementById('is_offline').checked;
+    const offlineLimitField = document.getElementById('offline_download_limit_field');
+    
+    if (isOfflineChecked) {
+        offlineLimitField.style.display = 'block';
+    } else {
+        offlineLimitField.style.display = 'none';
+        document.getElementById('offline_download_limit').value = '';
+    }
+}
+
+function togglePlaylistFields() {
+    const isUnlimitedPlaylist = document.getElementById('is_unlimitedplaylist').checked;
+    const playlistLimitField = document.getElementById('playlist_limit_field');
+    
+    if (isUnlimitedPlaylist) {
+        playlistLimitField.style.display = 'none';
+        document.getElementById('playlist_limit').value = '';
+    } else {
+        playlistLimitField.style.display = 'block';
+    }
+}
+
+// Check on page load if fields need to be shown
 document.addEventListener('DOMContentLoaded', function() {
     toggleFamilyFields();
+    toggleOfflineFields();
+    togglePlaylistFields();
 });
 </script>
 @endsection

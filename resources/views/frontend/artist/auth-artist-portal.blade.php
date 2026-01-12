@@ -1526,6 +1526,162 @@ a .payout-btn {
             </div>
         </section>
 
+        <!-- Artist Subscription Plans Section -->
+        <section class="artist-subscription-plans-section py-5" style="background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="text-center mb-5">
+                            <h2 style="color: #fbfbfb; font-size: 2.5rem; margin-bottom: 15px;">Artist Subscription Plans</h2>
+                            <p style="color: #b8a8d0; font-size: 1.1rem;">Choose the perfect plan to grow your music career</p>
+                        </div>
+
+                        <div class="row justify-content-center">
+                            @foreach($artist_plans as $index => $plan)
+                                @php
+                                    $isPopular = $plan->plan_slug == 'pro-artist';
+                                @endphp
+                                <div class="col-lg-4 col-md-6 mb-4">
+                                    <div class="artist-plan-card" style="background: rgba(45, 27, 78, 0.6); border: 1px solid rgba(183, 148, 246, 0.3); border-radius: 15px; padding: 30px; height: 100%; position: relative; transition: transform 0.3s ease; {{ $isPopular ? 'border: 2px solid #b794f6; transform: scale(1.05);' : '' }}">
+                                        @if($isPopular)
+                                            <div style="position: absolute; top: -15px; right: 20px; background: linear-gradient(135deg, #b794f6, #9d50bb); color: white; padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">Most Popular</div>
+                                        @endif
+                                        
+                                        <div class="text-center mb-4">
+                                            <h3 style="color: #fbfbfb; font-size: 1.8rem; margin-bottom: 10px;">{{ $plan->plan_name }}</h3>
+                                            @if($plan->ideal_for)
+                                                <p style="color: #b8a8d0; font-size: 0.95rem; margin-bottom: 15px;">{{ $plan->ideal_for }}</p>
+                                            @endif
+                                            <div style="color: #b794f6; font-size: 2.5rem; font-weight: bold; margin-bottom: 5px;">
+                                                @if($plan->monthly_fee > 0)
+                                                    {{ $plan->currency }} {{ number_format($plan->monthly_fee, 2) }}
+                                                @else
+                                                    Free
+                                                @endif
+                                            </div>
+                                            <div style="color: #b8a8d0; font-size: 0.9rem;">per month</div>
+                                        </div>
+
+                                        <ul style="list-style: none; padding: 0; margin: 25px 0; min-height: 300px;">
+                                            @if($plan->songs_per_month)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Upload up to {{ $plan->songs_per_month }} songs per month
+                                                </li>
+                                            @elseif($plan->is_unlimited_uploads)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Unlimited song uploads
+                                                </li>
+                                            @endif
+                                            
+                                            <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                Access to community feed & comments
+                                            </li>
+                                            
+                                            <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                Basic analytics (plays, likes, shares)
+                                            </li>
+                                            
+                                            <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                Profile customization tools
+                                            </li>
+                                            
+                                            @if($plan->is_featured_rotation)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Featured on front page rotation ({{ $plan->featured_rotation_weeks }} week{{ $plan->featured_rotation_weeks > 1 ? 's' : '' }}/month)
+                                                </li>
+                                            @endif
+                                            
+                                            @if($plan->is_priority_search)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Priority placement in search results
+                                                </li>
+                                            @endif
+                                            
+                                            @if($plan->is_custom_banner)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Custom banner/profile cover
+                                                </li>
+                                            @endif
+                                            
+                                            @if($plan->is_isrc_codes)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    ISRC codes assigned to each release
+                                                </li>
+                                            @endif
+                                            
+                                            @if($plan->is_early_access_insights)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Early access to platform insights & music trends
+                                                </li>
+                                            @endif
+                                            
+                                            @if($plan->is_certified_badge)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    "Certified Creator" badge on profile
+                                                </li>
+                                            @endif
+                                            
+                                            @if($plan->is_showcase_placement)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Placement in Certified Creators Showcase
+                                                </li>
+                                            @endif
+                                            
+                                            @if($plan->is_royalty_tracking)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Official royalty tracking with ISRC integration
+                                                </li>
+                                            @endif
+                                            
+                                            @if($plan->is_playlist_highlighted)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Highlighted inclusion in curated playlists
+                                                </li>
+                                            @endif
+                                            
+                                            @if($plan->is_advanced_analytics)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Advanced analytics (listener demographics, regional data)
+                                                </li>
+                                            @endif
+                                            
+                                            @if($plan->is_showcase_invitations)
+                                                <li style="color: #fbfbfb; padding: 10px 0; border-bottom: 1px solid rgba(183, 148, 246, 0.1);">
+                                                    <i class="fas fa-check-circle" style="color: #b794f6; margin-right: 10px;"></i>
+                                                    Invitations to online showcases, collaborations & promo campaigns
+                                                </li>
+                                            @endif
+                                        </ul>
+
+                                        <div class="text-center mt-4">
+                                            <a href="/service/artisit-subscription" class="btn" style="background: {{ $isPopular ? 'linear-gradient(135deg, #b794f6, #9d50bb)' : 'rgba(183, 148, 246, 0.3)' }}; color: white; border: 1px solid rgba(183, 148, 246, 0.5); padding: 12px 30px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: 600; width: 100%;">
+                                                {{ $plan->monthly_fee > 0 ? 'Subscribe Now' : 'Get Started' }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 console.log("DOM loaded, initializing file upload functionality...");
@@ -2278,7 +2434,7 @@ a .payout-btn {
             // ============================================
             
             let collaboratorCount = 0;
-            const artistsList = @json(\App\Models\User::where('is_artist', true)->where('id', '!=', auth()->id())->get(['id', 'name', 'email']));
+            const artistsList = @json($artistsList ?? []);
 
             // Add Collaborator Button
             document.getElementById('addCollaboratorBtn')?.addEventListener('click', function() {
@@ -2290,7 +2446,14 @@ a .payout-btn {
                 const musicId = this.value;
                 const form = document.getElementById('collaborationForm');
                 if (musicId && form) {
-                    form.action = `/artist/music/${musicId}/collaboration`;
+                    // Use named route helper - get base URL and construct path
+                    @php
+                        // Generate a sample route to extract the pattern
+                        $sampleRoute = route('artist.collaborations.store', ['id' => 999]);
+                        $routePattern = str_replace('999', 'MUSIC_ID', $sampleRoute);
+                    @endphp
+                    const routePattern = '{{ $routePattern }}';
+                    form.action = routePattern.replace('MUSIC_ID', musicId);
                 }
                 
                 // Check if track already has collaboration

@@ -27,8 +27,13 @@ class ServiceController extends Controller
 
     public function artisitsubscription(){
         $artistsubscriptions = ServiceArtistSubscription::all();
-        return view("frontend.services.artistsubscription", compact('artistsubscriptions'));
-        }
+        // Get artist subscription plans for pricing display
+        $artist_plans = \App\Models\ArtistSubscriptionPlan::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('monthly_fee')
+            ->get();
+        return view("frontend.services.artistsubscription", compact('artistsubscriptions', 'artist_plans'));
+    }
 
     public function artworkphoto(){
         $artworkphotos = ServiceArtworkPhoto::all();

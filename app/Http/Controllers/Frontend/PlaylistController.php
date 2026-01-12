@@ -700,7 +700,8 @@ class PlaylistController extends Controller
             }
 
             $request->validate([
-                'plan_type' => 'required|string|in:premium,family',
+                'plan_id' => 'required|integer|exists:user_subscription_plans,id',
+                'plan_type' => 'required|string',
                 'price' => 'required|numeric|min:0',
                 'duration' => 'required|integer|min:1',
                 'payment_method' => 'required|string|in:stripe,google-pay,apple-pay,paypal,square',
@@ -732,13 +733,8 @@ class PlaylistController extends Controller
                 ], 400);
             }
 
-            // Map plan type to subscription plan ID
-            $planIds = [
-                'premium' => 2,
-                'family' => 3
-            ];
-            
-            $subscriptionPlanId = $planIds[$request->plan_type] ?? 1; // Default to free plan
+            // Use the plan_id from request
+            $subscriptionPlanId = $request->plan_id;
 
             // Create subscription record in user_subscriptions table
             $subscription = UserSubscription::create([

@@ -1049,52 +1049,85 @@
                     <p>Choose the perfect plan for your music journey. Upgrade anytime!</p>
 
                     <div class="plans-grid">
-                        <div class="plan-card">
-                            <h3 class="plan-name">Free</h3>
-                            <div class="plan-price">£0</div>
-                            <div class="plan-period">forever</div>
-                            <ul class="plan-features">
-                                <li>Limited music streaming</li>
-                                <li>Ads between songs</li>
-                                <li>Basic playlist creation</li>
-                                <li>Mobile app access</li>
-                                <li>Community features</li>
-                            </ul>
-                            <button class="plan-button secondary" onclick="openSubscriptionPopup('free')">Current Plan</button>
-                        </div>
-
-                        <div class="plan-card popular">
-                            <h3 class="plan-name">Premium</h3>
-                            <div class="plan-price">£9.99</div>
-                            <div class="plan-period">per month</div>
-                            <ul class="plan-features">
-                                <li>Unlimited music streaming</li>
-                                <li>No advertisements</li>
-                                <li>Offline downloads</li>
-                                <li>High-quality audio</li>
-                                <li>Unlimited playlists</li>
-                                <li>Exclusive content</li>
-                                <li>Priority support</li>
-                            </ul>
-                            <button class="plan-button primary" onclick="openSubscriptionPopup('premium')">Upgrade
-                                Now</button>
-                        </div>
-
-                        <div class="plan-card">
-                            <h3 class="plan-name">Family</h3>
-                            <div class="plan-price">£14.99</div>
-                            <div class="plan-period">per month</div>
-                            <ul class="plan-features">
-                                <li>Up to 6 family members</li>
-                                <li>All Premium features</li>
-                                <li>Individual profiles</li>
-                                <li>Parental controls</li>
-                                <li>Shared family playlists</li>
-                                <li>Mix for family</li>
-                            </ul>
-                            <button class="plan-button primary" onclick="openSubscriptionPopup('family')">Choose
-                                Family</button>
-                        </div>
+                        @foreach($user_subscription_plans as $index => $plan)
+                            @php
+                                $isCurrentPlan = $currentSubscription && $currentSubscription->usersubscription_id == $plan->id;
+                                $isPopular = strpos(strtolower($plan->title), 'premium') !== false || strpos(strtolower($plan->title), 'super') !== false;
+                            @endphp
+                            <div class="plan-card {{ $isPopular ? 'popular' : '' }}">
+                                <h3 class="plan-name">{{ $plan->title }}</h3>
+                                <div class="plan-price">
+                                    @if($plan->price == '0' || $plan->price == 0)
+                                        Free
+                                    @else
+                                        £{{ number_format((float)$plan->price, 2) }}
+                                    @endif
+                                </div>
+                                <div class="plan-period">{{ $plan->duration }}</div>
+                                
+                                @if($plan->ideal_for)
+                                    <p style="color: #b8a8d0; font-size: 0.9rem; margin: 10px 0; text-align: center;">{{ $plan->ideal_for }}</p>
+                                @endif
+                                
+                                <ul class="plan-features">
+                                    @if($plan->is_ads == 0)
+                                        <li><i class="fas fa-check"></i> Stream songs with ads</li>
+                                    @else
+                                        <li><i class="fas fa-check"></i> Ad-free listening</li>
+                                    @endif
+                                    
+                                    @if($plan->is_unlimitedplaylist)
+                                        <li><i class="fas fa-check"></i> Unlimited playlist creation</li>
+                                    @elseif($plan->playlist_limit)
+                                        <li><i class="fas fa-check"></i> Create up to {{ $plan->playlist_limit }} playlists</li>
+                                    @endif
+                                    
+                                    @if($plan->is_offline)
+                                        @if($plan->offline_download_limit)
+                                            <li><i class="fas fa-check"></i> Offline downloads (up to {{ $plan->offline_download_limit }} songs)</li>
+                                        @else
+                                            <li><i class="fas fa-check"></i> Unlimited offline downloads</li>
+                                        @endif
+                                    @endif
+                                    
+                                    @if($plan->is_highquality)
+                                        <li><i class="fas fa-check"></i> High-quality streaming with HD audio</li>
+                                    @endif
+                                    
+                                    @if($plan->is_exclusivecontent)
+                                        <li><i class="fas fa-check"></i> Early access to Certified Creator releases</li>
+                                    @endif
+                                    
+                                    @if($plan->is_tip_artists)
+                                        <li><i class="fas fa-check"></i> Tip artists directly to support them</li>
+                                    @endif
+                                    
+                                    @if($plan->is_personalized_recommendations)
+                                        <li><i class="fas fa-check"></i> Personalized weekly music recommendations</li>
+                                    @endif
+                                    
+                                    @if($plan->is_supporter_badge)
+                                        <li><i class="fas fa-check"></i> Supporter Badge on profile & comments</li>
+                                    @endif
+                                    
+                                    @if($plan->is_trending_access)
+                                        <li><i class="fas fa-check"></i> Access trending & featured creators</li>
+                                    @endif
+                                </ul>
+                                
+                                @if($isCurrentPlan)
+                                    <button class="plan-button secondary" disabled>Current Plan</button>
+                                @else
+                                    <button class="plan-button primary" onclick="openSubscriptionPopup('{{ $plan->id }}', '{{ $plan->title }}', '{{ $plan->price }}', '{{ $plan->duration }}')">
+                                        @if($plan->price == '0' || $plan->price == 0)
+                                            Get Started
+                                        @else
+                                            Subscribe Now
+                                        @endif
+                                    </button>
+                                @endif
+                            </div>
+                        @endforeach
                     </div>
                 </section>
 
@@ -3426,14 +3459,14 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 
-function openSubscriptionPopup(planType) {
-    selectedPlan = planType;
+function openSubscriptionPopup(planId, planTitle, planPrice, planDuration) {
+    selectedPlan = planId;
     selectedPaymentMethod = null;
     
     const popup = document.getElementById('subscriptionPopup');
     const planName = document.getElementById('selectedPlanName');
-    const planPrice = document.getElementById('selectedPlanPrice');
-    const planPeriod = document.getElementById('selectedPlanPeriod');
+    const priceEl = document.getElementById('selectedPlanPrice');
+    const periodEl = document.getElementById('selectedPlanPeriod');
     
     // Reset payment method selection
     document.querySelectorAll('.subscription-popup .payment-method').forEach(method => {
@@ -3448,23 +3481,14 @@ function openSubscriptionPopup(planType) {
     // Reset terms checkbox
     document.getElementById('agreeTerms').checked = false;
     
-    // Update plan details based on type
-    switch(planType) {
-        case 'free':
-            planName.textContent = 'Free Plan';
-            planPrice.textContent = '£0';
-            planPeriod.textContent = 'forever';
-            break;
-        case 'premium':
-            planName.textContent = 'Premium Plan';
-            planPrice.textContent = '£9.99';
-            planPeriod.textContent = 'per month';
-            break;
-        case 'family':
-            planName.textContent = 'Family Plan';
-            planPrice.textContent = '£14.99';
-            planPeriod.textContent = 'per month';
-            break;
+    // Update plan details
+    planName.textContent = planTitle;
+    if (planPrice == '0' || planPrice == 0) {
+        priceEl.textContent = 'Free';
+        periodEl.textContent = 'forever';
+    } else {
+        priceEl.textContent = '£' + parseFloat(planPrice).toFixed(2);
+        periodEl.textContent = planDuration;
     }
     
     popup.classList.add('active');
@@ -4006,10 +4030,11 @@ async function processSquarePayment() {
 
 async function processPaymentWithMethod(method, paymentMethodId = null) {
     try {
-        const planPrices = {
-            'premium': 9.99,
-            'family': 14.99
-        };
+        // Get plan details from the selected plan
+        const planNameEl = document.getElementById('selectedPlanName');
+        const planPriceEl = document.getElementById('selectedPlanPrice');
+        const planPriceText = planPriceEl.textContent.replace('£', '').replace('Free', '0');
+        const planPrice = parseFloat(planPriceText) || 0;
         
         // Map payment methods to their display names
         const paymentMethodNames = {
@@ -4027,9 +4052,10 @@ async function processPaymentWithMethod(method, paymentMethodId = null) {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify({
-                plan_type: selectedPlan,
-                price: planPrices[selectedPlan],
-                duration: 30, // 30 days as requested
+                plan_id: selectedPlan,
+                plan_type: planNameEl.textContent.toLowerCase().replace(/\s+/g, '-'),
+                price: planPrice,
+                duration: 30, // 30 days (1 month)
                 payment_method: method,
                 payment_method_name: paymentMethodNames[method] || method,
                 payment_method_id: paymentMethodId

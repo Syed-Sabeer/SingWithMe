@@ -1738,15 +1738,21 @@ CREATE TABLE `user_subscription_plans` (
   `duration` varchar(300) DEFAULT NULL,
   `duration_months` int(11) DEFAULT NULL,
   `is_unlimitedstreaming` int(11) DEFAULT NULL,
-  `is_ads` int(11) DEFAULT NULL,
-  `is_offline` int(11) DEFAULT NULL,
-  `is_highquality` int(11) DEFAULT NULL,
-  `is_unlimitedplaylist` int(11) DEFAULT NULL,
-  `is_exclusivecontent` int(11) DEFAULT NULL,
+  `is_ads` int(11) DEFAULT NULL COMMENT '1 = no ads, 0 = with ads',
+  `is_offline` int(11) DEFAULT NULL COMMENT '1 = offline downloads enabled',
+  `offline_download_limit` int(11) DEFAULT NULL COMMENT 'NULL = unlimited, number = limit',
+  `is_highquality` int(11) DEFAULT NULL COMMENT 'HD audio',
+  `is_unlimitedplaylist` int(11) DEFAULT NULL COMMENT '1 = unlimited, 0 = limited',
+  `playlist_limit` int(11) DEFAULT NULL COMMENT 'NULL = unlimited, number = limit (e.g., 3)',
+  `is_exclusivecontent` int(11) DEFAULT NULL COMMENT 'Early access to releases',
   `is_prioritysupport` int(11) DEFAULT NULL,
   `is_family` int(11) DEFAULT NULL,
   `family_limit` int(11) DEFAULT NULL,
   `is_parentalcontrol` int(11) DEFAULT NULL,
+  `is_tip_artists` int(11) DEFAULT NULL COMMENT 'Ability to tip artists directly',
+  `is_personalized_recommendations` int(11) DEFAULT NULL COMMENT 'Personalized weekly recommendations',
+  `is_supporter_badge` int(11) DEFAULT NULL COMMENT 'Supporter badge on profile',
+  `is_trending_access` int(11) DEFAULT NULL COMMENT 'Access to trending & featured creators',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -1755,10 +1761,10 @@ CREATE TABLE `user_subscription_plans` (
 -- Dumping data for table `user_subscription_plans`
 --
 
-INSERT INTO `user_subscription_plans` (`id`, `title`, `price`, `duration`, `duration_months`, `is_unlimitedstreaming`, `is_ads`, `is_offline`, `is_highquality`, `is_unlimitedplaylist`, `is_exclusivecontent`, `is_prioritysupport`, `is_family`, `family_limit`, `is_parentalcontrol`, `created_at`, `updated_at`) VALUES
-(1, 'Free', '0', 'Life Time', 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, '2025-09-08 10:29:56', '2025-09-08 10:30:34'),
-(2, 'Premium', '9.99', 'Monthly', 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 0, '2025-09-08 10:30:26', '2025-12-08 06:56:49'),
-(3, 'Family', '14.99', 'Monthly', 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 1, '2025-09-08 10:31:06', '2025-09-08 10:31:06');
+INSERT INTO `user_subscription_plans` (`id`, `title`, `price`, `duration`, `duration_months`, `is_unlimitedstreaming`, `is_ads`, `is_offline`, `offline_download_limit`, `is_highquality`, `is_unlimitedplaylist`, `playlist_limit`, `is_exclusivecontent`, `is_prioritysupport`, `is_family`, `family_limit`, `is_parentalcontrol`, `is_tip_artists`, `is_personalized_recommendations`, `is_supporter_badge`, `is_trending_access`, `created_at`, `updated_at`) VALUES
+(1, 'Free Listener', '0', 'Monthly', 1, 1, 0, 0, NULL, 0, 0, 3, 0, 0, 0, NULL, 0, 0, 0, 0, 1, '2025-09-08 10:29:56', '2025-09-08 10:30:34'),
+(2, 'Premium Listener', '4.99', 'Monthly', 1, 1, 1, 1, 100, 1, 1, NULL, 0, 0, 0, NULL, 0, 0, 0, 0, 1, '2025-09-08 10:30:26', '2025-12-08 06:56:49'),
+(3, 'Super Listener', '9.99', 'Monthly', 1, 1, 1, 1, NULL, 1, 1, NULL, 1, 0, 0, NULL, 0, 1, 1, 1, 1, '2025-09-08 10:31:06', '2025-09-08 10:31:06');
 
 -- --------------------------------------------------------
 
@@ -3821,6 +3827,139 @@ ALTER TABLE `collaboration_revenue_distributions`
   ADD CONSTRAINT `fk_collaboration_revenue_collaboration` FOREIGN KEY (`collaboration_id`) REFERENCES `track_collaborations` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_collaboration_revenue_music` FOREIGN KEY (`music_id`) REFERENCES `artist_musics` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_collaboration_revenue_artist` FOREIGN KEY (`artist_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+-- ============================================================
+-- UPDATE USER SUBSCRIPTION PLANS TABLE WITH NEW FIELDS
+-- ============================================================
+
+-- Add new columns to user_subscription_plans table (for existing databases)
+-- Note: The CREATE TABLE statement above already includes these columns
+-- Uncomment below if you need to add these columns to an existing database:
+/*
+ALTER TABLE `user_subscription_plans`
+  ADD COLUMN `offline_download_limit` int(11) DEFAULT NULL COMMENT 'NULL = unlimited, number = limit' AFTER `is_offline`,
+  ADD COLUMN `playlist_limit` int(11) DEFAULT NULL COMMENT 'NULL = unlimited, number = limit (e.g., 3)' AFTER `is_unlimitedplaylist`,
+  ADD COLUMN `is_tip_artists` int(11) DEFAULT NULL COMMENT 'Ability to tip artists directly' AFTER `is_parentalcontrol`,
+  ADD COLUMN `is_personalized_recommendations` int(11) DEFAULT NULL COMMENT 'Personalized weekly recommendations' AFTER `is_tip_artists`,
+  ADD COLUMN `is_supporter_badge` int(11) DEFAULT NULL COMMENT 'Supporter badge on profile' AFTER `is_personalized_recommendations`,
+  ADD COLUMN `is_trending_access` int(11) DEFAULT NULL COMMENT 'Access to trending & featured creators' AFTER `is_supporter_badge`;
+*/
+
+-- Update existing plans with new values
+UPDATE `user_subscription_plans` SET 
+  `title` = 'Free Listener',
+  `duration` = 'Monthly',
+  `duration_months` = 1,
+  `is_unlimitedstreaming` = 1,
+  `is_ads` = 0,
+  `is_offline` = 0,
+  `offline_download_limit` = NULL,
+  `is_highquality` = 0,
+  `is_unlimitedplaylist` = 0,
+  `playlist_limit` = 3,
+  `is_exclusivecontent` = 0,
+  `is_prioritysupport` = 0,
+  `is_family` = 0,
+  `family_limit` = NULL,
+  `is_parentalcontrol` = 0,
+  `is_tip_artists` = 0,
+  `is_personalized_recommendations` = 0,
+  `is_supporter_badge` = 0,
+  `is_trending_access` = 1
+WHERE `id` = 1;
+
+UPDATE `user_subscription_plans` SET 
+  `title` = 'Premium Listener',
+  `price` = '4.99',
+  `duration` = 'Monthly',
+  `duration_months` = 1,
+  `is_unlimitedstreaming` = 1,
+  `is_ads` = 1,
+  `is_offline` = 1,
+  `offline_download_limit` = 100,
+  `is_highquality` = 1,
+  `is_unlimitedplaylist` = 1,
+  `playlist_limit` = NULL,
+  `is_exclusivecontent` = 0,
+  `is_prioritysupport` = 0,
+  `is_family` = 0,
+  `family_limit` = NULL,
+  `is_parentalcontrol` = 0,
+  `is_tip_artists` = 0,
+  `is_personalized_recommendations` = 0,
+  `is_supporter_badge` = 0,
+  `is_trending_access` = 1
+WHERE `id` = 2;
+
+UPDATE `user_subscription_plans` SET 
+  `title` = 'Super Listener',
+  `price` = '9.99',
+  `duration` = 'Monthly',
+  `duration_months` = 1,
+  `is_unlimitedstreaming` = 1,
+  `is_ads` = 1,
+  `is_offline` = 1,
+  `offline_download_limit` = NULL,
+  `is_highquality` = 1,
+  `is_unlimitedplaylist` = 1,
+  `playlist_limit` = NULL,
+  `is_exclusivecontent` = 1,
+  `is_prioritysupport` = 0,
+  `is_family` = 0,
+  `family_limit` = NULL,
+  `is_parentalcontrol` = 0,
+  `is_tip_artists` = 1,
+  `is_personalized_recommendations` = 1,
+  `is_supporter_badge` = 1,
+  `is_trending_access` = 1
+WHERE `id` = 3;
+
+-- ============================================================
+-- ARTIST SUBSCRIPTION PACKAGES
+-- ============================================================
+
+--
+-- Table structure for table `artist_subscription_plans`
+--
+CREATE TABLE IF NOT EXISTS `artist_subscription_plans` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `plan_name` varchar(255) NOT NULL,
+  `plan_slug` varchar(255) NOT NULL,
+  `monthly_fee` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `currency` varchar(3) NOT NULL DEFAULT 'GBP',
+  `ideal_for` text DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `songs_per_month` int(11) DEFAULT NULL COMMENT 'NULL = unlimited, 0 = free tier',
+  `is_unlimited_uploads` tinyint(1) NOT NULL DEFAULT 0,
+  `is_featured_rotation` tinyint(1) NOT NULL DEFAULT 0,
+  `featured_rotation_weeks` int(11) DEFAULT NULL COMMENT 'Weeks per month for featured rotation',
+  `is_priority_search` tinyint(1) NOT NULL DEFAULT 0,
+  `is_custom_banner` tinyint(1) NOT NULL DEFAULT 0,
+  `is_isrc_codes` tinyint(1) NOT NULL DEFAULT 0,
+  `is_early_access_insights` tinyint(1) NOT NULL DEFAULT 0,
+  `is_certified_badge` tinyint(1) NOT NULL DEFAULT 0,
+  `is_showcase_placement` tinyint(1) NOT NULL DEFAULT 0,
+  `is_royalty_tracking` tinyint(1) NOT NULL DEFAULT 0,
+  `is_playlist_highlighted` tinyint(1) NOT NULL DEFAULT 0,
+  `is_advanced_analytics` tinyint(1) NOT NULL DEFAULT 0,
+  `is_showcase_invitations` tinyint(1) NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_plan_slug` (`plan_slug`),
+  KEY `idx_is_active` (`is_active`),
+  KEY `idx_sort_order` (`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Insert default artist subscription plans
+--
+INSERT INTO `artist_subscription_plans` (`plan_name`, `plan_slug`, `monthly_fee`, `currency`, `ideal_for`, `description`, `songs_per_month`, `is_unlimited_uploads`, `is_featured_rotation`, `featured_rotation_weeks`, `is_priority_search`, `is_custom_banner`, `is_isrc_codes`, `is_early_access_insights`, `is_certified_badge`, `is_showcase_placement`, `is_royalty_tracking`, `is_playlist_highlighted`, `is_advanced_analytics`, `is_showcase_invitations`, `is_active`, `sort_order`) VALUES
+('Starter Artist', 'starter-artist', 0.00, 'GBP', 'Beginner musicians & new creators', 'Perfect for artists just starting their journey on SingWithMe', 3, 0, 0, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1),
+('Pro Artist', 'pro-artist', 9.99, 'GBP', 'Semi-professional creators seeking more exposure', 'Ideal for artists looking to grow their audience and get featured', NULL, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 2),
+('Certified Creator', 'certified-creator', 19.99, 'GBP', 'Established artists focusing on branding & monetization', 'Premium package for professional artists with advanced features', NULL, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3);
 
 COMMIT;
 
