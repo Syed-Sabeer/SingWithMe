@@ -56,7 +56,13 @@ Route::middleware(['web', 'auth'])->group(function () {
 
     Route::post('/profile/update', [AuthController::class, 'editProfile']);
     Route::get('/profile', [AuthController::class, 'getProfile']);
-Route::post('/notify', [NotificationController::class, 'sendNotification']);
+    Route::post('/notify', [NotificationController::class, 'sendNotification']);
+
+    // Notifications API for header UI
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'deleteNotification']);
     
     // Playlist API routes - all require authentication
     Route::get('/playlists', [PlaylistController::class, 'getUserPlaylists']);

@@ -155,81 +155,41 @@
     {{--garph js--}}
 
   <script>
-        // Sample notifications data
-        const notificationsData = [
-            {
-                id: 1,
-                type: 'tip',
-                title: 'New Vocal Mixing Technique',
-                message: 'Learn how to create professional vocal chains with compression, EQ, and reverb. This comprehensive guide covers everything from recording to final mix.',
-                time: '2 min ago',
-                date: 'December 22, 2025 at 3:45 PM',
-                unread: true
-            },
-            {
-                id: 2,
-                type: 'subscription',
-                title: 'Premium Membership Activated',
-                message: 'Your premium subscription is now active! Enjoy unlimited access to all features, exclusive content, and priority support.',
-                time: '1 hour ago',
-                date: 'December 22, 2025 at 2:15 PM',
-                unread: true
-            },
-            {
-                id: 3,
-                type: 'system',
-                title: 'New Release Available',
-                message: 'Check out "Midnight Echoes" by Luna Starr - now streaming on all platforms. This album features 12 tracks of pure sonic magic.',
-                time: '3 hours ago',
-                date: 'December 22, 2025 at 12:30 PM',
-                unread: true
-            },
-            {
-                id: 4,
-                type: 'tip',
-                title: 'Master Your Bass Lines',
-                message: 'Discover techniques for creating punchy, professional bass sounds that sit perfectly in your mix. Includes EQ, compression, and saturation tips.',
-                time: '1 day ago',
-                date: 'December 21, 2025 at 5:20 PM',
-                unread: false
-            },
-            {
-                id: 5,
-                type: 'subscription',
-                title: 'Payment Successful',
-                message: 'Your payment of $9.99 has been processed successfully. Thank you for being a valued member of SingWithMe Records!',
-                time: '2 days ago',
-                date: 'December 20, 2025 at 11:00 AM',
-                unread: false
-            },
-            {
-                id: 6,
-                type: 'system',
-                title: 'Platform Update',
-                message: 'We\'ve added new features including enhanced audio quality, collaborative playlists, and improved search functionality.',
-                time: '3 days ago',
-                date: 'December 19, 2025 at 9:15 AM',
-                unread: false
-            },
-            {
-                id: 7,
-                type: 'tip',
-                title: 'Recording Studio Hacks',
-                message: 'Professional tips for setting up your home studio on a budget. Learn about room treatment, microphone placement, and essential gear.',
-                time: '4 days ago',
-                date: 'December 18, 2025 at 4:30 PM',
-                unread: false
-            },
-            {
-                id: 8,
-                type: 'system',
-                title: 'Community Spotlight',
-                message: 'Your track "Summer Nights" has been featured in this week\'s community spotlight. Check it out and see the feedback from other artists!',
-                time: '5 days ago',
-                date: 'December 17, 2025 at 2:00 PM',
-                unread: false
+        const CSRF_TOKEN = '{{ csrf_token() }}';
+        let notificationsData = [];
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/notifications', {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+                if (!data.success || !Array.isArray(data.notifications)) return;
+
+                notificationsData = data.notifications.map(n => {
+                    const createdAt = n.created_at ? new Date(n.created_at) : new Date();
+                    const time = createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const date = createdAt.toLocaleString();
+                    return {
+                        id: n.id,
+                        type: n.notification_type || n.type || 'system',
+                        title: n.title || 'Notification',
+                        message: n.message || '',
+                        time,
+                        date,
+                        unread: !n.read_at && !n.is_read,
+                    };
+                });
+
+                renderQuickNotifications();
+                renderFullNotifications();
+            } catch (e) {
+                // fail silently
             }
-        ];
+        }
+
+        // (Old static sample notifications removed; data now comes from /api/notifications)
 
         let currentFilter = 'all';
 
@@ -362,28 +322,61 @@
         // Mark single notification as read
         function markAsRead(id) {
             const notification = notificationsData.find(n => n.id === id);
-            if (notification) {
+            if (!notification) return;
+
+            if (notification.unread) {
                 notification.unread = false;
-                renderQuickNotifications();
-                renderFullNotifications();
+                fetch(`/api/notifications/${id}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': CSRF_TOKEN,
+                        'Accept': 'application/json',
+                    },
+                }).catch(() => {});
             }
+
+            renderQuickNotifications();
+            renderFullNotifications();
         }
 
         // Mark all as read
         function markAllAsRead() {
+            if (!notificationsData.length) return;
+
             notificationsData.forEach(n => n.unread = false);
+            fetch('/api/notifications/read-all', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json',
+                },
+            }).catch(() => {});
+
             renderQuickNotifications();
             renderFullNotifications();
         }
 
         // Clear all notifications
         function clearAllNotifications() {
-            if (confirm('Are you sure you want to clear all notifications?')) {
-                notificationsData.length = 0;
+            if (!notificationsData.length) return;
+            if (!confirm('Are you sure you want to clear all notifications?')) return;
+
+            const ids = notificationsData.map(n => n.id);
+            notificationsData = [];
+
+            Promise.all(ids.map(id =>
+                fetch(`/api/notifications/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': CSRF_TOKEN,
+                        'Accept': 'application/json',
+                    },
+                }).catch(() => {})
+            )).finally(() => {
                 renderQuickNotifications();
                 renderFullNotifications();
                 closeFullNotifications();
-            }
+            });
         }
 
         // Handle keyboard navigation
@@ -423,7 +416,7 @@
         });
 
         // Initialize
-        renderQuickNotifications();
+        loadNotifications();
     </script>
 
 @yield('script')

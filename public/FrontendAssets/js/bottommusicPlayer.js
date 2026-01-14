@@ -383,6 +383,11 @@ window.MusicPlayer = {
             this.playPauseIcon.classList.remove('fa-play');
             this.playPauseIcon.classList.add('fa-pause');
         }
+        // Show bottom music player when song starts playing
+        const bottomPlayer = document.querySelector('.bottom_fixedMucicPlayer');
+        if (bottomPlayer) {
+            bottomPlayer.classList.remove('is-hidden');
+        }
     },
     
     // On pause event
@@ -472,8 +477,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Inicializar os displays de tempo
     function initTimeDisplays() {
-        currentTimeDisplay.textContent = formatTime(currentTrack.currentTime);
-        totalTimeDisplay.textContent = formatTime(currentTrack.duration);
+        const currentTimeDisplay = window.MusicPlayer?.currentTimeDisplay || document.querySelector('.current-time');
+        const totalTimeDisplay = window.MusicPlayer?.totalTimeDisplay || document.querySelector('.total-time');
+        
+        if (currentTimeDisplay && currentTrack) {
+            currentTimeDisplay.textContent = formatTime(currentTrack.currentTime);
+        }
+        if (totalTimeDisplay && currentTrack) {
+            totalTimeDisplay.textContent = formatTime(currentTrack.duration);
+        }
     }
     
     // Simular progresso da música
@@ -508,13 +520,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Event listeners para cliques nas barras de progresso e volume
+    // Use MusicPlayer instance if available
+    const progressBar = window.MusicPlayer?.progressBar || document.querySelector('.progress-bar');
+    const volumeBar = window.MusicPlayer?.volumeBar || document.querySelector('.volume-bar');
+    
     if (progressBar) {
         progressBar.addEventListener('click', (e) => {
             const rect = progressBar.getBoundingClientRect();
             const clickPosition = e.clientX - rect.left;
             const percent = (clickPosition / rect.width) * 100;
-            currentProgress = percent;
-            updateProgress(percent);
+            if (window.MusicPlayer) {
+                window.MusicPlayer.currentProgress = percent;
+                window.MusicPlayer.updateProgress(percent);
+            } else {
+                currentProgress = percent;
+                updateProgress(percent);
+            }
         });
     }
     
@@ -523,7 +544,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const rect = volumeBar.getBoundingClientRect();
             const clickPosition = e.clientX - rect.left;
             const percent = (clickPosition / rect.width) * 100;
-            updateVolume(percent);
+            if (window.MusicPlayer) {
+                window.MusicPlayer.updateVolume(percent);
+            } else {
+                updateVolume(percent);
+            }
         });
     }
     

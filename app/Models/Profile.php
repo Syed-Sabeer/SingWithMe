@@ -19,6 +19,7 @@ protected $fillable = [
     'dance_style',
     'dance_video',
     'picture',
+    'banner_image',
     'about',
 ];
 

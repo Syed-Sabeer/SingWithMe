@@ -48,6 +48,7 @@ use App\Http\Controllers\Frontend\WebsiteController;
 use App\Http\Controllers\Frontend\UserPortalController;
 use App\Http\Controllers\ArtistMusicController;
 use App\Http\Controllers\ArtworkPhotoController;
+use App\Http\Controllers\ArtistFollowController;
 // use App\Http\Controllers\LocationController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\PusherController;
@@ -189,6 +190,10 @@ Route::middleware(['artist'])->group(function () {
     Route::post('artist/music/{id}/collaboration', [\App\Http\Controllers\Artist\TrackCollaborationController::class, 'store'])->name('artist.collaborations.store');
     Route::get('artist/collaborations/{id}', [\App\Http\Controllers\Artist\TrackCollaborationController::class, 'show'])->name('artist.collaborations.show');
     Route::post('artist/collaborations/{collaborationId}/splits/{splitId}/approve', [\App\Http\Controllers\Artist\TrackCollaborationController::class, 'approveSplit'])->name('artist.collaborations.approve-split');
+
+    // Artist profile settings
+    Route::get('artist/profile-settings', [\App\Http\Controllers\Artist\ArtistProfileController::class, 'edit'])->name('artist.profile.edit');
+    Route::post('artist/profile-settings', [\App\Http\Controllers\Artist\ArtistProfileController::class, 'update'])->name('artist.profile.update');
     Route::post('artist/collaborations/{id}/reject', [\App\Http\Controllers\Artist\TrackCollaborationController::class, 'rejectCollaboration'])->name('artist.collaborations.reject');
 });
 
@@ -311,17 +316,16 @@ Route::get('allblogs', function () {
     return view('frontend.allblogs');
 })->name('allblogs');
 
-// artist profile page
-Route::get('artist-profile', function () {
-    return view('frontend.artist-profile');
-})->name('artist-profile');
+// artist profile page (public, dynamic)
+Route::get('artist-profile', [ArtistController::class, 'publicProfile'])
+    ->name('artist-profile');
 
 // allartist detail page
 Route::get('allartist', function () {
     return view('frontend.allartist');
 })->name('allartist');
 
-// allartist detail page
+// Songs detail page
 Route::get('songs-details', function () {
     return view('frontend.songs-details');
 })->name('songs-details');
@@ -403,6 +407,9 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('marketplace/purchase/{id}/confirmation', [\App\Http\Controllers\MarketplaceController::class, 'purchaseConfirmation'])->name('marketplace.purchase-confirmation');
     Route::post('marketplace/purchases/{id}/review', [\App\Http\Controllers\MarketplaceController::class, 'review'])->name('marketplace.review');
     Route::post('marketplace/{id}/request-collaboration', [\App\Http\Controllers\MarketplaceController::class, 'requestCollaboration'])->name('marketplace.request-collaboration');
+
+    // Artist subscriptions/followers (fan subscribes to artist updates)
+    Route::post('artist/subscribe', [ArtistFollowController::class, 'toggle'])->name('artist.subscribe');
 
 });
 

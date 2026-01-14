@@ -13,10 +13,6 @@
             --text-dim: #a0a0a0;
         }
 
-        .bottom_fixedMucicPlayer {
-            display:none;
-        }
-        
         .artistProfileSec {
             position:relative;
             padding:1rem 0;
@@ -862,6 +858,51 @@ h1,h2,h3 {
 
 @section('content')
 
+    @php
+        /** @var \App\Models\User|null $artist */
+        /** @var \App\Models\Profile|null $profile */
+
+        $artistUser = $artist ?? null;
+        $profileModel = $profile ?? ($artistUser?->profile ?? null);
+
+        $displayName = $profileModel && ($profileModel->first_name || $profileModel->last_name)
+            ? trim(($profileModel->first_name ?? '') . ' ' . ($profileModel->last_name ?? ''))
+            : ($artistUser->name ?? $artistUser->username ?? 'Artist');
+
+        $username = $artistUser?->username ?? Str::slug($displayName, '_');
+
+        $avatar = $profileModel && $profileModel->picture
+            ? asset('storage/' . $profileModel->picture)
+            : 'https://img.freepik.com/premium-vector/eps-urban-character-tshirt_888481-23.jpg';
+
+        $heroBanner = $profileModel && !empty($profileModel->banner_image ?? null)
+            ? asset('storage/' . $profileModel->banner_image)
+            : "https://img.freepik.com/premium-photo/desk-with-collection-vintage-vinyl-records_974629-215719.jpg?auto=compress&cs=tinysrgb&w=1200";
+
+        $aboutText = $profileModel && $profileModel->about
+            ? $profileModel->about
+            : 'This artist has not added an about section yet. Check back soon for more details about their story, influences, and musical journey.';
+
+        $songCount = isset($songs) ? $songs->count() : 0;
+        $artworkCount = isset($artworks) ? $artworks->count() : 0;
+
+        // Build a lightweight playlist array for the JS player
+        $playlist = isset($songs)
+            ? $songs->map(function ($song) use ($displayName) {
+                  /** @var \App\Models\ArtistMusic $song */
+                  $thumb = $song->thumbnail_image_url ?: 'https://via.placeholder.com/150x150?text=Track';
+                  return [
+                      'id' => $song->id,
+                      'title' => $song->name,
+                      'album' => $displayName,
+                      // Duration not stored yet, so show placeholder
+                      'time' => '3:30',
+                      'img' => $thumb,
+                  ];
+              })->values()
+            : collect();
+    @endphp
+
     <section class="artistProfileSec">
         <div class="container artistcontainer">
             <aside class="sidebar glass">
@@ -917,9 +958,9 @@ h1,h2,h3 {
                 </div>
 
                 <div class="user-account">
-                    <img src="https://img.freepik.com/premium-vector/eps-urban-character-tshirt_888481-23.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="User">
+                    <img src="{{ $avatar }}" alt="{{ $displayName }}">
                     <div class="info">
-                        <p>The Weeknd</p><small>weeknd09...</small>
+                        <p>{{ $displayName }}</p><small>{{ '@' . $username }}</small>
                     </div>
                     <i class="fa-solid fa-chevron-right" style="color: var(--text-dim);"></i>
                 </div>
@@ -927,14 +968,15 @@ h1,h2,h3 {
 
             <div class="main-container">
                 <main class="main-content active" id="home-content">
-                    <header class="hero">
-                        <img src="https://img.freepik.com/premium-vector/eps-urban-character-tshirt_888481-23.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80"
-                            alt="The Weeknd" class="artist-avatar">
-                        <h1 class="hero-title">The Weeknd</h1>
+                    <header class="hero" style="background: linear-gradient(to right, rgba(0, 0, 0, 0.8), transparent), url('{{ $heroBanner }}') center/cover;">
+                        <img src="{{ $avatar }}"
+                            alt="{{ $displayName }}" class="artist-avatar">
+                        <h1 class="hero-title">{{ $displayName }}</h1>
                         <div class="hero-btns">
                             <button class="btn btn-play" id="hero-play">Play</button>
+                            <button class="btn btn-outline" id="subscribeBtnHero" type="button">Subscribe</button>
                             <a href="/tip-artist">
-                            <button class="btn btn-outline">Artist Tip</button>
+                                <button class="btn btn-outline" type="button">Artist Tip</button>
                             </a>
                         </div>
                     </header>
@@ -956,13 +998,13 @@ h1,h2,h3 {
                     </table>
 
                     <div class="albums-section">
-                        <h3>Albums</h3>
+                        <h3>Albums & Releases</h3>
                         <div class="albums-list">
                             <div class="album-card">
                                 <a href="/songs-details">
                                     <div class="album-art"
-                                        style="background: url('https://upload.wikimedia.org/wikipedia/en/e/e6/The_Weeknd_-_Blinding_Lights.png') center/cover;">
-                                        <span class="duration">1:45</span>
+                                        style="background: url('{{ $songs->first()->thumbnail_image_url ?? 'https://via.placeholder.com/300x300?text=Release' }}') center/cover;">
+                                        <span class="duration">{{ $songCount }} tracks</span>
                                     </div>
                                     <p>THE HIGHLIGHTS</p>
                                     <small>Album - 2021</small>
@@ -1016,26 +1058,26 @@ h1,h2,h3 {
                             <!-- Artist Header -->
                             <div class="artist-header">
                                 <div class="header-content">
-                                    <img src="https://img.freepik.com/premium-vector/eps-urban-character-tshirt_888481-23.jpg" alt="The Weeknd" class="artist-image">
+                                    <img src="{{ $avatar }}" alt="{{ $displayName }}" class="artist-image">
                                     <div class="artist-info">
-                                        <h1 class="artist-name">The Weeknd</h1>
-                                        <p class="artist-username">@weeknd_official</p>
+                                        <h1 class="artist-name">{{ $displayName }}</h1>
+                                        <p class="artist-username">{{ '@' . $username }}</p>
                                         
                                         <div class="artist-stats">
                                             <div class="stat-item">
-                                                <span class="stat-number">152</span>
+                                                <span class="stat-number">{{ $songCount }}</span>
                                                 <span class="stat-label">Songs</span>
                                             </div>
                                             <div class="stat-item">
-                                                <span class="stat-number">8</span>
+                                                <span class="stat-number">{{ $artworkCount }}</span>
                                                 <span class="stat-label">Albums</span>
                                             </div>
                                             <div class="stat-item">
-                                                <span class="stat-number">95M</span>
+                                                <span class="stat-number">—</span>
                                                 <span class="stat-label">Listeners</span>
                                             </div>
                                             <div class="stat-item">
-                                                <span class="stat-number">2.4B</span>
+                                                <span class="stat-number">—</span>
                                                 <span class="stat-label">Streams</span>
                                             </div>
                                         </div>
@@ -1047,11 +1089,11 @@ h1,h2,h3 {
                                                 </svg>
                                                 <span>Play All</span>
                                             </button> -->
-                                            <button class="btn btn-secondary" id="followBtn">
+                                            <button class="btn btn-secondary" id="subscribeBtn">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                                                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                                                 </svg>
-                                                <span>Follow</span>
+                                                <span>Subscribe</span>
                                             </button>
                                             <div class="dropdown">
                                                 <button class="btn btn-secondary" id="moreBtn">
@@ -1112,11 +1154,7 @@ h1,h2,h3 {
                                     About Artist
                                 </h2>
                                 <p class="bio-text">
-                                    Abel Makkonen Tesfaye, known professionally as The Weeknd, is a Canadian singer, songwriter, and record producer. 
-                                    Known for his sonic versatility and dark lyricism, his music explores escapism, romance, and melancholia. He has 
-                                    received numerous accolades including multiple Grammy Awards, Billboard Music Awards, and has been recognized as 
-                                    one of the world's best-selling music artists. His innovative approach to R&B has influenced a generation of 
-                                    artists and redefined the genre for the modern era.
+                                    {!! nl2br(e($aboutText)) !!}
                                 </p>
                             </div>
 
@@ -1124,7 +1162,7 @@ h1,h2,h3 {
                             <div class="details-grid">
                                 <div class="detail-card">
                                     <div class="detail-label">Primary Genre</div>
-                                    <div class="detail-value">R&B / Pop</div>
+                                    <div class="detail-value">Various</div>
                                     <div class="genre-tags">
                                         <span class="genre-tag">R&B</span>
                                         <span class="genre-tag">Pop</span>
@@ -1135,12 +1173,12 @@ h1,h2,h3 {
 
                                 <div class="detail-card">
                                     <div class="detail-label">Location</div>
-                                    <div class="detail-value">Toronto, Canada</div>
+                                    <div class="detail-value">—</div>
                                 </div>
 
                                 <div class="detail-card">
                                     <div class="detail-label">Member Since</div>
-                                    <div class="detail-value">January 2015</div>
+                                    <div class="detail-value">{{ optional($artistUser->created_at)->format('F Y') ?? '—' }}</div>
                                 </div>
 
                                 <div class="detail-card">
@@ -1260,64 +1298,50 @@ h1,h2,h3 {
                     <div style="padding: 20px 0;">
                     <section class="artworkUploaded-Sec">
                         <div style="margin-left:18px">
-                        <h2>Uploaded Artwork</h2>
-                        <p class="count-info">All Artwork here</p>
+                            <h2>Uploaded Artwork</h2>
+                            <p class="count-info">
+                                @if($artworkCount > 0)
+                                    {{ $artworkCount }} artwork item{{ $artworkCount === 1 ? '' : 's' }} uploaded.
+                                @else
+                                    No artwork uploaded yet.
+                                @endif
+                            </p>
                         </div>
                         <div class="container">
                             <div class="gallery-header">
-                            <div class="">
-                            <div class="row">
-                            <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6 col-12 py-3">
-                                <div class="gallery-item gallery-item22" data-index="0">
-                                    <img src="https://img.freepik.com/premium-photo/creative-realistic-smart-painting-old-middle-aged-man-with-blue-brush-aig_31965-485022.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Engine Diagnostics">
-                                    <div class="gallery-overlay">
-                                    <div class="gallery-title">Cover Artwork</div>
-                                    <div class="gallery-subtitle">Official cover images used for singles, albums, and featured releases.</div>
+                                <div class="">
+                                    <div class="row">
+                                        @forelse($artworks as $index => $artwork)
+                                            <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6 col-12 py-3">
+                                                <div class="gallery-item gallery-item22" data-index="{{ $index }}">
+                                                    <img src="{{ $artwork->image_url ?? 'https://via.placeholder.com/600x400?text=Artwork' }}"
+                                                         alt="Artwork {{ $index + 1 }}">
+                                                    <div class="gallery-overlay">
+                                                        <div class="gallery-title">Artwork {{ $index + 1 }}</div>
+                                                        <div class="gallery-subtitle">
+                                                            Artwork uploaded by {{ $displayName }}.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <div class="col-12 py-4">
+                                                <p class="text-muted" style="color:#b8a8d0;">
+                                                    This artist has not uploaded any artwork yet.
+                                                </p>
+                                            </div>
+                                        @endforelse
+                                        @if($artworkCount > 0)
+                                            <div class="col-12">
+                                                <div>
+                                                    <a href="/all-artwork">
+                                                        <button class="btn btn-play"> View All</button>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6 col-12 py-3">
-                            <div class="gallery-item gallery-item22" data-index="1">
-                                <img src="https://img.freepik.com/free-photo/digital-art-portrait-person-listening-music-headphones_23-2151065130.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Lift Service">
-                                <div class="gallery-overlay">
-                                <div class="gallery-title">Promotional Visual</div>
-                                <div class="gallery-subtitle">Marketing visuals created to promote tracks, releases, and campaigns.</div>
-                                </div>
-                            </div>
-                            </div>
-                            <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6 col-12 py-3">
-                            <div class="gallery-item gallery-item22" data-index="2">
-                                <img src="https://img.freepik.com/free-photo/digital-art-portrait-person-listening-music-headphones_23-2151065134.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Tire Services">
-                                <div class="gallery-overlay">
-                                <div class="gallery-title">Album Art / Release Cover</div>
-                                <div class="gallery-subtitle">Primary artwork representing full albums, EPs, or official releases.</div>
-                                </div>
-                            </div>
-                            </div>
-                            <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6 col-12 py-3">
-                            <div class="gallery-item gallery-item22" data-index="3">
-                                <img src="https://img.freepik.com/premium-photo/painting-featuring-mans-face-against-colorful-backdrop_401395-6019.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Precision Work">
-                                <div class="gallery-overlay">
-                                <div class="gallery-title">Profile Artwork</div>
-                                <div class="gallery-subtitle">Visuals used to personalize and brand your artist profile.</div>
-                                </div>
-                            </div>
-                            </div>
-                            <div class="col-xxl-4 col-xl-4 col-lg-4 col-md-6 col-sm-6 col-12 py-3">
-                            <div class="gallery-item gallery-item22" data-index="4">
-                                <img src="https://img.freepik.com/premium-photo/man-with-colorful-stained-glass-pattern-his-face_900706-8051.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Expert Repairs">
-                                <div class="gallery-overlay">
-                                <div class="gallery-title">Event Poster / Banner</div>
-                                <div class="gallery-subtitle">Artwork designed for live shows, events, tours, and announcements.</div>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div>
-                                    <a href="/all-artwork"><button class="btn btn-play"> View All</button></a>
-                                </div>
-                            </div>
-                            </div>
-                            </div>
                             </div>
                         </div>
 
@@ -1340,7 +1364,13 @@ h1,h2,h3 {
                 <div class="main-content" id="likes-content">
                     <div class="liked-songs-section">
                         <h2>All Songs</h2>
-                        <p class="count-info">Currently holding 152 songs.</p>
+                        <p class="count-info">
+                            @if($songCount > 0)
+                                Currently holding {{ $songCount }} song{{ $songCount === 1 ? '' : 's' }}.
+                            @else
+                                No songs uploaded yet.
+                            @endif
+                        </p>
 
                         <div class="liked-actions">
                             <button class="btn btn-play"><i class="fa-solid fa-play"></i> Play All</button>
@@ -1360,42 +1390,27 @@ h1,h2,h3 {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="song-row">
-                                    <td>1</td>
-                                    <td class="song-title-cell">
-                                        <img src="https://upload.wikimedia.org/wikipedia/en/e/e6/The_Weeknd_-_Blinding_Lights.png"
-                                            class="song-img">
-                                        Blinding Lights
-                                    </td>
-                                    <td>The Weeknd</td>
-                                    <td>After Hours</td>
-                                    <td>3:22</td>
-                                    <td><i class="fa-solid fa-heart" style="color: var(--accent-red);"></i></td>
-                                </tr>
-                                <tr class="song-row">
-                                    <td>2</td>
-                                    <td class="song-title-cell">
-                                        <img src="https://img.freepik.com/premium-photo/man-with-beard-stands-front-dj-equipment_1204495-24857.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80"
-                                            class="song-img">
-                                        Save Your Tears
-                                    </td>
-                                    <td>The Weeknd</td>
-                                    <td>After Hours</td>
-                                    <td>3:35</td>
-                                    <td><i class="fa-solid fa-heart" style="color: var(--accent-red);"></i></td>
-                                </tr>
-                                <tr class="song-row">
-                                    <td>3</td>
-                                    <td class="song-title-cell">
-                                        <img src="https://img.freepik.com/premium-photo/acoustic-session-with-artist-their-guitar_1104763-36037.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80"
-                                            class="song-img">
-                                        Earned It
-                                    </td>
-                                    <td>The Weeknd</td>
-                                    <td>Beauty Behind the Madness</td>
-                                    <td>4:37</td>
-                                    <td><i class="fa-solid fa-heart" style="color: var(--accent-red);"></i></td>
-                                </tr>
+                                @forelse($songs as $index => $song)
+                                    @php
+                                        /** @var \App\Models\ArtistMusic $song */
+                                        $thumb = $song->thumbnail_image_url ?: 'https://via.placeholder.com/100x100?text=Track';
+                                    @endphp
+                                    <tr class="song-row">
+                                        <td>{{ $index + 1 }}</td>
+                                        <td class="song-title-cell">
+                                            <img src="{{ $thumb }}" class="song-img">
+                                            {{ $song->name }}
+                                        </td>
+                                        <td>{{ $displayName }}</td>
+                                        <td>Single</td>
+                                        <td>3:30</td>
+                                        <td><i class="fa-regular fa-heart"></i></td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" style="color:#b8a8d0;">No songs uploaded yet.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -1491,7 +1506,7 @@ h1,h2,h3 {
                     <div class="track-img" id="player-img"></div>
                     <div>
                         <p id="player-title" style="font-weight: 600;">Select a song</p>
-                        <p id="player-artist" style="font-size: 12px; color: var(--text-dim);">The Weeknd</p>
+                        <p id="player-artist" style="font-size: 12px; color: var(--text-dim);">{{ $displayName }}</p>
                     </div>
                     <i class="fa-solid fa-arrow-up-right-from-square" style="color: var(--text-dim);"></i>
                 </div>
@@ -1529,13 +1544,7 @@ h1,h2,h3 {
 
     <script>
         // --- Data and Player Logic (Reused for functionality) ---
-        const songs = [
-            { id: 1, title: "Take My Breath", album: "The Weeknd", time: "3:40", img: "https://upload.wikimedia.org/wikipedia/en/3/39/The_Weeknd_-_Starboy.png" },
-            { id: 2, title: "Blinding Lights", album: "The Weeknd", time: "3:22", img: "https://upload.wikimedia.org/wikipedia/en/e/e6/The_Weeknd_-_Blinding_Lights.png" },
-            { id: 3, title: "Save Your Tears", album: "The Weeknd", time: "3:35", img: "https://img.freepik.com/premium-photo/man-with-beard-stands-front-dj-equipment_1204495-24857.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" },
-            { id: 4, title: "You Right", album: "The Weeknd", time: "3:22", img: "https://img.freepik.com/premium-photo/man-wearing-goggles-microphone-is-playing-music_1276913-12049.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" },
-            { id: 5, title: "Call Out My Name", album: "My Dear Melancholy", time: "3:48", img: "https://img.freepik.com/premium-photo/live-performance-retro-vinyl-store_910054-131.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" }
-        ];
+        const songs = @json($playlist);
 
         let currentSongIndex = -1;
         let isPlaying = false;
@@ -1579,6 +1588,7 @@ h1,h2,h3 {
         }
 
         masterPlay.onclick = () => {
+            if (!songs.length) return;
             if (currentSongIndex === -1) playSong(0);
             else {
                 isPlaying = !isPlaying;
@@ -1588,22 +1598,25 @@ h1,h2,h3 {
             }
         };
 
-        document.getElementById('hero-play').onclick = () => playSong(0);
+        document.getElementById('hero-play').onclick = () => {
+            if (!songs.length) return;
+            playSong(0);
+        };
 
-        // Initial Song List Setup
+        // Initial Song List Setup (top "Musics" table)
         songs.forEach((song, index) => {
             const row = document.createElement('tr');
             row.classList.add('song-row');
             row.innerHTML = `
-            <td>${index + 1}</td>
-            <td class="song-title-cell">
-                <img src="${song.img}" class="song-img">
-                ${song.title}
-            </td>
-            <td>${song.album}</td>
-            <td>${song.time}</td>
-            <td><i class="fa-regular fa-heart"></i></td>
-        `;
+                <td>${index + 1}</td>
+                <td class="song-title-cell">
+                    <img src="${song.img}" class="song-img">
+                    ${song.title}
+                </td>
+                <td>${song.album}</td>
+                <td>${song.time}</td>
+                <td><i class="fa-regular fa-heart"></i></td>
+            `;
             row.onclick = () => playSong(index);
             songListBody.appendChild(row);
         });
@@ -1638,35 +1651,78 @@ h1,h2,h3 {
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const followBtn = document.getElementById('followBtn');
+            const subscribeBtn = document.getElementById('subscribeBtn');
+            const subscribeBtnHero = document.getElementById('subscribeBtnHero');
             const playBtn = document.getElementById('playBtn');
             const moreBtn = document.getElementById('moreBtn');
             const dropdownMenu = document.getElementById('dropdownMenu');
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toastMessage');
 
-            // --- Toggle Follow ---
-            let isFollowing = false;
-            followBtn.addEventListener('click', () => {
-                isFollowing = !isFollowing;
-                if (isFollowing) {
-                    followBtn.classList.add('following');
-                    followBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                        </svg>
-                        <span>Following</span>`;
-                    showToast('Artist added to your library');
-                } else {
-                    followBtn.classList.remove('following');
-                    followBtn.innerHTML = `
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                        </svg>
-                        <span>Follow</span>`;
-                    showToast('Removed from library');
-                }
-            });
+            // --- Subscribe / Unsubscribe to artist updates ---
+            function handleSubscribeClick(button) {
+                if (!button) return;
+                button.disabled = true;
+                    fetch("{{ route('artist.subscribe') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            artist_id: {{ $artistUser->id ?? 'null' }},
+                        }),
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!data.success) {
+                                showToast(data.message || 'Unable to update subscription.');
+                                return;
+                            }
+
+                            const isSubscribed = data.status === 'subscribed';
+                            if (isSubscribed) {
+                                button.classList.add('following');
+                                button.innerHTML = `
+                                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                                    </svg>
+                                    <span>Subscribed</span>`;
+                            } else {
+                                button.classList.remove('following');
+                                button.innerHTML = `
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                                    </svg>
+                                    <span>Subscribe</span>`;
+                            }
+
+                            showToast(data.message || (isSubscribed
+                                ? 'Subscribed to artist updates.'
+                                : 'Unsubscribed from artist updates.'));
+                        })
+                        .catch(() => {
+                            showToast('Unable to update subscription right now.');
+                        })
+                        .finally(() => {
+                            button.disabled = false;
+                        });
+            }
+
+            if (subscribeBtn) {
+                subscribeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handleSubscribeClick(subscribeBtn);
+                });
+            }
+
+            if (subscribeBtnHero) {
+                subscribeBtnHero.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handleSubscribeClick(subscribeBtnHero);
+                });
+            }
 
             // --- Dropdown Menu Logic ---
             moreBtn.addEventListener('click', (e) => {
@@ -1693,9 +1749,11 @@ h1,h2,h3 {
                 });
             });
 
-            playBtn.addEventListener('click', () => {
-                showToast('Playing artist radio...');
-            });
+            if (playBtn) {
+                playBtn.addEventListener('click', () => {
+                    showToast('Playing artist radio...');
+                });
+            }
 
             // --- Toast Function ---
             function showToast(message) {

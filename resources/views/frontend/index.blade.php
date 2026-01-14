@@ -307,6 +307,7 @@
             </div>
             </div>
         </section>
+
         <!-- End of Main Banner -->
 
         <!-- Start of Artist Section -->
@@ -339,116 +340,37 @@
                         </div>
                     </div>
                 <div class="artists-grid">
-
-                    <!-- Artist 1 -->
-                    <a href="/featured-artist">
-                    <div class="artist-card">
-                        <div class="artist-image-wrapper">
-                            <img class="artist-image" src="https://img.freepik.com/premium-photo/musician-recording-song-home-studio_919955-56272.jpg" alt="">
-                            <div class="play-button"></div>
-                        </div>
-                        <div class="artist-info">
-                            <div class="artist-name">Jay Nova</div>
-                            <div class="artist-genre">Electronic, Hip-Hop</div>
-                            <div class="artist-stats">
-                                <span>2.4M Followers</span>
-                                <span>5.8M Monthly Listeners</span>
-                            </div>
-                            <span class="genre-tag">Trending</span>
-                        </div>
-                    </div>
-                    </a>
-
-                    <!-- Artist 2 -->
-                    <a href="/featured-artist">
-                    <div class="artist-card">
-                        <div class="artist-image-wrapper">
-                            <img class="artist-image" src="https://img.freepik.com/premium-photo/person-with-headphones-guitar-their-hands_1276913-11243.jpg" alt="">
-                            <div class="play-button"></div>
-                        </div>
-                        <div class="artist-info">
-                            <div class="artist-name">Sarah Chen</div>
-                            <div class="artist-genre">Alternative Rock</div>
-                            <div class="artist-stats">
-                                <span>1.8M Followers</span>
-                                <span>4.2M Monthly Listeners</span>
-                            </div>
-                            <span class="genre-tag">Rising</span>
-                        </div>
-                    </div>
-                    </a>
-                    <!-- Artist 3 -->
-                    <a href="/featured-artist">
-                    <div class="artist-card">
-                        <div class="artist-image-wrapper">
-                            <img class="artist-image" src="https://img.freepik.com/premium-photo/young-musician-making-sound-new-song_73070-3466.jpg" alt="">
-                            <div class="play-button"></div>
-                        </div>
-                        <div class="artist-info">
-                            <div class="artist-name">Marcus Steel</div>
-                            <div class="artist-genre">Rock, Metal</div>
-                            <div class="artist-stats">
-                                <span>3.2M Followers</span>
-                                <span>7.1M Monthly Listeners</span>
-                            </div>
-                            <span class="genre-tag">Top Artist</span>
-                        </div>
-                    </div>
-                    </a>
-                    <!-- Artist 4 -->
-                    <a href="/featured-artist">
-                    <div class="artist-card">
-                        <div class="artist-image-wrapper">
-                            <img class="artist-image" src="https://img.freepik.com/premium-photo/drums-lights-all-energy-studio-rehearsal_1092689-79439.jpg" alt="">
-                            <div class="play-button"></div>
-                        </div>
-                        <div class="artist-info">
-                            <div class="artist-name">Austin Rivers</div>
-                            <div class="artist-genre">IN Pop</div>
-                            <div class="artist-stats">
-                                <span>1.5M Followers</span>
-                                <span>3.6M Monthly Listeners</span>
-                            </div>
-                            <span class="genre-tag">New</span>
-                        </div>
-                    </div>
-                    </a>
-                    <!-- Artist 5 -->
-                    <a href="/featured-artist">
-                    <div class="artist-card">
-                        <div class="artist-image-wrapper">
-                            <img class="artist-image" src="https://img.freepik.com/premium-photo/man-wearing-goggles-microphone-is-playing-music_1276913-10156.jpg" alt="">
-                            <div class="play-button"></div>
-                        </div>
-                        <div class="artist-info">
-                            <div class="artist-name">Alex Jordan</div>
-                            <div class="artist-genre">R&B, Soul</div>
-                            <div class="artist-stats">
-                                <span>2.1M Followers</span>
-                                <span>4.9M Monthly Listeners</span>
-                            </div>
-                            <span class="genre-tag">Featured</span>
-                        </div>
-                    </div>
-                    </a>
-                    <!-- Artist 6 -->
-                    <a href="/featured-artist">
-                    <div class="artist-card">
-                        <div class="artist-image-wrapper">
-                            <img class="artist-image" src="https://img.freepik.com/premium-photo/recording-studio-bathed-moody_1036891-2233.jpg" alt="">
-                            <div class="play-button"></div>
-                        </div>
-                        <div class="artist-info">
-                            <div class="artist-name">Echo Martinez</div>
-                            <div class="artist-genre">Electronic, Ambient</div>
-                            <div class="artist-stats">
-                                <span>989K Followers</span>
-                                <span>2.3M Monthly Listeners</span>
-                            </div>
-                            <span class="genre-tag">Discovery</span>
-                        </div>
-                    </div>
-                    </a>
+                    @if(isset($recent_artists) && $recent_artists->count() > 0)
+                        @foreach($recent_artists as $artist)
+                            @php
+                                $profile = $artist->profile;
+                                $avatar = $profile && $profile->picture
+                                    ? asset('storage/' . $profile->picture)
+                                    : 'https://img.freepik.com/premium-photo/musician-recording-song-home-studio_919955-56272.jpg';
+                                $name = $artist->name ?? $artist->username ?? 'Artist';
+                                $genre = 'Various';
+                                $followers = '0';
+                                $listeners = '0';
+                            @endphp
+                            <a href="{{ route('artist-profile', ['artist' => $artist->id]) }}">
+                                <div class="artist-card">
+                                    <div class="artist-image-wrapper">
+                                        <img class="artist-image" src="{{ $avatar }}" alt="{{ $name }}">
+                                        <div class="play-button"></div>
+                                    </div>
+                                    <div class="artist-info">
+                                        <div class="artist-name">{{ $name }}</div>
+                                        <div class="artist-genre">{{ $genre }}</div>
+                                        <div class="artist-stats">
+                                            <span>{{ $followers }} Followers</span>
+                                            <span>{{ $listeners }} Monthly Listeners</span>
+                                        </div>
+                                        <span class="genre-tag">New</span>
+                                    </div>
+                                </div>
+                            </a>
+                        @endforeach
+                    @endif
                 </div>
                 <div class="col-lg-12">
                                 <div class="btn-part wow fadeup-animation" data-wow-duration="0.8s" data-wow-delay="0.6s">

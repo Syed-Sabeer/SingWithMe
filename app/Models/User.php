@@ -77,6 +77,38 @@ class User  extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Notification::class);
     }
 
+    /**
+     * Followers/subscribers of this artist
+     */
+    public function artistFollowers()
+    {
+        return $this->hasMany(ArtistFollower::class, 'artist_id');
+    }
+
+    /**
+     * Artists this user is following/subscribed to
+     */
+    public function followingArtists()
+    {
+        return $this->hasMany(ArtistFollower::class, 'follower_id');
+    }
+
+    /**
+     * Convenience: get follower users (many-to-many)
+     */
+    public function followerUsers()
+    {
+        return $this->belongsToMany(User::class, 'artist_followers', 'artist_id', 'follower_id');
+    }
+
+    /**
+     * Convenience: artists this user has subscribed to
+     */
+    public function subscribedArtists()
+    {
+        return $this->belongsToMany(User::class, 'artist_followers', 'follower_id', 'artist_id');
+    }
+
     public function playlists()
     {
         return $this->hasMany(UserPlaylist::class);

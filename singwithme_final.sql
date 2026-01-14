@@ -4028,6 +4028,30 @@ CREATE TABLE IF NOT EXISTS `artist_wallets` (
   CONSTRAINT `fk_artist_wallets_user` FOREIGN KEY (`artist_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+-- Add banner_image column to profiles table
+-- --------------------------------------------------------
+
+ALTER TABLE `profiles` 
+    ADD COLUMN IF NOT EXISTS `banner_image` varchar(255) NULL AFTER `picture`;
+
+-- --------------------------------------------------------
+-- Artist followers/subscribers table
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `artist_followers` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `artist_id` bigint(20) UNSIGNED NOT NULL COMMENT 'Artist user ID',
+  `follower_id` bigint(20) UNSIGNED NOT NULL COMMENT 'Follower (fan) user ID',
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_artist_follower` (`artist_id`, `follower_id`),
+  KEY `idx_follower_id` (`follower_id`),
+  CONSTRAINT `fk_artist_followers_artist` FOREIGN KEY (`artist_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_artist_followers_follower` FOREIGN KEY (`follower_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

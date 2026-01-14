@@ -1599,6 +1599,13 @@ a .payout-btn {
                                         </li>
                                         @endforelse
                                     </ul>
+                                    @if($topMusics->count() > 0)
+                                    <div class="mt-3 text-end">
+                                        <a href="{{ route('artist.my-music') }}" class="btn btn-sm" style="background: rgba(183,148,246,0.25); color:#b794f6; border-radius:20px; padding:6px 16px; text-decoration:none;">
+                                            View All Songs
+                                        </a>
+                                    </div>
+                                    @endif
                                 </div>
                                 <div class="similar-artists">
                                     <h4>similar artists</h4>
@@ -1856,6 +1863,13 @@ a .payout-btn {
                 </div>
             </div>
         </section>
+
+        <!-- Profile Settings Link -->
+        <div class="text-center mb-4">
+            <a href="{{ route('artist.profile.edit') }}" class="btn" style="background: rgba(183,148,246,0.3); color:#b794f6; border:1px solid rgba(183,148,246,0.5); padding:10px 25px; border-radius:8px; text-decoration:none; display:inline-block;">
+                <i class="fas fa-user-edit"></i> Edit Profile Settings
+            </a>
+        </div>
 
         <!-- Artist Subscription Plans Section -->
         <section class="artist-subscription-plans-section py-5" style="background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);">
@@ -3092,24 +3106,58 @@ a .payout-btn {
         <script src="https://www.paypal.com/sdk/js?client-id={{ env('PAYPAL_CLIENT_ID', 'YOUR_CLIENT_ID') }}&currency=GBP"></script>
         <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
         <script>
-        let selectedArtistPortalPlan = null;
-        let selectedArtistPortalPaymentMethod = null;
-        let artistPortalStripe = null;
-        let artistPortalStripeCardElement = null;
-        let artistPortalPaypalButtons = null;
-        let artistPortalSquareCard = null;
+        // Make functions globally accessible
+        window.selectedArtistPortalPlan = null;
+        window.selectedArtistPortalPaymentMethod = null;
+        window.artistPortalStripe = null;
+        window.artistPortalStripeCardElement = null;
+        window.artistPortalPaypalButtons = null;
+        window.artistPortalSquareCard = null;
 
-        // Initialize Stripe
-        document.addEventListener('DOMContentLoaded', function() {
-            const stripeKey = '{{ env("STRIPE_KEY", "") }}';
-            if (stripeKey) {
-                artistPortalStripe = Stripe(stripeKey);
+        // Initialize Stripe when it's loaded - only once
+        let stripeInitialized = false;
+        function initArtistPortalStripe() {
+            // Only initialize once
+            if (stripeInitialized && window.artistPortalStripe) {
+                return;
+            }
+            
+            if (typeof Stripe !== 'undefined') {
+                const stripeKey = '{{ env("STRIPE_KEY", "") }}';
+                if (stripeKey && !window.artistPortalStripe) {
+                    window.artistPortalStripe = Stripe(stripeKey);
+                    stripeInitialized = true;
+                    // Unmount any existing card element to ensure fresh start
+                    if (window.artistPortalStripeCardElement) {
+                        try {
+                            window.artistPortalStripeCardElement.unmount();
+                        } catch(e) {}
+                        window.artistPortalStripeCardElement = null;
+                    }
+                }
+            } else {
+                // Retry after a short delay if Stripe isn't loaded yet
+                setTimeout(initArtistPortalStripe, 100);
+            }
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initArtistPortalStripe);
+        } else {
+            initArtistPortalStripe();
+        }
+
+        // Also try to initialize when Stripe script loads (but only if not already initialized)
+        window.addEventListener('load', function() {
+            if (!stripeInitialized) {
+                initArtistPortalStripe();
             }
         });
 
-        function openArtistPortalSubscriptionPopup(planId, planTitle, planPrice, planDuration) {
-            selectedArtistPortalPlan = planId;
-            selectedArtistPortalPaymentMethod = null;
+        window.openArtistPortalSubscriptionPopup = function(planId, planTitle, planPrice, planDuration) {
+            window.selectedArtistPortalPlan = planId;
+            window.selectedArtistPortalPaymentMethod = null; // Reset payment method
             
             const popup = document.getElementById('artistPortalSubscriptionPopup');
             const planName = document.getElementById('selectedArtistPortalPlanName');
@@ -3143,18 +3191,24 @@ a .payout-btn {
             document.body.style.overflow = 'hidden';
         }
 
-        function closeArtistPortalSubscriptionPopup(event) {
+        window.closeArtistPortalSubscriptionPopup = function(event) {
             if (event && event.target !== event.currentTarget) return;
             
             const popup = document.getElementById('artistPortalSubscriptionPopup');
             popup.classList.remove('active');
             document.body.style.overflow = '';
             
-            selectedArtistPortalPlan = null;
-            selectedArtistPortalPaymentMethod = null;
+            window.selectedArtistPortalPlan = null;
+            window.selectedArtistPortalPaymentMethod = null;
+            
+            // Don't unmount Stripe element - keep it for reuse
+            // Just hide the form
+            document.querySelectorAll('#artistPortalSubscriptionPopup .payment-form').forEach(form => {
+                form.style.display = 'none';
+            });
         }
 
-        function selectArtistPortalPaymentMethod(element, method) {
+        window.selectArtistPortalPaymentMethod = function(element, method) {
             // Remove selection from all payment methods
             document.querySelectorAll('#artistPortalSubscriptionPopup .payment-method').forEach(m => {
                 m.classList.remove('selected');
@@ -3167,60 +3221,101 @@ a .payout-btn {
             
             // Add selection to clicked method
             element.classList.add('selected');
-            selectedArtistPortalPaymentMethod = method;
+            window.selectedArtistPortalPaymentMethod = method;
             
             // Show appropriate payment form
             if (method === 'stripe') {
-                showArtistPortalStripeForm();
+                window.showArtistPortalStripeForm();
             } else if (method === 'paypal') {
-                showArtistPortalPayPalForm();
+                window.showArtistPortalPayPalForm();
             } else if (method === 'google-pay') {
-                showArtistPortalGooglePayForm();
+                window.showArtistPortalGooglePayForm();
             } else if (method === 'apple-pay') {
-                showArtistPortalApplePayForm();
+                window.showArtistPortalApplePayForm();
             } else if (method === 'square') {
-                showArtistPortalSquareForm();
+                window.showArtistPortalSquareForm();
             }
-        }
+        };
 
-        function showArtistPortalStripeForm() {
+        window.showArtistPortalStripeForm = function() {
             const stripeForm = document.getElementById('artist-portal-stripe-payment-form');
             stripeForm.style.display = 'block';
             
-            if (!artistPortalStripeCardElement && artistPortalStripe) {
-                const elements = artistPortalStripe.elements();
-                artistPortalStripeCardElement = elements.create('card', {
-                    style: {
-                        base: {
-                            fontSize: '16px',
-                            color: '#424770',
-                        },
+            // Ensure Stripe is initialized
+            if (!window.artistPortalStripe) {
+                initArtistPortalStripe();
+                // Wait a bit for Stripe to initialize
+                setTimeout(function() {
+                    if (window.artistPortalStripe && !window.artistPortalStripeCardElement) {
+                        createStripeCardElement();
+                    }
+                }, 200);
+                return;
+            }
+            
+            // Create card element if it doesn't exist
+            if (!window.artistPortalStripeCardElement) {
+                createStripeCardElement();
+            }
+        };
+        
+        function createStripeCardElement() {
+            if (!window.artistPortalStripe) {
+                console.error('Stripe not initialized');
+                return;
+            }
+            
+            // Unmount existing element if any
+            if (window.artistPortalStripeCardElement) {
+                try {
+                    window.artistPortalStripeCardElement.unmount();
+                } catch(e) {
+                    console.warn('Error unmounting Stripe element:', e);
+                }
+                window.artistPortalStripeCardElement = null;
+            }
+            
+            // Clear the container
+            const cardElementContainer = document.getElementById('artist-portal-stripe-card-element');
+            if (cardElementContainer) {
+                cardElementContainer.innerHTML = '';
+            }
+            
+            // Create new card element using the same Stripe instance
+            const elements = window.artistPortalStripe.elements();
+            window.artistPortalStripeCardElement = elements.create('card', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#424770',
                     },
-                });
-                
-                artistPortalStripeCardElement.mount('#artist-portal-stripe-card-element');
-                
-                artistPortalStripeCardElement.on('change', function(event) {
-                    const displayError = document.getElementById('artist-portal-stripe-card-errors');
+                },
+            });
+            
+            window.artistPortalStripeCardElement.mount('#artist-portal-stripe-card-element');
+            
+            window.artistPortalStripeCardElement.on('change', function(event) {
+                const displayError = document.getElementById('artist-portal-stripe-card-errors');
+                if (displayError) {
                     if (event.error) {
                         displayError.textContent = event.error.message;
                     } else {
                         displayError.textContent = '';
                     }
-                });
-            }
+                }
+            });
         }
 
-        function showArtistPortalPayPalForm() {
+        window.showArtistPortalPayPalForm = function() {
             const paypalForm = document.getElementById('artist-portal-paypal-payment-button');
             paypalForm.style.display = 'block';
             
-            if (!artistPortalPaypalButtons && typeof paypal !== 'undefined') {
+            if (!window.artistPortalPaypalButtons && typeof paypal !== 'undefined') {
                 const planPriceEl = document.getElementById('selectedArtistPortalPlanPrice');
                 const planPriceText = planPriceEl.textContent.replace('£', '').replace('Free', '0');
                 const planPrice = parseFloat(planPriceText) || 0;
                 
-                artistPortalPaypalButtons = paypal.Buttons({
+                window.artistPortalPaypalButtons = paypal.Buttons({
                     createOrder: function(data, actions) {
                         return actions.order.create({
                             purchase_units: [{
@@ -3232,7 +3327,7 @@ a .payout-btn {
                     },
                     onApprove: function(data, actions) {
                         return actions.order.capture().then(function(details) {
-                            processArtistPortalPaymentWithMethod('paypal', details.id);
+                            window.processArtistPortalPaymentWithMethod('paypal', details.id);
                         });
                     },
                     onError: function(err) {
@@ -3244,33 +3339,57 @@ a .payout-btn {
                     }
                 });
                 
-                artistPortalPaypalButtons.render('#artist-portal-paypal-button-container');
+                window.                window.artistPortalPaypalButtons.render('#artist-portal-paypal-button-container');
             }
-        }
+        };
 
-        function showArtistPortalGooglePayForm() {
+        window.showArtistPortalGooglePayForm = function() {
             document.getElementById('artist-portal-google-pay-payment-form').style.display = 'block';
-        }
+        };
 
-        function showArtistPortalApplePayForm() {
+        window.showArtistPortalApplePayForm = function() {
             document.getElementById('artist-portal-apple-pay-payment-form').style.display = 'block';
-        }
+        };
 
-        function showArtistPortalSquareForm() {
+        window.showArtistPortalSquareForm = function() {
             document.getElementById('artist-portal-square-payment-form').style.display = 'block';
-        }
+        };
 
-        async function purchaseArtistPortalSubscription() {
-            if (!selectedArtistPortalPlan || selectedArtistPortalPlan === 'free') {
+        window.purchaseArtistPortalSubscription = async function() {
+            if (!window.selectedArtistPortalPlan) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Invalid Plan',
-                    text: 'Please select a valid plan'
+                    title: 'No Plan Selected',
+                    text: 'Please select a subscription plan first'
                 });
                 return;
             }
             
-            if (!selectedArtistPortalPaymentMethod) {
+            // Check if it's a free plan
+            const planPriceEl = document.getElementById('selectedArtistPortalPlanPrice');
+            let planPrice = 0;
+            if (planPriceEl) {
+                const planPriceText = planPriceEl.textContent.replace('£', '').replace('Free', '0').trim();
+                planPrice = parseFloat(planPriceText) || 0;
+            }
+            
+            // For free plans, process directly
+            if (planPrice === 0) {
+                const termsCheckbox = document.getElementById('agreeArtistPortalTerms');
+                if (termsCheckbox && !termsCheckbox.checked) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Terms Required',
+                        text: 'Please agree to the terms and conditions'
+                    });
+                    return;
+                }
+                await processArtistPortalPaymentWithMethod('free');
+                return;
+            }
+            
+            // For paid plans, require payment method
+            if (!window.selectedArtistPortalPaymentMethod) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Payment Method Required',
@@ -3279,7 +3398,9 @@ a .payout-btn {
                 return;
             }
             
-            if (!document.getElementById('agreeArtistPortalTerms').checked) {
+            // Check terms checkbox for paid plans
+            const termsCheckbox = document.getElementById('agreeArtistPortalTerms');
+            if (termsCheckbox && !termsCheckbox.checked) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Terms Required',
@@ -3289,38 +3410,54 @@ a .payout-btn {
             }
             
             // Handle different payment methods
-            if (selectedArtistPortalPaymentMethod === 'stripe') {
-                await processArtistPortalStripePayment();
-            } else if (selectedArtistPortalPaymentMethod === 'paypal') {
+            if (window.selectedArtistPortalPaymentMethod === 'stripe') {
+                await window.processArtistPortalStripePayment();
+            } else if (window.selectedArtistPortalPaymentMethod === 'paypal') {
                 Swal.fire({
                     icon: 'info',
                     title: 'Complete PayPal Payment',
                     text: 'Please complete the PayPal payment above'
                 });
                 return;
-            } else if (selectedArtistPortalPaymentMethod === 'google-pay' || selectedArtistPortalPaymentMethod === 'apple-pay') {
-                await processArtistPortalPaymentWithMethod(selectedArtistPortalPaymentMethod);
-            } else if (selectedArtistPortalPaymentMethod === 'square') {
-                await processArtistPortalSquarePayment();
+            } else if (window.selectedArtistPortalPaymentMethod === 'google-pay' || window.selectedArtistPortalPaymentMethod === 'apple-pay') {
+                await window.processArtistPortalPaymentWithMethod(window.selectedArtistPortalPaymentMethod);
+            } else if (window.selectedArtistPortalPaymentMethod === 'square') {
+                await window.processArtistPortalSquarePayment();
             } else {
-                await processArtistPortalPaymentWithMethod(selectedArtistPortalPaymentMethod);
+                await window.processArtistPortalPaymentWithMethod(window.selectedArtistPortalPaymentMethod);
             }
-        }
+        };
 
-        async function processArtistPortalStripePayment() {
-            if (!artistPortalStripe || !artistPortalStripeCardElement) {
+        window.processArtistPortalStripePayment = async function() {
+            // Ensure Stripe is initialized
+            if (!window.artistPortalStripe) {
+                initArtistPortalStripe();
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            if (!window.artistPortalStripe) {
                 Swal.fire({
                     icon: 'error',
                     title: 'Stripe Error',
-                    text: 'Stripe not initialized'
+                    text: 'Stripe not initialized. Please refresh the page and try again.'
+                });
+                return;
+            }
+            
+            if (!window.artistPortalStripeCardElement) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Card Error',
+                    text: 'Please select Stripe as payment method first'
                 });
                 return;
             }
             
             try {
-                const { paymentMethod, error } = await artistPortalStripe.createPaymentMethod({
+                // Use the same Stripe instance that was used to create the card element
+                const { paymentMethod, error } = await window.artistPortalStripe.createPaymentMethod({
                     type: 'card',
-                    card: artistPortalStripeCardElement,
+                    card: window.artistPortalStripeCardElement,
                 });
                 
                 if (error) {
@@ -3332,7 +3469,7 @@ a .payout-btn {
                     return;
                 }
                 
-                await processArtistPortalPaymentWithMethod('stripe', paymentMethod.id);
+                await window.processArtistPortalPaymentWithMethod('stripe', paymentMethod.id);
             } catch (error) {
                 console.error('Stripe payment error:', error);
                 Swal.fire({
@@ -3341,13 +3478,13 @@ a .payout-btn {
                     text: 'Payment failed: ' + error.message
                 });
             }
-        }
+        };
 
-        async function processArtistPortalSquarePayment() {
-            await processArtistPortalPaymentWithMethod('square', 'mock_token');
-        }
+        window.processArtistPortalSquarePayment = async function() {
+            await window.processArtistPortalPaymentWithMethod('square', 'mock_token');
+        };
 
-        async function processArtistPortalPaymentWithMethod(method, paymentMethodId = null) {
+        window.processArtistPortalPaymentWithMethod = async function(method, paymentMethodId = null) {
             try {
                 const planNameEl = document.getElementById('selectedArtistPortalPlanName');
                 const planPriceEl = document.getElementById('selectedArtistPortalPlanPrice');
@@ -3359,18 +3496,19 @@ a .payout-btn {
                     'google-pay': 'Google Pay (via Stripe)',
                     'apple-pay': 'Apple Pay (via Stripe)',
                     'paypal': 'PayPal',
-                    'square': 'Square'
+                    'square': 'Square',
+                    'free': 'Free'
                 };
                 
                 const response = await fetch('{{ route("api.artist-subscription.purchase") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     },
                     body: JSON.stringify({
-                        plan_id: selectedArtistPortalPlan,
-                        plan_type: planNameEl.textContent.toLowerCase().replace(/\s+/g, '-'),
+                        plan_id: window.selectedArtistPortalPlan,
+                        plan_type: planNameEl ? planNameEl.textContent.toLowerCase().replace(/\s+/g, '-') : '',
                         price: planPrice,
                         duration: 30,
                         payment_method: method,
@@ -3378,6 +3516,22 @@ a .payout-btn {
                         payment_method_id: paymentMethodId
                     })
                 });
+                
+                if (!response.ok) {
+                    let errorMessage = 'Failed to process subscription';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorData.error || errorMessage;
+                    } catch (e) {
+                        const errorText = await response.text();
+                        if (errorText && !errorText.includes('<!DOCTYPE')) {
+                            errorMessage = errorText.substring(0, 200);
+                        } else {
+                            errorMessage = `HTTP error! status: ${response.status}`;
+                        }
+                    }
+                    throw new Error(errorMessage);
+                }
                 
                 const data = await response.json();
                 
@@ -3388,7 +3542,7 @@ a .payout-btn {
                         text: 'Artist subscription purchased successfully!',
                         confirmButtonText: 'OK'
                     }).then(() => {
-                        closeArtistPortalSubscriptionPopup();
+                        window.closeArtistPortalSubscriptionPopup();
                         window.location.reload();
                     });
                 } else {

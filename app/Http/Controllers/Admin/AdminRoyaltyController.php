@@ -9,6 +9,7 @@ use App\Models\TransactionHistory;
 use App\Models\User;
 use App\Models\ArtistWallet;
 use App\Models\PayoutHistory;
+use App\Models\PlatformRevenueTracking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -36,11 +37,17 @@ class AdminRoyaltyController extends Controller
         $calculations = $query->latest('calculation_period')->paginate(20);
         $artists = User::where('is_artist', true)->get();
 
-        // Summary statistics
+        // Summary statistics - from royalty calculations
         $totalRevenue = RoyaltyCalculation::sum('total_gross_revenue');
         $totalPlatformFee = RoyaltyCalculation::sum('platform_fee_amount');
         $totalArtistPayments = RoyaltyCalculation::sum('artist_royalty_amount');
         $pendingPayments = RoyaltyCalculation::where('status', 'pending')->sum('artist_royalty_amount');
+        
+        // Platform revenue tracking (set by admin)
+        $platformRevenues = PlatformRevenueTracking::orderBy('period_year', 'desc')
+            ->orderBy('period_month', 'desc')
+            ->get();
+        $totalPlatformRevenueSet = PlatformRevenueTracking::sum('total_platform_revenue');
 
         return view('admin.royalty.index', compact(
             'calculations',
@@ -48,7 +55,9 @@ class AdminRoyaltyController extends Controller
             'totalRevenue',
             'totalPlatformFee',
             'totalArtistPayments',
-            'pendingPayments'
+            'pendingPayments',
+            'platformRevenues',
+            'totalPlatformRevenueSet'
         ));
     }
 

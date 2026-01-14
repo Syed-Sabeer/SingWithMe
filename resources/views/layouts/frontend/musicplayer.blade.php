@@ -1,4 +1,4 @@
-<section class="bottom_fixedMucicPlayer">
+<section class="bottom_fixedMucicPlayer is-hidden">
         <!-- Hidden audio element for actual playback -->
         <audio id="mainAudioPlayer" preload="metadata">
             <source src="" type="audio/mpeg">
@@ -154,3 +154,25 @@
             </div>
         </div>
        </section>
+
+<style>
+.bottom_fixedMucicPlayer.is-hidden {
+    display: none;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var bottomPlayer = document.querySelector('.bottom_fixedMucicPlayer');
+    if (!bottomPlayer) return;
+
+    // If MusicPlayer already exists, wrap its onPlay to reveal the bar
+    if (window.MusicPlayer) {
+        var originalOnPlay = window.MusicPlayer.onPlay ? window.MusicPlayer.onPlay.bind(window.MusicPlayer) : null;
+        window.MusicPlayer.onPlay = function () {
+            bottomPlayer.classList.remove('is-hidden');
+            if (originalOnPlay) originalOnPlay();
+        };
+    }
+});
+</script>

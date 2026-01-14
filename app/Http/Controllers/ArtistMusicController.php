@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ArtistMusic;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -52,6 +53,21 @@ class ArtistMusicController extends Controller
 
 
         $artistMusic = ArtistMusic::create($data);
+
+        // Notify subscribers that this artist uploaded a new song
+        try {
+            $artist = Auth::user();
+            if ($artist && method_exists($artist, 'followerUsers')) {
+                $subscribers = $artist->followerUsers()->get();
+                if ($subscribers->isNotEmpty()) {
+                    $message = ($artist->name ?? $artist->username ?? 'An artist') .
+                        ' uploaded a new song: ' . $artistMusic->name;
+                    app('notificationService')->notifyUsers($subscribers, $message, 'New Song Uploaded', 'system');
+                }
+            }
+        } catch (\Throwable $e) {
+            // Do not break upload flow if notifications fail
+        }
 
         if ($request->expectsJson()) {
             return response()->json([

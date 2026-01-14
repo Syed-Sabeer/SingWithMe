@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Faq;
 use App\Models\ArtworkPhoto;
+use App\Models\ArtistMusic;
+use App\Models\User;
+use App\Models\UserSubscriptionPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -86,6 +89,60 @@ class ArtistController extends Controller
             'songsPerMonth'
         ));
     }
-  
+
+    /**
+     * Public artist profile page (for listeners/fans)
+     *
+     * ?artist={id} is used to decide which artist to show.
+     * If no query is provided and the logged-in user is an artist,
+     * we show their own public profile.
+     */
+    public function publicProfile(Request $request)
+    {
+        try {
+            $artistId = $request->query('artist');
+
+            if ($artistId) {
+                $artist = User::where('is_artist', true)
+                    ->with('profile')
+                    ->findOrFail($artistId);
+            } elseif (Auth::check() && Auth::user()->is_artist) {
+                $artist = Auth::user()->load('profile');
+            } else {
+                abort(404);
+            }
+
+            $profile = $artist->profile;
+
+            // Fetch artist songs and artworks
+            $songs = ArtistMusic::where('driver_id', $artist->id)
+                ->latest('created_at')
+                ->get();
+
+            $artworks = ArtworkPhoto::where('driver_id', $artist->id)
+                ->latest('created_at')
+                ->get();
+
+            // Listener subscription plans (for "Subscribe" section)
+            // Note: older databases may not have an `is_active` column yet, so keep this simple
+            $listenerPlans = UserSubscriptionPlan::orderBy('price')->get();
+
+            return view('frontend.artist-profile', compact(
+                'artist',
+                'profile',
+                'songs',
+                'artworks',
+                'listenerPlans'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error loading public artist profile', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            abort(404);
+        }
+    }
+
 
 }

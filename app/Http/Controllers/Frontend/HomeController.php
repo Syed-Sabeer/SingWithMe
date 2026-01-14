@@ -13,6 +13,7 @@ use App\Models\AboutSection;
 use App\Models\HomeHeroSection;
 use App\Models\Blog;
 use App\Models\LiveVideo;
+use App\Models\User;
 
 class HomeController extends Controller
 {
@@ -27,8 +28,13 @@ public function index()
     $hero_details = HomeHeroSection::first();
     $live_videos = LiveVideo::where('visibility', 1)->latest()->take(10)->get();
     $blogs = Blog::where('visibility', 1)->latest()->get();
+    $recent_artists = User::where('is_artist', true)
+        ->latest()
+        ->with('profile')
+        ->take(8)
+        ->get();
 
-    return view('frontend.index',compact('about_details','hero_details','blogs','live_videos'));
+    return view('frontend.index',compact('about_details','hero_details','blogs','live_videos','recent_artists'));
 }
 
     public function contactStore(Request $request){

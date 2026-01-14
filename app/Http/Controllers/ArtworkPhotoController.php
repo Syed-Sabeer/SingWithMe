@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ArtworkPhoto;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -29,6 +30,21 @@ class ArtworkPhotoController extends Controller
             ]);
 
             $uploadedImages[] = $artworkPhoto;
+        }
+
+        // Notify subscribers that this artist uploaded new artwork
+        try {
+            $artist = Auth::user();
+            if ($artist && method_exists($artist, 'followerUsers')) {
+                $subscribers = $artist->followerUsers()->get();
+                if ($subscribers->isNotEmpty()) {
+                    $message = ($artist->name ?? $artist->username ?? 'An artist') .
+                        ' uploaded new artwork.';
+                    app('notificationService')->notifyUsers($subscribers, $message, 'New Artwork Uploaded', 'system');
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignore notification failures
         }
 
         if ($request->expectsJson()) {
