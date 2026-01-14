@@ -6,6 +6,7 @@ use App\Models\TrackCollaboration;
 use App\Models\CollaborationRevenueDistribution;
 use App\Models\StreamStat;
 use App\Models\ArtistEarning;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -100,6 +101,22 @@ class CollaborationRevenueService
             }
 
             DB::commit();
+
+            // Notify artists about collaborative revenue distribution
+            try {
+                foreach ($distributions as $dist) {
+                    $artist = User::find($dist['artist_id']);
+                    if ($artist && $dist['artist_share'] > 0) {
+                        $message = "Collaborative track revenue distributed! You earned $" . 
+                            number_format($dist['artist_share'], 2) . " from " . 
+                            number_format($streamCount) . " streams (ownership: " . 
+                            number_format($dist['ownership_percentage'], 1) . "%). Amount added to your wallet.";
+                        app('notificationService')->notifyUsers([$artist], $message, 'Collaboration Revenue', 'payment');
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore notification failures
+            }
 
             return [
                 'success' => true,

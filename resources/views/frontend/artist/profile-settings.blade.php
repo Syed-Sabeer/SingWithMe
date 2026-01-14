@@ -14,7 +14,7 @@
         border-radius: 20px;
         border: 1px solid rgba(183, 148, 246, 0.3);
         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-        overflow: hidden;
+        overflow: visible; /* ensure inner form is not clipped */
     }
     .profile-banner-preview {
         height: 200px;

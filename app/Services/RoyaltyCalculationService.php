@@ -11,6 +11,7 @@ use App\Models\StreamStat;
 use App\Models\DownloadStat;
 use App\Models\TrackCollaboration;
 use App\Models\OwnershipSplit;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -228,6 +229,22 @@ class RoyaltyCalculationService
             $platformRevenueTracking->save();
 
             DB::commit();
+
+            // Notify artists about their royalty calculations
+            try {
+                foreach ($calculations as $calc) {
+                    $artist = User::find($calc['artist_id']);
+                    if ($artist && $calc['net_amount'] > 0) {
+                        $periodName = \Carbon\Carbon::create($year, $month, 1)->format('F Y');
+                        $message = "Royalty calculation completed for {$periodName}. You earned $" . 
+                            number_format($calc['net_amount'], 2) . " from " . 
+                            number_format($calc['streams']) . " streams. Amount added to your wallet.";
+                        app('notificationService')->notifyUsers([$artist], $message, 'Royalty Calculated', 'payment');
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("RoyaltyCalculation: Failed to send notifications", ['error' => $e->getMessage()]);
+            }
 
             Log::info("RoyaltyCalculation: Completed for period {$month}/{$year}", [
                 'total_artists' => count($calculations),

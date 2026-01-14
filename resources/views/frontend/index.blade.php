@@ -434,7 +434,7 @@
         </section>
         <!-- about-sec -->
 
-        <!-- Start of Albums Section -->
+        <!-- Start of Artworks Section -->
         <section class="albums-section mt-5">
             <div class="music3_vectors">
                 <img src="{{asset('FrontendAssets/images/singWithMe/music-3.png')}}" alt="">
@@ -446,13 +446,13 @@
                         <div class="title">
                             <h2 class="h2-title wow fadeup-animation" data-wow-duration="0.8s" data-wow-delay="0.1s">
                             <div class='main mx-auto'>
-                                <h2 class="first"> Albums</h2>
-                                <h2 class="second">Albums</h2>
+                                <h2 class="first"> Artworks</h2>
+                                <h2 class="second">Artworks</h2>
                             </div>
                                 
                             </h2>
                             <h4 class="h4-title wow fadeup-animation" data-wow-duration="0.8s" data-wow-delay="0.2s">
-                                Check out our Latest Albums</h4>
+                                Check out our Latest Artworks</h4>
                         </div>
 
                     </div>
@@ -462,49 +462,34 @@
                         <div class="col-lg-12">
                             <div class="album-box-row">
                                 <div class="row">
-                                    <div class="col-lg-4">
-                                        <a href="/allartist" title="Austin Neill" class="album-box wow fadeup-animation"
-                                            data-wow-duration="0.8s" data-wow-delay="0.2s">
-                                            <div class="back-img"
-                                                style="background-image: url(https://img.freepik.com/free-photo/medium-shot-man-futuristic-portrait_23-2151178933.jpg?t=st=1765787285~exp=1765790885~hmac=fc4f3349ea99c8874a79082736f38c0e7b567574be7c6f7efe179baacf28dca4&w=1060);">
-                                            </div>
-                                            <h3 class="h3-title">Broken Song</h3>
-                                            <h4 class="singer-name">
-                                                <span>austin neill</span>
-                                            </h4>
-                                        </a>
-                                    </div>
-                                    <div class="col-lg-4">
-                                        <a href="/allartist" title="joshua fuller"
-                                            class="album-box middle-box wow fadeup-animation" data-wow-duration="0.8s"
-                                            data-wow-delay="0.3s">
-                                            <div class="back-img"
-                                                style="background-image: url(https://img.freepik.com/premium-photo/woman-portrait-digital-art-human-distortion_73070-14321.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80);">
-                                            </div>
-                                            <h3 class="h3-title">Blue Ghost</h3>
-                                            <h4 class="singer-name">
-                                                <span>joshua fuller</span>
-                                            </h4>
-                                        </a>
-                                    </div>
-                                    <div class="col-lg-4">
-                                        <a href="/allartist" title="Slim Emcee" class="album-box wow fadeup-animation"
-                                            data-wow-duration="0.8s" data-wow-delay="0.4s">
-                                            <div class="back-img"
-                                                style="background-image: url(https://img.freepik.com/free-photo/medium-shot-man-posing-futuristic-portrait_23-2151178872.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80);">
-                                            </div>
-                                            <h3 class="h3-title">Altered Song</h3>
-                                            <h4 class="singer-name">
-                                                <span>slim emcee</span>
-                                            </h4>
-                                        </a>
-                                    </div>
-
+                                    @forelse($latest_artworks as $artwork)
+                                        @php
+                                            $imageUrl = $artwork->image_url 
+                                                ?? 'https://img.freepik.com/premium-photo/musician-recording-song-home-studio_919955-56272.jpg';
+                                            $artistName = $artwork->user->name ?? 'Unknown Artist';
+                                        @endphp
+                                        <div class="col-lg-4">
+                                            <a href="{{ route('all-artwork') }}" title="{{ $artistName }}" class="album-box wow fadeup-animation"
+                                                data-wow-duration="0.8s" data-wow-delay="0.2s">
+                                                <div class="back-img"
+                                                    style="background-image: url('{{ $imageUrl }}');">
+                                                </div>
+                                                <h3 class="h3-title">Artwork</h3>
+                                                <h4 class="singer-name">
+                                                    <span>{{ $artistName }}</span>
+                                                </h4>
+                                            </a>
+                                        </div>
+                                    @empty
+                                        <div class="col-lg-12 text-center py-5">
+                                            <p class="text-muted">No artworks uploaded yet.</p>
+                                        </div>
+                                    @endforelse
                                 </div>
                             </div>
                            
                             <div class="btn-part wow fadeup-animation" data-wow-duration="0.8s" data-wow-delay="0.5s">
-                                <a href="/allartist" class="sec-btn" title="view more">view more</a>
+                                <a href="{{ route('all-artwork') }}" class="sec-btn" title="view more">view more</a>
                             </div>
                             
                         </div>
@@ -512,7 +497,7 @@
                 </div>
             </div>
         </section>
-        <!-- End of Albums Section -->
+        <!-- End of Artworks Section -->
 
        <!-- Start Of Music Controls -->
         <div class="lyrics-box" id="songs">
@@ -744,166 +729,44 @@
 
         <section class="creators-section">
         <div class="section-header">
-            <h2 class="section-title">Certified <span class="un_Span">Creators</span></h2>
+            <h2 class="section-title">Featured <span class="un_Span">Artists</span></h2>
             <p class="section-subtitle">Discover our verified artists making waves in the music industry with their unique sounds and authentic voices.</p>
         </div>
 
         <div class="creators-grid">
-            <!-- Artist Card 1 -->
-            <div class="artist-card">
-                <div class="artist-image-container">
-                    <img src="https://img.freepik.com/premium-photo/man-singing-into-microphone-with-vibrant-lighting_261220-571.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Maxwell Rivers" class="artist-image">
-                    <div class="verification-badge">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        </svg>
-                    </div>
-                    <div class="genre-tag">Pop / Electronic</div>
-                    <div class="action-buttons">
-                        <a href="/songs-details">
-                        <button class="action-btn btn-play">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                            Play
-                        </button>
-                        </a>
-                        <a href="/artist-profile">
-                        <button class="action-btn btn-profile">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-                            </svg>
-                            Profile
-                        </button>
-                        </a>
-                        <a href="/tip-artist">
-                        <button class="action-btn btn-tip">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
-                            </svg>
-                            Tip
-                        </button>
-                        </a>
-                    </div>
-                </div>
-                <div class="artist-info">
-                    <h3 class="artist-name">Maxwell Rivers</h3>
-                    <div class="stats-container">
-                        <div class="stat-item">
-                            <span class="stat-value">2.4M</span>
-                            <span class="stat-label">Followers</span>
+            @forelse($featured_artists as $artist)
+                @php
+                    $profile = $artist->profile;
+                    $avatar = $profile && $profile->picture
+                        ? asset('storage/' . $profile->picture)
+                        : 'https://img.freepik.com/premium-photo/musician-recording-song-home-studio_919955-56272.jpg';
+                    $name      = $artist->name ?? $artist->username ?? 'Artist';
+                    $genre     = 'Various';
+                    $followers = '0';
+                    $listeners = '0';
+                @endphp
+                <a href="{{ route('artist-profile', ['artist' => $artist->id]) }}">
+                    <div class="artist-card">
+                        <div class="artist-image-wrapper">
+                            <img class="artist-image" src="{{ $avatar }}" alt="{{ $name }}">
+                            <div class="play-button"></div>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-value">5.8M</span>
-                            <span class="stat-label">Monthly Listeners</span>
+                        <div class="artist-info">
+                            <div class="artist-name">{{ $name }}</div>
+                            <div class="artist-genre">{{ $genre }}</div>
+                            <div class="artist-stats">
+                                <span>{{ $followers }} Followers</span>
+                                <span>{{ $listeners }} Monthly Listeners</span>
+                            </div>
+                            <span class="genre-tag">Featured</span>
                         </div>
                     </div>
+                </a>
+            @empty
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">No featured artists selected yet. Set featured artists from the admin panel.</p>
                 </div>
-            </div>
-
-            <!-- Artist Card 2 -->
-            <div class="artist-card">
-                <div class="artist-image-container">
-                    <img src="https://img.freepik.com/premium-photo/music-producer-is-studio-headphones-his-hand_943281-68871.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Marcus Steel" class="artist-image">
-                    <div class="verification-badge">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        </svg>
-                    </div>
-                    <div class="genre-tag">Hip Hop / Rap</div>
-                    <div class="action-buttons">
-                        <a href="/songs-details">
-                        <button class="action-btn btn-play">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                            Play
-                        </button>
-                        </a>
-                        <a href="/artist-profile">
-                        <button class="action-btn btn-profile">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-                            </svg>
-                            Profile
-                        </button>
-                        </a>
-                        <a href="/tip-artist">
-                        <button class="action-btn btn-tip">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
-                            </svg>
-                            Tip
-                        </button>
-                        </a>
-                    </div>
-                </div>
-                <div class="artist-info">
-                    <h3 class="artist-name">Marcus Steel</h3>
-                    <div class="stats-container">
-                        <div class="stat-item">
-                            <span class="stat-value">1.8M</span>
-                            <span class="stat-label">Followers</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-value">4.2M</span>
-                            <span class="stat-label">Monthly Listeners</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Artist Card 3 -->
-            <div class="artist-card">
-                <div class="artist-image-container">
-                    <img src="https://img.freepik.com/premium-photo/drums-lights-all-energy-studio-rehearsal_1092689-79439.jpg?uid=R222349977&ga=GA1.1.368428666.1763141483&semt=ais_hybrid&w=740&q=80" alt="Smith Well" class="artist-image">
-                    <div class="verification-badge">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        </svg>
-                    </div>
-                    <div class="genre-tag">R&B / Soul</div>
-                    <div class="action-buttons">
-                        <a href="/songs-details">
-                        <button class="action-btn btn-play">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M8 5v14l11-7z"/>
-                            </svg>
-                            Play
-                        </button>
-                        </a>
-                        <a href="/artist-profile">
-                        <button class="action-btn btn-profile">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-                            </svg>
-                            Profile
-                        </button>
-                        </a>
-                        <a href="/tip-artist">
-                        <button class="action-btn btn-tip">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
-                            </svg>
-                            Tip
-                        </button>
-                        </a>
-                    </div>
-                </div>
-                <div class="artist-info">
-                    <h3 class="artist-name">Smith Well</h3>
-                    <div class="stats-container">
-                        <div class="stat-item">
-                            <span class="stat-value">3.1M</span>
-                            <span class="stat-label">Followers</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-value">7.5M</span>
-                            <span class="stat-label">Monthly Listeners</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            @endforelse
         </div>
     </section>
 

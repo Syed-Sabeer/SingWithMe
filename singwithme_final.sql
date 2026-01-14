@@ -107,6 +107,10 @@ INSERT INTO `artist_musics` (`id`, `driver_id`, `name`, `music_file`, `video_fil
 (10, 17, 'Test', 'artist_music/music_1764685044_YhXu7EkUkw.mp3', NULL, 'artist_thumbnails/thumb_1764685044_grhcLuQljx.jpg', 0, '2025-12-02 09:17:24', '2025-12-02 09:17:24'),
 (11, 19, 'levi', 'artist_music/music_1765190335_Aw4qT0Qbti.mp3', 'artist_videos/video_1765190335_p1fzgD81rU.mp4', 'artist_thumbnails/thumb_1765190335_47IJc49hTw.png', 0, '2025-12-08 05:38:55', '2025-12-08 05:38:55');
 
+-- Featured flag for tracks
+ALTER TABLE `artist_musics`
+  ADD COLUMN IF NOT EXISTS `is_featured` tinyint(1) NOT NULL DEFAULT 0 AFTER `listeners`;
+
 -- --------------------------------------------------------
 
 --
@@ -4034,6 +4038,13 @@ CREATE TABLE IF NOT EXISTS `artist_wallets` (
 
 ALTER TABLE `profiles` 
     ADD COLUMN IF NOT EXISTS `banner_image` varchar(255) NULL AFTER `picture`;
+
+-- --------------------------------------------------------
+-- Featured artist flag on users
+-- --------------------------------------------------------
+
+ALTER TABLE `users`
+  ADD COLUMN IF NOT EXISTS `is_featured` tinyint(1) NOT NULL DEFAULT 0 AFTER `is_artist`;
 
 -- --------------------------------------------------------
 -- Artist followers/subscribers table

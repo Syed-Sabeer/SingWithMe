@@ -17,10 +17,12 @@ class ArtistMusic extends Model
         'video_file',
         'thumbnail_image',
         'listeners',
+        'is_featured',
     ];
 
     protected $casts = [
         'listeners' => 'integer',
+        'is_featured' => 'boolean',
     ];
 
     // Relationship with User (driver_id refers to user_id)

@@ -14,6 +14,7 @@ use App\Models\HomeHeroSection;
 use App\Models\Blog;
 use App\Models\LiveVideo;
 use App\Models\User;
+use App\Models\ArtworkPhoto;
 
 class HomeController extends Controller
 {
@@ -24,17 +25,41 @@ class HomeController extends Controller
 public function index()
 {
 
-    $about_details = AboutSection::first();
-    $hero_details = HomeHeroSection::first();
-    $live_videos = LiveVideo::where('visibility', 1)->latest()->take(10)->get();
-    $blogs = Blog::where('visibility', 1)->latest()->get();
-    $recent_artists = User::where('is_artist', true)
-        ->latest()
-        ->with('profile')
-        ->take(8)
-        ->get();
+        $about_details = AboutSection::first();
+        $hero_details = HomeHeroSection::first();
+        $live_videos = LiveVideo::where('visibility', 1)->latest()->take(10)->get();
+        $blogs = Blog::where('visibility', 1)->latest()->get();
+        $recent_artists = User::where('is_artist', true)
+            ->latest()
+            ->with('profile')
+            ->take(8)
+            ->get();
+        $featured_artists = User::where('is_artist', true)
+            ->where('is_featured', true)
+            ->with('profile')
+            ->orderByDesc('created_at')
+            ->take(6)
+            ->get();
+        $featured_tracks = \App\Models\ArtistMusic::with('user')
+            ->where('is_featured', true)
+            ->orderByDesc('created_at')
+            ->take(6)
+            ->get();
+        $latest_artworks = ArtworkPhoto::with('user')
+            ->latest('created_at')
+            ->take(3)
+            ->get();
 
-    return view('frontend.index',compact('about_details','hero_details','blogs','live_videos','recent_artists'));
+        return view('frontend.index',compact(
+            'about_details',
+            'hero_details',
+            'blogs',
+            'live_videos',
+            'recent_artists',
+            'featured_artists',
+            'featured_tracks',
+            'latest_artworks'
+        ));
 }
 
     public function contactStore(Request $request){

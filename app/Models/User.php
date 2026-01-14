@@ -36,6 +36,7 @@ class User  extends Authenticatable implements MustVerifyEmail
         'provider',
         'provider_id',
         'is_artist',
+        'is_featured',
         'usersubscription_id',
         'usersubscription_date',
         'usersubscription_duration',
@@ -64,6 +65,7 @@ class User  extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'is_artist' => 'boolean',
             'is_active' => 'boolean',
+            'is_featured' => 'boolean',
         ];
     }
 

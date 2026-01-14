@@ -2661,17 +2661,30 @@ async function loadPlaylists() {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             }
         });
+
+        // If API fails or returns non-JSON, just show empty state instead of scary error
+        if (!response.ok) {
+            console.warn('Non-OK response for playlists, showing empty state.');
+            displayPlaylists([]);
+            updateUserStats([]);
+            return;
+        }
+
         const data = await response.json();
         
-        if (data.success) {
+        if (data && data.success && Array.isArray(data.data)) {
             displayPlaylists(data.data);
             updateUserStats(data.data);
         } else {
-            showPlaylistsError('Failed to load playlists: ' + data.message);
+            // Treat missing/invalid data as no playlists
+            displayPlaylists([]);
+            updateUserStats([]);
         }
     } catch (error) {
         console.error('Error loading playlists:', error);
-        showPlaylistsError('Error loading playlists. Please try again.');
+        // On any error, fallback to empty playlists UI instead of error screen
+        displayPlaylists([]);
+        updateUserStats([]);
     }
 }
 
@@ -2842,16 +2855,25 @@ async function loadFavorites() {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             }
         });
+
+        if (!response.ok) {
+            console.warn('Non-OK response for favorites, showing empty state.');
+            displayFavorites([]);
+            return;
+        }
+
         const data = await response.json();
         
-        if (data.success) {
+        if (data && data.success && Array.isArray(data.data)) {
             displayFavorites(data.data);
         } else {
-            showFavoritesError('Failed to load favorites: ' + data.message);
+            // Treat missing/invalid data as no favorites
+            displayFavorites([]);
         }
     } catch (error) {
         console.error('Error loading favorites:', error);
-        showFavoritesError('Error loading favorites. Please try again.');
+        // On any error, fallback to empty favorites UI instead of error screen
+        displayFavorites([]);
     }
 }
 

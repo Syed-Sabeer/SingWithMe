@@ -25,7 +25,9 @@ use App\Http\Controllers\Admin\AdminContactPageController;
 use App\Http\Controllers\Admin\AdminSubscriptionPlanController;
 use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Admin\AdminArtistSubscriptionPlanController;
+use App\Http\Controllers\Admin\AdminSongController;
 use App\Http\Controllers\Admin\AdminCustomerController;
+use App\Http\Controllers\Admin\AdminArtistController;
 use App\Http\Controllers\Admin\AdminGiftController;
 use App\Http\Controllers\Admin\AdminServiceMusicVideoController;
 use App\Http\Controllers\Admin\AdminServiceRoyaltyCollectionController;
@@ -555,7 +557,15 @@ Route::delete('service/artistsubscription/{id}', [AdminServiceArtistSubscription
     Route::put('customer/{id}', [AdminCustomerController::class, 'update'])->name('customer.update');
     Route::delete('customer/{id}', [AdminCustomerController::class, 'destroy'])->name('customer.destroy');
     Route::post('customer/{id}/toggle-status', [AdminCustomerController::class, 'toggleStatus'])->name('customer.toggleStatus');
+    Route::post('customer/{id}/toggle-featured', [AdminCustomerController::class, 'toggleFeatured'])->name('customer.toggleFeatured');
 
+    // Songs / Tracks Routes
+    Route::get('songs', [AdminSongController::class, 'index'])->name('songs.index');
+    Route::post('songs/{id}/toggle-featured', [AdminSongController::class, 'toggleFeatured'])->name('songs.toggleFeatured');
+
+    // Artist Routes
+    Route::get('artist', [AdminArtistController::class, 'index'])->name('artist.index');
+    Route::post('artist/{id}/toggle-featured', [AdminArtistController::class, 'toggleFeatured'])->name('artist.toggleFeatured');
 
     // About Section Routes
 

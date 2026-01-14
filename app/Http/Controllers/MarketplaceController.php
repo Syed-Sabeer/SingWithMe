@@ -158,6 +158,18 @@ class MarketplaceController extends Controller
             'processed_at' => now(),
         ]);
 
+        // Notify artist about marketplace sale
+        try {
+            $artist = \App\Models\User::find($item->artist_id);
+            if ($artist) {
+                $message = "Your item \"{$item->title}\" was purchased! You earned $" . 
+                    number_format($artistEarnings, 2) . " (after platform fee). Amount added to your wallet.";
+                app('notificationService')->notifyUsers([$artist], $message, 'Marketplace Sale', 'payment');
+            }
+        } catch (\Throwable $e) {
+            // Ignore notification failures
+        }
+
         return redirect()->route('marketplace.purchase-confirmation', $purchase->id)
             ->with('success', 'Purchase completed successfully!');
     }

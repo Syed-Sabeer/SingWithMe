@@ -121,6 +121,17 @@ class AdminRoyaltyController extends Controller
 
             DB::commit();
 
+            // Notify artist about payout approval
+            try {
+                $artist = User::find($payoutRequest->artist_id);
+                if ($artist) {
+                    $message = "Your payout request of $" . number_format($payoutRequest->requested_amount, 2) . " has been approved and is being processed.";
+                    app('notificationService')->notifyUsers([$artist], $message, 'Payout Approved', 'payment');
+                }
+            } catch (\Throwable $e) {
+                // Ignore notification failures
+            }
+
             return back()->with('success', 'Payout request approved and wallet deducted. Payment processing can now proceed.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -151,6 +162,17 @@ class AdminRoyaltyController extends Controller
             ]);
         }
 
+        // Notify artist about payout completion
+        try {
+            $artist = User::find($payoutRequest->artist_id);
+            if ($artist) {
+                $message = "Your payout of $" . number_format($payoutRequest->requested_amount, 2) . " has been completed and sent to your " . $payoutRequest->payout_method . " account.";
+                app('notificationService')->notifyUsers([$artist], $message, 'Payout Completed', 'payment');
+            }
+        } catch (\Throwable $e) {
+            // Ignore notification failures
+        }
+
         return back()->with('success', 'Payout marked as completed.');
     }
 
@@ -170,6 +192,18 @@ class AdminRoyaltyController extends Controller
             'rejected_by' => auth()->id(),
             'admin_notes' => $request->admin_notes,
         ]);
+
+        // Notify artist about payout rejection
+        try {
+            $artist = User::find($payoutRequest->artist_id);
+            if ($artist) {
+                $reason = $request->admin_notes ? " Reason: " . $request->admin_notes : "";
+                $message = "Your payout request of $" . number_format($payoutRequest->requested_amount, 2) . " has been rejected." . $reason;
+                app('notificationService')->notifyUsers([$artist], $message, 'Payout Rejected', 'payment');
+            }
+        } catch (\Throwable $e) {
+            // Ignore notification failures
+        }
 
         return back()->with('success', 'Payout request rejected.');
     }

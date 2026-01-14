@@ -123,6 +123,29 @@ class AdminCustomerController extends Controller
             return redirect()->back()->withErrors('Could not update customer status.');
         }
     }
+
+    /**
+     * Toggle featured artist flag for a user.
+     */
+    public function toggleFeatured(Request $request, $id)
+    {
+        try {
+            $user = User::findOrFail($id);
+
+            // Only allow marking artists as featured
+            if (!$user->is_artist) {
+                return redirect()->back()->withErrors('Only artist accounts can be marked as featured.');
+            }
+
+            $user->is_featured = $user->is_featured ? 0 : 1;
+            $user->save();
+
+            return redirect()->back()->with('success', 'Featured artist status updated.');
+        } catch (\Exception $e) {
+            Log::error('Customer featured toggle error:', ['message' => $e->getMessage()]);
+            return redirect()->back()->withErrors('Could not update featured status.');
+        }
+    }
 }
 
 

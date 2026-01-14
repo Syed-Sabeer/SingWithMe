@@ -172,7 +172,7 @@ class ArtistRoyaltyController extends Controller
         }
 
         // Don't deduct yet - will be deducted when payout is approved by admin
-        PayoutRequest::create([
+        $payoutRequest = PayoutRequest::create([
             'artist_id' => $artistId,
             'requested_amount' => $requestedAmount,
             'available_balance' => $availableBalance,
@@ -182,6 +182,18 @@ class ArtistRoyaltyController extends Controller
             'artist_notes' => $request->notes ?? null,
             'status' => 'pending',
         ]);
+
+        // Notify artist that payout request was submitted
+        try {
+            $artist = Auth::user();
+            if ($artist) {
+                $message = "Your payout request of $" . number_format($requestedAmount, 2) . 
+                    " has been submitted and is pending admin approval. You will be notified once it's processed.";
+                app('notificationService')->notifyUsers([$artist], $message, 'Payout Request Submitted', 'payment');
+            }
+        } catch (\Throwable $e) {
+            // Ignore notification failures
+        }
 
         return back()->with('success', 'Payout request submitted successfully. It will be processed within 3-5 business days.');
     }

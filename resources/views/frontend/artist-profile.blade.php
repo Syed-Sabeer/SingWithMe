@@ -921,8 +921,8 @@ h1,h2,h3 {
                     <div class="nav-item tab-link" data-target="likes-content"><i class="fa-solid fa-heart"></i> Songs</div>
                     <!-- <div class="nav-item"><i class="fa-solid fa-podcast"></i> Podcast</div> -->
                     <!-- <div class="nav-item"><i class="fa-solid fa-radio"></i> Radio</div> -->
-                    <div class="nav-item tab-link" data-target="Profile-content"><i class="fa-solid fa-user"></i> Profile <i
-                            class="fa-solid fa-circle" style="font-size: 8px; color: #9465e4;"></i></div>
+                    {{-- <div class="nav-item tab-link" data-target="Profile-content"><i class="fa-solid fa-user"></i> Profile <i
+                            class="fa-solid fa-circle" style="font-size: 8px; color: #9465e4;"></i></div> --}}
                 </div>
 
                 <div class="nav-group d-none" style="flex: 1;">
@@ -975,9 +975,9 @@ h1,h2,h3 {
                         <div class="hero-btns">
                             <button class="btn btn-play" id="hero-play">Play</button>
                             <button class="btn btn-outline" id="subscribeBtnHero" type="button">Subscribe</button>
-                            <a href="/tip-artist">
+                            {{-- <a href="/tip-artist">
                                 <button class="btn btn-outline" type="button">Artist Tip</button>
-                            </a>
+                            </a> --}}
                         </div>
                     </header>
 
@@ -997,7 +997,7 @@ h1,h2,h3 {
                         </tbody>
                     </table>
 
-                    <div class="albums-section">
+                    <div class="albums-section d-none">
                         <h3>Albums & Releases</h3>
                         <div class="albums-list">
                             <div class="album-card">

@@ -105,25 +105,22 @@
                   </li>
 
 
-                          <li class="sidebar-list"><i class="fa-solid fa-thumbtack"></i>
+                          {{-- <li class="sidebar-list"><i class="fa-solid fa-thumbtack"></i> --}}
                     {{-- <label class="badge badge-light-primary">13</label> --}}
-                    <a class="sidebar-link sidebar-title" href="#">
+                    {{-- <a class="sidebar-link sidebar-title" href="#">
                       <svg class="stroke-icon">
                         <use href="{{asset('AdminAssets/svg/icon-sprite.svg#stroke-knowledgebase')}}"></use>
                       </svg>
                       <svg class="fill-icon">
                         <use href="{{asset('AdminAssets/svg/icon-sprite.svg#fill-knowledgebase')}}"></use>
                       </svg><span class="lan-3">Orders</span></a>
-                    <ul class="sidebar-submenu">
-                      <!-- <li><a class="lan-4" href="{{route('admin.gift.orders')}}">Gifts</a></li>
-                         <li><a class="lan-4" href="{{route('admin.ring.orders')}}">Rings</a></li>
-                    -->
+                    <ul class="sidebar-submenu"> --}}
+                      
 
 
 
-
-                    </ul>
-                  </li>
+                    {{-- </ul>
+                  </li>  --}}
 
                   <li class="sidebar-list"><i class="fa-solid fa-thumbtack"></i>
                 
@@ -150,10 +147,12 @@
                   </svg>
                   <svg class="fill-icon">
                     <use href="{{asset('AdminAssets/svg/icon-sprite.svg#fill-user')}}"></use>
-                  </svg><span class="lan-3">Subscriptions & Customers</span></a>
+                  </svg><span class="lan-3">Users Management</span></a>
                 <ul class="sidebar-submenu">
                   <li><a class="lan-4" href="{{route('admin.subscription.index')}}">User Subscription Plans</a></li>
                   <li><a class="lan-4" href="{{route('admin.artist-subscription-plans.index')}}">Artist Subscription Plans</a></li>
+                  <li><a class="lan-4" href="{{route('admin.songs.index')}}">Tracks</a></li>
+                  <li><a class="lan-4" href="{{route('admin.artist.index')}}">Artists</a></li>
                   <li><a class="lan-4" href="{{route('admin.customer.index')}}">Customers</a></li>
                 </ul>
               </li>
