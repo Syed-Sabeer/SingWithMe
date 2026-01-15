@@ -141,11 +141,20 @@ class ArtistFanInteractionController extends Controller
 
         if ($preview->access_type === 'public') {
             $hasAccess = true;
-        } elseif ($preview->access_type === 'all_subscribers' && $user->usersubscription_id) {
+        } elseif ($preview->access_type === 'all_subscribers' && $user && $user->activeUserSubscription) {
             $hasAccess = true;
-        } elseif ($preview->access_type === 'premium_only' && $user->usersubscription_id) {
-            // Check if user has premium subscription
-            $hasAccess = true;
+        } elseif ($preview->access_type === 'premium_only' && $user) {
+            // Check if user has Premium or Super Listener subscription
+            $subscription = $user->activeUserSubscription;
+            if ($subscription && $subscription->subscriptionPlan) {
+                $hasAccess = in_array($subscription->usersubscription_id, [2, 3]); // Premium (2) or Super (3)
+            }
+        } elseif ($preview->access_type === 'super_listeners_only' && $user) {
+            // Only Super Listener (id 3)
+            $subscription = $user->activeUserSubscription;
+            if ($subscription && $subscription->subscriptionPlan) {
+                $hasAccess = $subscription->usersubscription_id == 3;
+            }
         }
 
         if (!$hasAccess) {

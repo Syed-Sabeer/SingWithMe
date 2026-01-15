@@ -14,6 +14,7 @@ use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class PlaylistController extends Controller
 {
@@ -98,11 +99,30 @@ class PlaylistController extends Controller
             $request->validate([
                 'playlist_name' => 'required|string|max:300',
                 'music_ids' => 'required|array|min:1',
-                'music_ids.*' => 'exists:artist_musics,id'
+                'music_ids.*' => 'required|integer|exists:artist_musics,id'
             ]);
 
-            // Get user ID from authenticated user or session
-            $userId = auth()->id() ?? session('user_id', 1);
+            // Get user ID from authenticated user
+            $userId = auth()->id();
+            
+            if (!$userId) {
+                \Log::warning('Playlist creation attempted without authentication');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You must be logged in to create a playlist'
+                ], 401);
+            }
+
+            // Check playlist creation limit based on subscription
+            $user = \App\Models\User::find($userId);
+            if (!$user->canCreatePlaylist()) {
+                $limit = $user->getPlaylistLimit();
+                $currentCount = $user->playlists()->distinct('playlist_name')->count('playlist_name');
+                return response()->json([
+                    'success' => false,
+                    'message' => "You have reached your playlist limit of {$limit}. Current playlists: {$currentCount}. Please upgrade your plan to create unlimited playlists."
+                ], 403);
+            }
 
             $playlistData = [];
             foreach ($request->music_ids as $musicId) {
@@ -128,6 +148,16 @@ class PlaylistController extends Controller
                 ]
             ]);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Playlist creation validation error', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             \Log::error('Playlist creation error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
@@ -136,6 +166,44 @@ class PlaylistController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create playlist: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check if user can create more playlists
+     */
+    public function checkPlaylistLimit(Request $request): JsonResponse
+    {
+        try {
+            $userId = auth()->id();
+            
+            if (!$userId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You must be logged in'
+                ], 401);
+            }
+
+            $user = \App\Models\User::find($userId);
+            $canCreate = $user->canCreatePlaylist();
+            $limit = $user->getPlaylistLimit();
+            $currentCount = $user->playlists()->distinct('playlist_name')->count('playlist_name');
+
+            return response()->json([
+                'success' => true,
+                'can_create' => $canCreate,
+                'limit' => $limit,
+                'current_count' => $currentCount,
+                'message' => $canCreate 
+                    ? "You can create playlists. Current: {$currentCount}" . ($limit ? "/{$limit}" : " (unlimited)") 
+                    : "You have reached your playlist limit of {$limit}. Current: {$currentCount}. Please upgrade to create unlimited playlists."
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Check playlist limit error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error checking playlist limit'
             ], 500);
         }
     }
@@ -295,6 +363,7 @@ class PlaylistController extends Controller
                     'thumbnail' => $song->thumbnail_image_url,
                     'music_file' => $song->music_file_url,
                     'listeners' => $song->listeners,
+                    'isrc_code' => $song->isrc_code, // Add ISRC code
                     'duration' => '3:45', // Placeholder duration
                     'in_playlists' => $userPlaylists->get($song->id, []),
                     'created_at' => $song->created_at->format('Y-m-d H:i:s'),

@@ -209,6 +209,150 @@ class User  extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(GiftSubscription::class, 'recipient_id');
     }
 
+    /**
+     * Get user subscriptions
+     */
+    public function userSubscriptions()
+    {
+        return $this->hasMany(UserSubscription::class);
+    }
+
+    /**
+     * Get active user subscription
+     */
+    public function getActiveUserSubscriptionAttribute()
+    {
+        $subscriptions = $this->userSubscriptions()
+            ->with('subscriptionPlan')
+            ->latest('usersubscription_date')
+            ->get();
+        
+        foreach ($subscriptions as $subscription) {
+            if ($subscription->isActive()) {
+                return $subscription;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Check if user has access to a specific feature
+     */
+    public function hasUserFeature($feature)
+    {
+        $subscription = $this->activeUserSubscription;
+        
+        if (!$subscription || !$subscription->subscriptionPlan) {
+            // Free plan - check default features
+            return $this->hasFreeFeature($feature);
+        }
+        
+        $plan = $subscription->subscriptionPlan;
+        
+        // Map feature names to plan attributes
+        $featureMap = [
+            'ad_free' => 'is_ads',
+            'unlimited_playlists' => 'is_unlimitedplaylist',
+            'offline_downloads' => 'is_offline',
+            'high_quality' => 'is_highquality',
+            'exclusive_content' => 'is_exclusivecontent',
+            'tip_artists' => 'is_tip_artists',
+            'personalized_recommendations' => 'is_personalized_recommendations',
+            'supporter_badge' => 'is_supporter_badge',
+            'trending_access' => 'is_trending_access',
+        ];
+        
+        if (isset($featureMap[$feature])) {
+            return (bool) $plan->{$featureMap[$feature]};
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check free plan features
+     */
+    private function hasFreeFeature($feature)
+    {
+        // Free plan features
+        $freeFeatures = [
+            'trending_access' => true, // Access trending & featured creators
+        ];
+        
+        return $freeFeatures[$feature] ?? false;
+    }
+
+    /**
+     * Get playlist limit for current subscription
+     */
+    public function getPlaylistLimit()
+    {
+        $subscription = $this->activeUserSubscription;
+        
+        if (!$subscription || !$subscription->subscriptionPlan) {
+            return 3; // Free plan: 3 playlists
+        }
+        
+        $plan = $subscription->subscriptionPlan;
+        
+        if ($plan->is_unlimitedplaylist) {
+            return null; // Unlimited
+        }
+        
+        return $plan->playlist_limit ?? 3;
+    }
+
+    /**
+     * Get offline download limit for current subscription
+     */
+    public function getOfflineDownloadLimit()
+    {
+        $subscription = $this->activeUserSubscription;
+        
+        if (!$subscription || !$subscription->subscriptionPlan) {
+            return 0; // Free plan: no offline downloads
+        }
+        
+        $plan = $subscription->subscriptionPlan;
+        
+        if (!$plan->is_offline) {
+            return 0;
+        }
+        
+        // If offline_download_limit is null, it means unlimited
+        return $plan->offline_download_limit ?? null;
+    }
+
+    /**
+     * Check if user can create more playlists
+     */
+    public function canCreatePlaylist()
+    {
+        $limit = $this->getPlaylistLimit();
+        
+        if ($limit === null) {
+            return true; // Unlimited
+        }
+        
+        $currentCount = $this->playlists()->distinct('playlist_name')->count('playlist_name');
+        return $currentCount < $limit;
+    }
+
+    /**
+     * Get current subscription plan name
+     */
+    public function getCurrentSubscriptionPlanName()
+    {
+        $subscription = $this->activeUserSubscription;
+        
+        if (!$subscription || !$subscription->subscriptionPlan) {
+            return 'Free Listener';
+        }
+        
+        return $subscription->subscriptionPlan->title ?? 'Free Listener';
+    }
+
     public function marketplaceItems()
     {
         return $this->hasMany(MarketplaceItem::class, 'artist_id');

@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Services\ISRCService;
 
 class ArtistMusicController extends Controller
 {
@@ -19,6 +20,7 @@ class ArtistMusicController extends Controller
             'music_file' => 'required|file|max:500000',
             'video_file' => 'nullable|file|mimes:mp4,avi,mov,wmv,flv|max:100000',
             'thumbnail_image' => 'required|file|mimes:jpeg,jpg,png,gif|max:10240',
+            'isrc_code' => 'nullable|string|max:20',
         ]);
 
         $data = [
@@ -26,6 +28,28 @@ class ArtistMusicController extends Controller
             'driver_id' => Auth::id(),
             'listeners' => 0,
         ];
+
+        // Handle ISRC code - simple manual entry (optional field)
+        if ($request->filled('isrc_code')) {
+            $isrcCode = strtoupper(trim($request->input('isrc_code')));
+            // Remove any extra spaces or special characters except hyphens
+            $isrcCode = preg_replace('/[^A-Z0-9\-]/', '', $isrcCode);
+            
+            if (!empty($isrcCode)) {
+                // Optional: Check if ISRC already exists
+                $existing = ArtistMusic::where('isrc_code', $isrcCode)->first();
+                if ($existing && $existing->id !== null) {
+                    if ($request->expectsJson()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'This ISRC code is already assigned to another track.'
+                        ], 422);
+                    }
+                    return redirect()->back()->withErrors(['isrc_code' => 'This ISRC code is already assigned to another track.']);
+                }
+                $data['isrc_code'] = $isrcCode;
+            }
+        }
 
 
         if ($request->hasFile('music_file')) {

@@ -101,11 +101,14 @@ class AdInjectionService
     private function getActiveSubscription($userId)
     {
         try {
-            $subscription = UserSubscription::where('user_id', $userId)
-                ->where('usersubscription_date', '<=', now())
-                ->whereRaw('DATE_ADD(usersubscription_date, INTERVAL usersubscription_duration DAY) >= ?', [now()])
-                ->orderBy('created_at', 'desc')
-                ->first();
+            // Use the User model's activeUserSubscription attribute for consistency
+            $user = \App\Models\User::find($userId);
+            if (!$user) {
+                Log::warning('AdInjectionService: User not found', ['user_id' => $userId]);
+                return null;
+            }
+            
+            $subscription = $user->activeUserSubscription;
                 
             if ($subscription) {
                 Log::info('AdInjectionService: Found active subscription', [

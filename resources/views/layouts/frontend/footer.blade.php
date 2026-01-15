@@ -57,7 +57,7 @@
                             </div>
                         </div>
                         <div class="col-lg-6 text-right ">  
-                            <span class="copyright-text ">Copyright © 2025 - SingWithMe | Powered By  <a
+                            <span class="copyright-text ">Copyright © 2026 - SingWithMe | Powered By  <a
                                     href="https://thevisionbrands.com/" target="_blank" title="Vision Brands ">The
                                     Vision Brands</a></span>
                         </div>

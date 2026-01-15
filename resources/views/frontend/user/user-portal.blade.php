@@ -755,6 +755,38 @@
         text-align: center;
     }
 
+    /* Current Plan Styling */
+    .plan-card.current-plan {
+        border: 2px solid rgba(139, 92, 246, 0.6);
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.3);
+        position: relative;
+    }
+
+    .plan-card.current-plan::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #8b5cf6, #a855f7);
+        border-radius: 12px 12px 0 0;
+    }
+
+    .current-plan-indicator {
+        position: absolute;
+        top: -10px;
+        right: 20px;
+        background: linear-gradient(135deg, #8b5cf6, #a855f7);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        z-index: 10;
+    }
+
     .square-card-container {
         background: white;
         border-radius: 8px;
@@ -772,6 +804,109 @@
         color: #ef4444;
         font-size: 14px;
         margin-top: 10px;
+    }
+
+    /* Playlist Section Styles */
+    .playlistSection {
+        position: relative;
+    }
+
+    .playlistSection .create-btn {
+        display: block !important;
+        visibility: visible !important;
+        background: linear-gradient(135deg, #8b5cf6, #a855f7);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        margin: 20px auto;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    .playlistSection .create-btn:hover {
+        background: linear-gradient(135deg, #a855f7, #8b5cf6);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    }
+
+    .playlistSection .create-btn span {
+        font-size: 20px;
+        margin-right: 8px;
+    }
+
+    /* Playlist Overlay Styles */
+    .playlistSection .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .playlistSection .overlay.active {
+        display: flex !important;
+    }
+
+    .playlistSection .overlay .popup {
+        background: linear-gradient(135deg, #290d46 0%, #1a0a2e 100%);
+        border-radius: 20px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        position: relative;
+        margin: 20px;
+    }
+
+    .playlistSection .overlay .popup-header {
+        padding: 25px 30px;
+        border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .playlistSection .overlay .popup-title {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .playlistSection .overlay .close-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        color: white;
+        font-size: 1.5rem;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .playlistSection .overlay .close-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+    }
+
+    .playlistSection .overlay .popup-content {
+        padding: 30px;
     }
 
     /* Mobile Responsive */
@@ -939,14 +1074,14 @@
                             <button type="submit" class="submit-btn" id="submitBtn">Sign Up</button>
                         </form>
 
-                        <div class="divider">
+                        {{-- <div class="divider">
                             <span>OR</span>
                         </div>
 
                         <button class="google-btn">
                             <div class="google-icon"></div>
                             Continue with Google
-                        </button>
+                        </button> --}}
 
                         <div class="privacy-text">
                             Protected by reCAPTCHA and subject to the Google Privacy Policy and Terms of Service.
@@ -1037,6 +1172,47 @@
                     </div>
                 </section>
 
+                @if(auth()->check() && isset($subscriptionFeatures))
+                    <!-- Current Subscription Features Summary -->
+                    <section class="section" style="margin-bottom: 40px;">
+                        <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 20px;">
+                            <h3 style="color: #b794f6; margin-bottom: 15px; font-size: 1.2rem;">
+                                <i class="fas fa-star" style="margin-right: 8px;"></i>Your Current Plan Features
+                            </h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div style="color: #fff;">
+                                    <strong style="color: #b794f6;">Playlists:</strong> 
+                                    @if($subscriptionFeatures['unlimited_playlists'])
+                                        Unlimited
+                                    @else
+                                        {{ $subscriptionFeatures['playlist_limit'] ?? 3 }} max
+                                    @endif
+                                </div>
+                                <div style="color: #fff;">
+                                    <strong style="color: #b794f6;">Ads:</strong> 
+                                    {{ $subscriptionFeatures['ad_free'] ? 'Ad-free' : 'With ads' }}
+                                </div>
+                                <div style="color: #fff;">
+                                    <strong style="color: #b794f6;">Offline Downloads:</strong> 
+                                    @if($subscriptionFeatures['offline_downloads'])
+                                        @if($subscriptionFeatures['offline_download_limit'])
+                                            Up to {{ $subscriptionFeatures['offline_download_limit'] }} songs
+                                        @else
+                                            Unlimited
+                                        @endif
+                                    @else
+                                        Not available
+                                    @endif
+                                </div>
+                                <div style="color: #fff;">
+                                    <strong style="color: #b794f6;">Audio Quality:</strong> 
+                                    {{ $subscriptionFeatures['high_quality'] ? 'HD Audio' : 'Standard' }}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                @endif
+
                 <!-- Subscription Plans Section -->
                 <section class="section" id="subscription">
                     <h2 class="section-title">
@@ -1048,13 +1224,44 @@
                     </h2>
                     <p>Choose the perfect plan for your music journey. Upgrade anytime!</p>
 
+                    @if($currentSubscription && $currentPlan)
+                        <div class="current-plan-badge" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.2)); border: 2px solid rgba(139, 92, 246, 0.5); border-radius: 12px; padding: 15px 20px; margin-bottom: 30px; text-align: center;">
+                            <div style="color: #b794f6; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px;">Current Plan</div>
+                            <div style="color: #fff; font-size: 1.3rem; font-weight: 700;">{{ $currentPlan->title }}</div>
+                            @if($currentSubscription->usersubscription_date && $currentSubscription->usersubscription_duration)
+                                @php
+                                    $endDate = \Carbon\Carbon::parse($currentSubscription->usersubscription_date)->addDays($currentSubscription->usersubscription_duration);
+                                    $daysRemaining = now()->diffInDays($endDate, false);
+                                @endphp
+                                <div style="color: #b8a8d0; font-size: 0.85rem; margin-top: 5px;">
+                                    @if($daysRemaining > 0)
+                                        {{ $daysRemaining }} day{{ $daysRemaining !== 1 ? 's' : '' }} remaining
+                                    @else
+                                        Expired
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @elseif(auth()->check())
+                        <div class="current-plan-badge" style="background: rgba(107, 114, 128, 0.2); border: 2px solid rgba(107, 114, 128, 0.5); border-radius: 12px; padding: 15px 20px; margin-bottom: 30px; text-align: center;">
+                            <div style="color: #9ca3af; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px;">Current Plan</div>
+                            <div style="color: #fff; font-size: 1.3rem; font-weight: 700;">Free Listener</div>
+                        </div>
+                    @endif
+
                     <div class="plans-grid">
                         @foreach($user_subscription_plans as $index => $plan)
                             @php
-                                $isCurrentPlan = $currentSubscription && $currentSubscription->usersubscription_id == $plan->id;
-                                $isPopular = strpos(strtolower($plan->title), 'premium') !== false || strpos(strtolower($plan->title), 'super') !== false;
+                                $isCurrentPlan = $currentSubscription && $currentSubscription->usersubscription_id == $plan->id && 
+                                                $currentSubscription->isActive();
+                                $isPopular = strpos(strtolower($plan->title ?? ''), 'premium') !== false || strpos(strtolower($plan->title ?? ''), 'super') !== false;
                             @endphp
-                            <div class="plan-card {{ $isPopular ? 'popular' : '' }}">
+                            <div class="plan-card {{ $isPopular ? 'popular' : '' }} {{ $isCurrentPlan ? 'current-plan' : '' }}">
+                                @if($isCurrentPlan)
+                                    <div class="current-plan-indicator" style="position: absolute; top: -10px; right: 20px; background: linear-gradient(135deg, #8b5cf6, #a855f7); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);">
+                                        ✓ Current Plan
+                                    </div>
+                                @endif
                                 <h3 class="plan-name">{{ $plan->title }}</h3>
                                 <div class="plan-price">
                                     @if($plan->price == '0' || $plan->price == 0)
@@ -1083,7 +1290,7 @@
                                     @endif
                                     
                                     @if($plan->is_offline)
-                                        @if($plan->offline_download_limit)
+                                        @if($plan->offline_download_limit && $plan->offline_download_limit > 0)
                                             <li><i class="fas fa-check"></i> Offline downloads (up to {{ $plan->offline_download_limit }} songs)</li>
                                         @else
                                             <li><i class="fas fa-check"></i> Unlimited offline downloads</li>
@@ -1116,7 +1323,9 @@
                                 </ul>
                                 
                                 @if($isCurrentPlan)
-                                    <button class="plan-button secondary" disabled>Current Plan</button>
+                                    <button class="plan-button secondary" disabled style="opacity: 0.7; cursor: not-allowed;">
+                                        <i class="fas fa-check-circle" style="margin-right: 5px;"></i>Current Plan
+                                    </button>
                                 @else
                                     <button class="plan-button primary" onclick="openSubscriptionPopup('{{ $plan->id }}', '{{ $plan->title }}', '{{ $plan->price }}', '{{ $plan->duration }}')">
                                         @if($plan->price == '0' || $plan->price == 0)
@@ -1327,20 +1536,8 @@
                 </div>
 
                 <!-- Playlists Section -->
+                @auth
                 <section class="section" id="playlists">
-                    <!-- <h2 class="section-title">
-                        <div class="user-Lord"><lord-icon src="https://cdn.lordicon.com/wrjtqsvf.json" trigger="loop"
-                                delay="2000"
-                                colors="primary:#320a5c,secondary:#e5d1fa,tertiary:#c69cf4,quaternary:#320a5c">
-                            </lord-icon>
-                        </div>
-                        <span class="text-white" style="margin-right: -15px;">My</span> Playlists
-                    </h2>
-                    <p>Organize your favorite tracks into custom playlists</p>
-
-                    <button class="create-playlist-btn create-btn">
-                        + Create New Playlist
-                    </button> -->
                     <section class="playlistSection">
                         <div class="main-container">
                             <div class="header">
@@ -1465,11 +1662,26 @@
 
                     </section>
                 </section>
+                @else
+                <!-- Login Prompt for Playlists -->
+                <section class="section" id="playlists">
+                    <div style="text-align: center; padding: 60px 20px; background: rgba(139, 92, 246, 0.1); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3);">
+                        <lord-icon src="https://cdn.lordicon.com/wrjtqsvf.json" trigger="loop" delay="2000"
+                            colors="primary:#320a5c,secondary:#e5d1fa,tertiary:#c69cf4,quaternary:#320a5c"
+                            style="width:100px;height:100px;margin-bottom:20px;">
+                        </lord-icon>
+                        <h2 style="color: #fff; margin-bottom: 15px;">My Playlists</h2>
+                        <p style="color: #b8a8d0; margin-bottom: 25px;">Organize your favorite tracks into custom playlists</p>
+                        <button class="open-popup-btn" onclick="openModal()">Login to Create Playlists</button>
+                    </div>
+                </section>
+                @endauth
 
                 <!-- Favorites Collection Section -->
             </div>
         </section>
 
+        @auth
         <section class="song_list">
             <div class="container">
                 <div class="section-header">
@@ -1521,25 +1733,40 @@
 
                 <div class="stats">
                     <div class="stat-item">
-                        <div class="stat-number">6</div>
+                        <div class="stat-number">{{ $userStats['total_playlists'] ?? 0 }}</div>
                         <div class="stat-label">Total Playlists</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">286</div>
+                        <div class="stat-number">{{ $userStats['total_songs'] ?? 0 }}</div>
                         <div class="stat-label">Total Songs</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">18h</div>
-                        <div class="stat-label">Total Duration</div>
+                        <div class="stat-number">{{ $userStats['total_favorites'] ?? 0 }}</div>
+                        <div class="stat-label">Total Favorites</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">1.2K</div>
-                        <div class="stat-label">Total Plays</div>
+                        <div class="stat-number">{{ $userStats['total_subscribed'] ?? 0 }}</div>
+                        <div class="stat-label">Total Subscribed</div>
                     </div>
                 </div>
             </div>
         </section>
-
+        @else
+        <!-- Login Prompt for Favorites -->
+        <section class="song_list">
+            <div class="container">
+                <div style="text-align: center; padding: 60px 20px; background: rgba(139, 92, 246, 0.1); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3);">
+                    <lord-icon src="https://cdn.lordicon.com/wtrpyxpe.json" trigger="loop"
+                        colors="primary:#320a5c,secondary:#c69cf4,tertiary:#a866ee,quaternary:#c69cf4"
+                        style="width:100px;height:100px;margin-bottom:20px;">
+                    </lord-icon>
+                    <h1 class="section-title" style="margin-bottom: 15px;">Favorite Collection</h1>
+                    <p class="section-subtitle" style="margin-bottom: 25px;">Your curated music collections</p>
+                    <button class="open-popup-btn" onclick="openModal()">Login to View Favorites</button>
+                </div>
+            </div>
+        </section>
+        @endauth
 
 @endsection
 
@@ -1587,22 +1814,48 @@
             // Global variable for selected songs
             let ps_selectedSongs = new Map();
 
-            (function () {
+            function initializePlaylistModal() {
                 // scope to the playlist section so no globals are created
                 const section = document.querySelector('.playlistSection');
-                if (!section) return;
+                if (!section) {
+                    console.warn('Playlist section not found, skipping initialization');
+                    return;
+                }
 
                 const overlay = section.querySelector('.overlay');
                 const openBtn = section.querySelector('.create-btn');
                 const closeBtn = section.querySelector('.close-btn');
                 const form = section.querySelector('form.playlistForm');
+                
+                // Safety check - if required elements are missing, exit
+                if (!overlay || !openBtn || !closeBtn || !form) {
+                    console.error('Playlist section required elements not found:', {
+                        overlay: !!overlay,
+                        openBtn: !!openBtn,
+                        closeBtn: !!closeBtn,
+                        form: !!form,
+                        section: !!section
+                    });
+                    return;
+                }
+                
+                // Optional elements
                 const coverUpload = section.querySelector('input.coverUpload');
                 const coverUploadSection = section.querySelector('.cover-upload-section');
                 const coverPreviewDiv = section.querySelector('.cover-preview-placeholder') || section.querySelector('.upload-placeholder');
                 const selectedCountEl = section.querySelector('.selected-count');
                 const privacyOptions = section.querySelectorAll('.privacy-option');
+                
                 const submitBtn = form.querySelector('.btn-primary');
                 const cancelBtn = form.querySelector('.btn-secondary');
+                
+                // Buttons are optional - form can still work without them being found immediately
+                if (!submitBtn) {
+                    console.warn('Submit button not found, but continuing initialization');
+                }
+                if (!cancelBtn) {
+                    console.warn('Cancel button not found, but continuing initialization');
+                }
                 
                 // New elements for music search
                 const musicSearchInput = document.getElementById('musicSearchInput');
@@ -1613,9 +1866,14 @@
                 let searchTimeout = null;
 
                 // Open popup
-                openBtn.addEventListener('click', () => {
+                openBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Create playlist button clicked');
                     overlay.classList.add('active');
+                    overlay.setAttribute('aria-hidden', 'false');
                     document.body.style.overflow = 'hidden';
+                    console.log('Modal opened, overlay active:', overlay.classList.contains('active'));
                 });
 
                 // Close popup when clicking overlay (outside the popup)
@@ -1627,51 +1885,62 @@
                 closeBtn.addEventListener('click', closePopup);
 
                 // Cancel action (reset & close)
-                cancelBtn.addEventListener('click', () => {
-                    form.reset();
-                    coverPreviewDiv.innerHTML = '🎵';
-                    privacyOptions.forEach((opt) => opt.classList.toggle('selected', opt.dataset.privacy === 'public'));
-                    ps_selectedSongs.clear();
-                    updateSelectedCount();
-                    updateSelectedSongsGrid();
-                    ps_selectedPrivacy = 'public';
-                    closePopup();
-                });
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                        if (form) form.reset();
+                        if (coverPreviewDiv) coverPreviewDiv.innerHTML = '🎵';
+                        if (privacyOptions && privacyOptions.length > 0) {
+                            privacyOptions.forEach((opt) => opt.classList.toggle('selected', opt.dataset.privacy === 'public'));
+                        }
+                        ps_selectedSongs.clear();
+                        updateSelectedCount();
+                        updateSelectedSongsGrid();
+                        ps_selectedPrivacy = 'public';
+                        closePopup();
+                    });
+                }
 
                 // Escape key closes popup when active - handled in global keydown listener
 
                 function closePopup() {
                     overlay.classList.remove('active');
+                    overlay.setAttribute('aria-hidden', 'true');
                     document.body.style.overflow = '';
-                    musicSearchInput.value = '';
+                    if (musicSearchInput) musicSearchInput.value = '';
                     // Clear search results from songs grid
                     updateSelectedSongsGrid();
                 }
 
 
                 // Cover upload triggers
-                coverUploadSection.addEventListener('click', () => coverUpload.click());
-                coverUpload.addEventListener('change', function () {
-                    const file = this.files && this.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = function (evt) {
-                        coverPreviewDiv.innerHTML = `<img src="${evt.target.result}" alt="Cover Preview" class="cover-preview">`;
-                    };
-                    reader.readAsDataURL(file);
-                });
+                if (coverUploadSection && coverUpload) {
+                    coverUploadSection.addEventListener('click', () => coverUpload.click());
+                    coverUpload.addEventListener('change', function () {
+                        const file = this.files && this.files[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = function (evt) {
+                            if (coverPreviewDiv) {
+                                coverPreviewDiv.innerHTML = `<img src="${evt.target.result}" alt="Cover Preview" class="cover-preview">`;
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
 
                 // Privacy options (use data-privacy attribute set in HTML)
-                privacyOptions.forEach(option => {
+                if (privacyOptions && privacyOptions.length > 0) {
+                    privacyOptions.forEach(option => {
                     option.addEventListener('click', () => {
                         privacyOptions.forEach(opt => opt.classList.remove('selected'));
                         option.classList.add('selected');
                         ps_selectedPrivacy = option.dataset.privacy || 'public';
                     });
-                });
+                }
 
                 // Music search functionality
-                musicSearchInput.addEventListener('input', function() {
+                if (musicSearchInput) {
+                    musicSearchInput.addEventListener('input', function() {
                     const query = this.value.trim();
                     
                     // Clear previous timeout
@@ -1688,7 +1957,8 @@
                     searchTimeout = setTimeout(() => {
                         searchMusic(query);
                     }, 300);
-                });
+                    });
+                }
 
                 async function searchMusic(query) {
                     try {
@@ -1886,7 +2156,9 @@
 
                 form.addEventListener('submit', async function (e) {
                     e.preventDefault();
-                    const playlistTitle = form.querySelector('input[type="text"]').value || '';
+                    if (!form) return;
+                    const playlistTitleInput = form.querySelector('input[type="text"]');
+                    const playlistTitle = playlistTitleInput ? playlistTitleInput.value.trim() : '';
                     console.log('Form submission - Playlist title:', playlistTitle);
                     console.log('Form submission - Selected songs count:', ps_selectedSongs.size);
                     console.log('Form submission - Selected songs:', Array.from(ps_selectedSongs.keys()));
@@ -1901,8 +2173,31 @@
                         return;
                     }
 
-                    submitBtn.textContent = 'Creating...';
-                    submitBtn.disabled = true;
+                    // Check playlist limit before submission
+                    try {
+                        const response = await fetch('/api/user/playlist-limit-check', {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.can_create === false) {
+                                alert(data.message || 'You have reached your playlist limit. Please upgrade your plan to create more playlists.');
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('Could not check playlist limit, proceeding anyway:', error);
+                    }
+
+                    if (submitBtn) {
+                        submitBtn.textContent = 'Creating...';
+                        submitBtn.disabled = true;
+                    }
 
                     try {
                         const response = await fetch('/api/playlist/create', {
@@ -1917,30 +2212,47 @@
                             })
                         });
 
-                        const data = await response.json();
+                        // Check if response is JSON
+                        let data;
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            data = await response.json();
+                        } else {
+                            // If not JSON, it's likely an HTML error page
+                            const text = await response.text();
+                            console.error('Non-JSON response:', text);
+                            throw new Error('Server returned an error. Please check the console for details.');
+                        }
 
                         if (data.success) {
                             alert(`Playlist "${playlistTitle}" created successfully with ${data.data.songs_count} songs!`);
                             
-
-                        form.reset();
-                        coverPreviewDiv.innerHTML = '🎵';
-                        privacyOptions.forEach(opt => opt.classList.toggle('selected', opt.dataset.privacy === 'public'));
-                        ps_selectedSongs.clear();
-                        updateSelectedCount();
+                            if (form) form.reset();
+                            if (coverPreviewDiv) coverPreviewDiv.innerHTML = '🎵';
+                            if (privacyOptions && privacyOptions.length > 0) {
+                                privacyOptions.forEach(opt => opt.classList.toggle('selected', opt.dataset.privacy === 'public'));
+                            }
+                            ps_selectedSongs.clear();
+                            updateSelectedCount();
                             updateSelectedSongsGrid();
-                        ps_selectedPrivacy = 'public';
-
+                            ps_selectedPrivacy = 'public';
                             closePopup();
                         } else {
-                            alert('Error creating playlist: ' + data.message);
+                            const errorMsg = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : 'Failed to create playlist');
+                            alert('Error creating playlist: ' + errorMsg);
                         }
                     } catch (error) {
-                        console.error('Error:', error);
-                        alert('Error creating playlist. Please try again.');
+                        console.error('Error creating playlist:', error);
+                        let errorMessage = 'Failed to create playlist. Please try again.';
+                        if (error.message) {
+                            errorMessage = error.message;
+                        }
+                        alert(errorMessage);
                     } finally {
-                        submitBtn.textContent = 'Create Playlist';
-                        submitBtn.disabled = false;
+                        if (submitBtn) {
+                            submitBtn.textContent = 'Create Playlist';
+                            submitBtn.disabled = false;
+                        }
                     }
                 });
 
@@ -1952,9 +2264,33 @@
                            '';
                 }
 
-                // Initialize selected songs gri
+                // Initialize selected songs grid
                 updateSelectedSongsGrid();
-            })();
+            }
+            
+            // Initialize when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializePlaylistModal);
+            } else {
+                // DOM is already loaded, initialize immediately
+                initializePlaylistModal();
+            }
+            
+            // Fallback: Direct button click handler (in case initialization fails)
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.create-btn') && e.target.closest('.playlistSection')) {
+                    const section = e.target.closest('.playlistSection');
+                    const overlay = section ? section.querySelector('.overlay') : null;
+                    if (overlay) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        overlay.classList.add('active');
+                        overlay.setAttribute('aria-hidden', 'false');
+                        document.body.style.overflow = 'hidden';
+                        console.log('Fallback: Modal opened via direct click handler');
+                    }
+                }
+            });
         </script>
         <script>
 

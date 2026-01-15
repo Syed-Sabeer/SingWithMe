@@ -895,6 +895,7 @@ h1,h2,h3 {
                       'id' => $song->id,
                       'title' => $song->name,
                       'album' => $displayName,
+                      'isrc_code' => $song->isrc_code, // Add ISRC code
                       // Duration not stored yet, so show placeholder
                       'time' => '3:30',
                       'img' => $thumb,
@@ -1375,7 +1376,15 @@ h1,h2,h3 {
                         <div class="liked-actions">
                             <button class="btn btn-play"><i class="fa-solid fa-play"></i> Play All</button>
                             {{--<button class="btn btn-outline"><i class="fa-solid fa-shuffle"></i> Shuffle</button>--}}
-                            <a href="/tip-artist"><button class="btn btn-outline"><i class="fa-solid fa-sack-dollar"></i> Artist Tip</button></a>
+                            @if(isset($canTipArtist) && $canTipArtist)
+                                <a href="{{ route('tip-artist') }}"><button class="btn btn-outline"><i class="fa-solid fa-sack-dollar"></i> Artist Tip</button></a>
+                            @elseif(auth()->check())
+                                <button class="btn btn-outline" onclick="alert('This feature is only available for Super Listener subscribers. Please upgrade your plan to tip artists.');" title="Upgrade to Super Listener to tip artists">
+                                    <i class="fa-solid fa-sack-dollar"></i> Artist Tip
+                                </button>
+                            @else
+                                <a href="{{ route('user.portal') }}"><button class="btn btn-outline"><i class="fa-solid fa-sack-dollar"></i> Artist Tip</button></a>
+                            @endif
                         </div>
 
                         <table class="songs-table">
@@ -1399,7 +1408,12 @@ h1,h2,h3 {
                                         <td>{{ $index + 1 }}</td>
                                         <td class="song-title-cell">
                                             <img src="{{ $thumb }}" class="song-img">
-                                            {{ $song->name }}
+                                            <div>
+                                                <div>{{ $song->name }}</div>
+                                                @if($song->isrc_code)
+                                                    <small style="color: #b794f6; font-size: 0.75rem;">ISRC: {{ $song->isrc_code }}</small>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td>{{ $displayName }}</td>
                                         <td>Single</td>
@@ -1566,6 +1580,19 @@ h1,h2,h3 {
             // Visual updates on song list
             document.querySelectorAll('.song-row').forEach(r => r.classList.remove('playing'));
             document.querySelectorAll('.song-row')[index].classList.add('playing');
+
+            // Also load into global MusicPlayer if available (for bottom player)
+            if (window.MusicPlayer && song.id) {
+                const track = {
+                    id: song.id,
+                    name: song.title,
+                    artist: song.album,
+                    thumbnail: song.img,
+                    music_file: '', // Will be set if available
+                    isrc_code: song.isrc_code || null
+                };
+                window.MusicPlayer.loadTrack(track);
+            }
 
             startPlayback();
         }

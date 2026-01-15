@@ -119,6 +119,7 @@
                                             <th>Cover</th>
                                             <th>Title</th>
                                             <th>Artist</th>
+                                            <th>ISRC Code</th>
                                             <th>Plays</th>
                                             <th>Featured</th>
                                             <th>Uploaded At</th>
@@ -137,6 +138,13 @@
                                                 </td>
                                                 <td>{{ $song->name }}</td>
                                                 <td>{{ $song->user->name ?? 'Unknown Artist' }}</td>
+                                                <td>
+                                                    @if($song->isrc_code)
+                                                        <code style="color: #b794f6; font-size: 0.85rem; background: rgba(183, 148, 246, 0.1); padding: 4px 8px; border-radius: 4px;">{{ $song->isrc_code }}</code>
+                                                    @else
+                                                        <span class="text-muted" style="font-size: 0.85rem;">—</span>
+                                                    @endif
+                                                </td>
                                                 <td>{{ number_format($song->listeners) }}</td>
                                                 <td>
                                                     <form method="POST"
@@ -160,7 +168,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="7" class="text-center py-4 text-muted">
+                                                <td colspan="8" class="text-center py-4 text-muted">
                                                     No songs found.
                                                 </td>
                                             </tr>

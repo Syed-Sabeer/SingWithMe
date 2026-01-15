@@ -95,18 +95,32 @@ class FanInteractionController extends Controller
     private function checkAccess($accessType)
     {
         $user = Auth::user();
+        
+        if (!$user) {
+            return false;
+        }
 
         switch ($accessType) {
             case 'public':
                 return true;
             case 'all_subscribers':
-                return $user->usersubscription_id !== null;
+                // Any paid subscription (Premium or Super)
+                return $user->activeUserSubscription !== null;
             case 'premium_only':
-                // Check if user has premium subscription
-                return $user->usersubscription_id !== null;
+                // Premium Listener or higher
+                $subscription = $user->activeUserSubscription;
+                if (!$subscription || !$subscription->subscriptionPlan) {
+                    return false;
+                }
+                // Premium Listener (id 2) or Super Listener (id 3)
+                return in_array($subscription->usersubscription_id, [2, 3]);
             case 'super_listeners_only':
-                // Check if user is a super listener
-                return false; // Implement super listener check
+                // Only Super Listener (id 3)
+                $subscription = $user->activeUserSubscription;
+                if (!$subscription || !$subscription->subscriptionPlan) {
+                    return false;
+                }
+                return $subscription->usersubscription_id == 3;
             default:
                 return false;
         }

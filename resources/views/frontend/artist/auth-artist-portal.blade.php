@@ -1381,6 +1381,34 @@ a .payout-btn {
                         </div>
                 </div>
 
+                {{-- ISRC Code Field (Optional) --}}
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-8">
+                        <div class="upload-box" style="text-align: center; padding: 20px;">
+                            <div style="color: white; margin-bottom: 15px; font-size: 18px; font-weight: 600;">
+                                🎼 ISRC Code (Optional)
+                            </div>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="isrcCode" 
+                                   name="isrc_code" 
+                                   placeholder="Example: GXHE8-23-00001" 
+                                   value="{{ old('isrc_code') }}" 
+                                   maxlength="20"
+                                   style="padding: 12px; border-radius: 8px; border: none; background: rgba(255, 255, 255, 0.1); color: white; font-size: 16px; text-align: center; width: 100%; max-width: 400px; margin: 0 auto; text-transform: uppercase;"
+                                   oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '');"
+                                   onfocus="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.outline='none';"
+                                   onblur="this.style.background='rgba(255, 255, 255, 0.1)';">
+                            <small style="color: #b8a8d0; margin-top: 8px; display: block; font-size: 12px;">
+                                Enter your International Standard Recording Code (e.g., GXHE8-23-00001)
+                            </small>
+                            @error('isrc_code')
+                                <div class="text-danger mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row justify-content-center">
                     <div class="col-xxl-4 col-xl-4 col-lg-6 col-md-6 col-sm-12 py-4">
                             <div class="upload-box">

@@ -127,12 +127,19 @@ class ArtistController extends Controller
             // Note: older databases may not have an `is_active` column yet, so keep this simple
             $listenerPlans = UserSubscriptionPlan::orderBy('price')->get();
 
+            // Check if current user can tip artists (Super Listener only)
+            $canTipArtist = false;
+            if (Auth::check()) {
+                $canTipArtist = Auth::user()->hasUserFeature('tip_artists');
+            }
+            
             return view('frontend.artist-profile', compact(
                 'artist',
                 'profile',
                 'songs',
                 'artworks',
-                'listenerPlans'
+                'listenerPlans',
+                'canTipArtist'
             ));
         } catch (\Exception $e) {
             Log::error('Error loading public artist profile', [

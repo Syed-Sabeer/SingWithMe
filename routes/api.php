@@ -66,6 +66,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     
     // Playlist API routes - all require authentication
     Route::get('/playlists', [PlaylistController::class, 'getUserPlaylists']);
+    Route::get('/user/playlist-limit-check', [PlaylistController::class, 'checkPlaylistLimit']);
     Route::post('/playlist/create', [PlaylistController::class, 'createPlaylist']);
     Route::get('/playlist/{playlistName}', [PlaylistController::class, 'getPlaylistDetails']);
     Route::get('/songs', [PlaylistController::class, 'getAllSongs']);

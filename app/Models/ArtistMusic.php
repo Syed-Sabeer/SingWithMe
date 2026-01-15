@@ -18,6 +18,7 @@ class ArtistMusic extends Model
         'thumbnail_image',
         'listeners',
         'is_featured',
+        'isrc_code',
     ];
 
     protected $casts = [

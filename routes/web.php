@@ -298,10 +298,19 @@ Route::get('artist-agreement', function () {
     return view('frontend.artist-agreement');
 })->name('artist-agreement');
 
-// Playlist detail page
+// Tip Artist page - Only for Super Listener plan
 Route::get('tip-artist', function () {
+    if (!auth()->check()) {
+        return redirect()->route('user.portal')->with('error', 'Please login to access this feature.');
+    }
+    
+    $user = auth()->user();
+    if (!$user->hasUserFeature('tip_artists')) {
+        return redirect()->route('user.portal')->with('error', 'This feature is only available for Super Listener subscribers. Please upgrade your plan.');
+    }
+    
     return view('frontend.tip-artist');
-})->name('tip-artist');
+})->middleware('auth')->name('tip-artist');
 
 // Analytics & Insights Dashboard page
 Route::get('dashboard-analytics-insights', function () {

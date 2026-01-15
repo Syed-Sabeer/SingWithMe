@@ -50,7 +50,9 @@ class UserSubscription extends Model
             return false;
         }
 
-        $endDate = $this->usersubscription_date->addDays($this->usersubscription_duration);
+        // Create a copy to avoid modifying the original date
+        $startDate = \Carbon\Carbon::parse($this->usersubscription_date);
+        $endDate = $startDate->copy()->addDays($this->usersubscription_duration);
         return now()->isBefore($endDate);
     }
 

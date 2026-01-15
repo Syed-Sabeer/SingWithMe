@@ -111,6 +111,10 @@ INSERT INTO `artist_musics` (`id`, `driver_id`, `name`, `music_file`, `video_fil
 ALTER TABLE `artist_musics`
   ADD COLUMN IF NOT EXISTS `is_featured` tinyint(1) NOT NULL DEFAULT 0 AFTER `listeners`;
 
+-- ISRC code for tracks (manual entry)
+ALTER TABLE `artist_musics`
+  ADD COLUMN IF NOT EXISTS `isrc_code` varchar(20) NULL DEFAULT NULL AFTER `is_featured`;
+
 -- --------------------------------------------------------
 
 --

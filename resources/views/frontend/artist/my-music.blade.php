@@ -89,6 +89,9 @@
                                 <p class="title">{{ $music->name }}</p>
                                 <p class="meta">
                                     Uploaded {{ $music->created_at?->format('M d, Y') ?? '' }}
+                                    @if($music->isrc_code)
+                                        <br><span style="color: #b794f6; font-weight: 600;">ISRC: {{ $music->isrc_code }}</span>
+                                    @endif
                                 </p>
                             </div>
                         </div>

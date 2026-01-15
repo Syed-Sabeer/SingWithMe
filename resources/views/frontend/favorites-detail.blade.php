@@ -447,8 +447,10 @@ function displaySongs(songs) {
         return;
     }
 
-    container.innerHTML = songs.map((song, index) => `
-        <div class="song-item" onclick="playSong(${song.id}, '${song.name.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', '${song.thumbnail}', '${song.music_file}')">
+    container.innerHTML = songs.map((song, index) => {
+        const escapedISRC = song.isrc_code ? song.isrc_code.replace(/'/g, "\\'") : '';
+        return `
+        <div class="song-item" onclick="playSong(${song.id}, '${song.name.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', '${song.thumbnail}', '${song.music_file}', '${escapedISRC}')">
             <div class="song-number">${((currentPage - 1) * 20) + index + 1}</div>
             <div class="song-info">
                 <img src="${song.thumbnail || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAxMkgxNlYyOEgxNlYxMloiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTI0IDEySDI0VjI4SDI0VjEyWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'}" 
@@ -464,7 +466,7 @@ function displaySongs(songs) {
             <div class="song-duration">${song.duration || '0:00'}</div>
             <div class="song-added">${formatDate(song.added_at)}</div>
             <div class="song-actions" onclick="event.stopPropagation()">
-                <button class="btn play-button" onclick="playSong(${song.id}, '${song.name.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', '${song.thumbnail}', '${song.music_file}')" title="Play song">
+                <button class="btn play-button" onclick="playSong(${song.id}, '${song.name.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', '${song.thumbnail}', '${song.music_file}', '${escapedISRC}')" title="Play song">
                     <i class="fas fa-play"></i>
                 </button>
                 <button class="btn song-like-button liked" onclick="removeFromFavorites(${song.id})" title="Remove from favorites">
@@ -475,7 +477,8 @@ function displaySongs(songs) {
                 </button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // Update statistics
@@ -555,8 +558,8 @@ function updatePagination() {
 }
 
 // Play song
-function playSong(songId, name, artist, thumbnail, musicFile) {
-    console.log('Playing song:', { songId, name, artist, thumbnail, musicFile });
+function playSong(songId, name, artist, thumbnail, musicFile, isrcCode = null) {
+    console.log('Playing song:', { songId, name, artist, thumbnail, musicFile, isrcCode });
     
     if (window.MusicPlayer) {
         const track = {
@@ -564,7 +567,8 @@ function playSong(songId, name, artist, thumbnail, musicFile) {
             name: name,
             artist: artist,
             thumbnail: thumbnail,
-            music_file: musicFile
+            music_file: musicFile,
+            isrc_code: isrcCode || null // Include ISRC if provided
         };
         
         window.MusicPlayer.loadTrack(track);

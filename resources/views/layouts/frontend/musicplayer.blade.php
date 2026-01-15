@@ -120,6 +120,35 @@
                     </div>
                 </div>
 
+                <!-- Song Info Modal -->
+                <div class="song-info-modal" id="songInfoModal" style="display: none;">
+                    <div class="song-info-overlay" onclick="closeSongInfoModal()"></div>
+                    <div class="song-info-content">
+                        <button class="song-info-close" onclick="closeSongInfoModal()">&times;</button>
+                        <div class="song-info-header">
+                            <img id="songInfoCover" src="" alt="Album Cover" class="song-info-cover">
+                            <div class="song-info-title-section">
+                                <h2 id="songInfoTitle">Song Title</h2>
+                                <p id="songInfoArtist">Artist Name</p>
+                            </div>
+                        </div>
+                        <div class="song-info-body">
+                            <div class="song-info-item">
+                                <span class="song-info-label">ISRC Code:</span>
+                                <span class="song-info-value" id="songInfoISRC">—</span>
+                            </div>
+                            <div class="song-info-item">
+                                <span class="song-info-label">Duration:</span>
+                                <span class="song-info-value" id="songInfoDuration">—</span>
+                            </div>
+                            <div class="song-info-item">
+                                <span class="song-info-label">Plays:</span>
+                                <span class="song-info-value" id="songInfoPlays">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Controles de reprodução -->
                 <div class="playback-controls">
                     <div class="playback-buttons">
@@ -158,6 +187,138 @@
 <style>
 .bottom_fixedMucicPlayer.is-hidden {
     display: none;
+}
+
+/* Song Info Modal Styles */
+.song-info-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.song-info-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.song-info-content {
+    position: relative;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid rgba(183, 148, 246, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 10001;
+}
+
+.song-info-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(183, 148, 246, 0.2);
+    border: none;
+    color: #fff;
+    font-size: 28px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+.song-info-close:hover {
+    background: rgba(183, 148, 246, 0.4);
+}
+
+.song-info-header {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(183, 148, 246, 0.2);
+}
+
+.song-info-cover {
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.song-info-title-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.song-info-title-section h2 {
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+}
+
+.song-info-title-section p {
+    color: #b8a8d0;
+    font-size: 16px;
+    margin: 0;
+}
+
+.song-info-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.song-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(183, 148, 246, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(183, 148, 246, 0.2);
+}
+
+.song-info-label {
+    color: #b8a8d0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.song-info-value {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.song-info-value code {
+    background: rgba(183, 148, 246, 0.2);
+    color: #b794f6;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Courier New', monospace;
 }
 </style>
 

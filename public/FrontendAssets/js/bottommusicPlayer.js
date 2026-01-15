@@ -632,18 +632,102 @@ document.addEventListener('DOMContentLoaded', function() {
             if (element) {
                 element.onclick = () => {
                     closePopup();
-                    showNotification(actions[id]);
-                    if (id === 'share' && navigator.share) {
-                        navigator.share({
-                            title: 'Beautiful Song',
-                            text: 'Check out this amazing song by Amazing Artist!',
-                            url: location.href
-                        }).catch(() => { });
-                    } else if (id === 'share') {
-                        navigator.clipboard.writeText(`Check out "Beautiful Song" by Amazing Artist: ${location.href}`);
+                    if (id === 'info') {
+                        // Open song info modal instead of notification
+                        openSongInfoModal();
+                    } else {
+                        showNotification(actions[id]);
+                        if (id === 'share' && navigator.share) {
+                            navigator.share({
+                                title: 'Beautiful Song',
+                                text: 'Check out this amazing song by Amazing Artist!',
+                                url: location.href
+                            }).catch(() => { });
+                        } else if (id === 'share') {
+                            navigator.clipboard.writeText(`Check out "Beautiful Song" by Amazing Artist: ${location.href}`);
+                        }
                     }
                 };
             }
         });
     }
+
+    // Song Info Modal Functions
+    function openSongInfoModal() {
+        const modal = document.getElementById('songInfoModal');
+        if (!modal) return;
+
+        const track = window.MusicPlayer?.currentTrack;
+        if (!track) {
+            alert('No song is currently playing.');
+            return;
+        }
+
+        // Update modal content
+        const coverImg = document.getElementById('songInfoCover');
+        const titleEl = document.getElementById('songInfoTitle');
+        const artistEl = document.getElementById('songInfoArtist');
+        const isrcEl = document.getElementById('songInfoISRC');
+        const durationEl = document.getElementById('songInfoDuration');
+        const playsEl = document.getElementById('songInfoPlays');
+
+        if (coverImg) coverImg.src = track.thumbnail || coverImg.src;
+        if (titleEl) titleEl.textContent = track.name || 'Unknown Title';
+        if (artistEl) artistEl.textContent = track.artist || 'Unknown Artist';
+        
+        // Display ISRC
+        if (isrcEl) {
+            if (track.isrc_code) {
+                isrcEl.innerHTML = `<code>${track.isrc_code}</code>`;
+            } else {
+                isrcEl.textContent = '—';
+            }
+        }
+
+        // Display duration
+        if (durationEl && window.MusicPlayer?.audio) {
+            const audio = window.MusicPlayer.audio;
+            if (audio.duration && !isNaN(audio.duration)) {
+                const minutes = Math.floor(audio.duration / 60);
+                const seconds = Math.floor(audio.duration % 60);
+                durationEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            } else {
+                durationEl.textContent = '—';
+            }
+        }
+
+        // Display plays/listeners
+        if (playsEl) {
+            playsEl.textContent = track.listeners ? number_format(track.listeners) : '—';
+        }
+
+        // Show modal
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSongInfoModal() {
+        const modal = document.getElementById('songInfoModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Helper function for number formatting
+    function number_format(num) {
+        if (!num) return '0';
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSongInfoModal();
+        }
+    });
+
+    // Make functions globally available
+    window.openSongInfoModal = openSongInfoModal;
+    window.closeSongInfoModal = closeSongInfoModal;
 });
