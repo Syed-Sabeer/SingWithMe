@@ -72,12 +72,23 @@ class UserPortalController extends Controller
             }
         }
 
+        // Get user's downloaded songs count for display
+        $downloadedSongsCount = 0;
+        $downloadLimit = null;
+        if (auth()->check()) {
+            $user = auth()->user();
+            $downloadedSongsCount = \App\Models\UserOfflineDownload::where('user_id', $user->id)->count();
+            $downloadLimit = $user->getOfflineDownloadLimit();
+        }
+
         return view('frontend.user.user-portal', compact(
             'user_subscription_plans', 
             'currentSubscription',
             'currentPlan',
             'subscriptionFeatures',
-            'userStats'
+            'userStats',
+            'downloadedSongsCount',
+            'downloadLimit'
         ));
     }
 

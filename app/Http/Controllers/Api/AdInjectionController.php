@@ -112,34 +112,12 @@ class AdInjectionController extends Controller
             // Check if user should see ads
             $shouldShowAds = $this->adInjectionService->shouldShowAds($userId);
             
-            if (!$shouldShowAds) {
-                return response()->json([
-                    'success' => true,
-                    'show_ads' => false,
-                    'message' => 'Premium user - no ads'
-                ]);
-            }
-            
-            $ad = $this->adInjectionService->getRandomAd();
-            
-            if (!$ad) {
-                return response()->json([
-                    'success' => true,
-                    'show_ads' => false,
-                    'message' => 'No ads available'
-                ]);
-            }
+            $adData = $this->adInjectionService->getAdInjectionData($userId);
+            $timing = $this->adInjectionService->getAdTiming();
             
             return response()->json([
                 'success' => true,
-                'show_ads' => true,
-                'ad' => [
-                    'id' => $ad->id,
-                    'title' => $ad->title,
-                    'file_url' => $ad->file_url,
-                    'link' => $ad->link,
-                    'type' => $this->getAdType($ad->file)
-                ]
+                'data' => array_merge($adData, $timing)
             ]);
             
         } catch (\Exception $e) {

@@ -116,6 +116,11 @@ class User  extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(UserPlaylist::class);
     }
 
+    public function offlineDownloads()
+    {
+        return $this->hasMany(UserOfflineDownload::class);
+    }
+
     public function credits()
     {
         return $this->hasOne(UserCredit::class);
@@ -152,6 +157,23 @@ class User  extends Authenticatable implements MustVerifyEmail
             ->with('subscriptionPlan')
             ->latest('subscription_date')
             ->first();
+    }
+
+    /**
+     * Check if artist is a Certified Creator
+     */
+    public function isCertifiedCreator()
+    {
+        if (!$this->is_artist) {
+            return false;
+        }
+        
+        $subscription = $this->activeArtistSubscription;
+        if (!$subscription || !$subscription->subscriptionPlan) {
+            return false;
+        }
+        
+        return (bool) $subscription->subscriptionPlan->is_certified_badge;
     }
 
     /**

@@ -419,6 +419,252 @@
         loadNotifications();
     </script>
 
+    {{-- Global Ad Injection System Initialization --}}
+    <script>
+        // Global Ad Injection System (available on all pages)
+        if (typeof window.adInjectionSystem === 'undefined') {
+            window.adInjectionSystem = {
+                isEnabled: false,
+                currentAd: null,
+                adContainer: null,
+                isShowingAd: false,
+                showAdsBetweenSongs: true,
+                showAdsDuringPlayback: true,
+                adTimer: null,
+                nextAdTime: 30,
+                midSongAdShown: false,
+                countdownInterval: null,
+
+                // Initialize the ad injection system
+                init() {
+                    console.log('Global AdInjectionSystem: Initializing...');
+                    this.checkAdStatus();
+                },
+                
+                async checkAdStatus() {
+                    try {
+                        console.log('Global AdInjectionSystem: Checking ad status...');
+                        
+                        const response = await fetch('/api/ad-injection/data', {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            console.warn('Global AdInjectionSystem: Non-OK response', response.status);
+                            this.isEnabled = false;
+                            return;
+                        }
+                        
+                        const data = await response.json();
+                        console.log('Global AdInjectionSystem: API response data:', data);
+                        
+                        if (data.success && data.data && data.data.show_ads) {
+                            this.isEnabled = true;
+                            this.currentAd = data.data.ad;
+                            this.nextAdTime = data.data.next_ad_in_seconds || 30;
+                            console.log('Global AdInjectionSystem: Ads enabled', {
+                                ad: this.currentAd,
+                                nextAdIn: this.nextAdTime
+                            });
+                        } else {
+                            this.isEnabled = false;
+                            console.log('Global AdInjectionSystem: Ads disabled', {
+                                success: data.success,
+                                show_ads: data.data ? data.data.show_ads : 'no data',
+                                message: data.message
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Global AdInjectionSystem: Error checking ad status', error);
+                        this.isEnabled = false;
+                    }
+                },
+                
+                // Start ad timer for during-playback ads
+                startAdTimer() {
+                    if (!this.isEnabled || this.adTimer) return;
+                    
+                    const randomTime = Math.floor(Math.random() * 50) + 10; // 10-60 seconds
+                    console.log(`Global AdInjectionSystem: Starting ad timer for ${randomTime} seconds`);
+                    
+                    this.adTimer = setTimeout(() => {
+                        this.showAdDuringPlayback();
+                    }, randomTime * 1000);
+                },
+                
+                // Show ad between songs
+                showAdBetweenSongs() {
+                    if (!this.isEnabled || this.isShowingAd) return;
+                    console.log('Global AdInjectionSystem: Showing ad between songs');
+                    this.showAd();
+                },
+                
+                // Show ad during playback
+                showAdDuringPlayback() {
+                    if (!this.isEnabled || this.isShowingAd) return;
+                    console.log('Global AdInjectionSystem: Showing ad during playback');
+                    this.showAd();
+                },
+                
+                // Show ad at specific song progress
+                showAdAtProgress(progressPercent) {
+                    if (!this.isEnabled || this.isShowingAd || this.midSongAdShown) return;
+                    console.log(`Global AdInjectionSystem: Showing ad at ${progressPercent}% progress`);
+                    this.midSongAdShown = true;
+                    this.showAd();
+                },
+                
+                // Show the actual ad
+                showAd() {
+                    if (!this.currentAd || this.isShowingAd) return;
+                    
+                    console.log('Global AdInjectionSystem: Displaying ad', this.currentAd);
+                    
+                    // Pause music player
+                    if (window.MusicPlayer && window.MusicPlayer.audio) {
+                        window.MusicPlayer.audio.pause();
+                    }
+                    
+                    this.isShowingAd = true;
+                    
+                    // Create ad overlay
+                    const adOverlay = document.createElement('div');
+                    adOverlay.id = 'ad-overlay';
+                    adOverlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.95);
+                        z-index: 10000;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-family: Arial, sans-serif;
+                    `;
+                    
+                    const adContent = document.createElement('div');
+                    adContent.style.cssText = `
+                        text-align: center;
+                        max-width: 600px;
+                        padding: 2rem;
+                    `;
+                    
+                    const adTitle = document.createElement('h2');
+                    adTitle.textContent = this.currentAd.title || 'Advertisement';
+                    adTitle.style.cssText = `
+                        font-size: 2rem;
+                        margin-bottom: 1rem;
+                        color: #fff;
+                    `;
+                    
+                    let adMedia = '';
+                    if (this.currentAd.file_url) {
+                        const fileUrl = this.currentAd.file_url;
+                        const fileExtension = fileUrl.split('.').pop().toLowerCase();
+                        
+                        if (['mp4', 'webm', 'ogg', 'avi', 'mov'].includes(fileExtension)) {
+                            adMedia = `<video controls autoplay muted loop style="max-width: 100%; height: 400px; margin-bottom: 1rem; border-radius: 8px; background: #000;">
+                                <source src="${fileUrl}" type="video/${fileExtension}">
+                                Your browser does not support the video tag.
+                            </video>`;
+                        } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
+                            adMedia = `<img src="${fileUrl}" alt="${this.currentAd.title}" style="max-width: 100%; height: 400px; object-fit: cover; margin-bottom: 1rem; border-radius: 8px;">`;
+                        }
+                    }
+                    
+                    const countdown = document.createElement('div');
+                    countdown.id = 'ad-countdown';
+                    countdown.style.cssText = `
+                        font-size: 1.5rem;
+                        margin: 1rem 0;
+                        color: #ff6b6b;
+                    `;
+                    
+                    const skipButton = document.createElement('button');
+                    skipButton.textContent = 'Skip Ad';
+                    skipButton.style.cssText = `
+                        background: #ff6b6b;
+                        color: white;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        margin-top: 1rem;
+                    `;
+                    skipButton.onclick = () => this.hideAd();
+                    
+                    const clickLink = this.currentAd.link ? 
+                        `<a href="${this.currentAd.link}" target="_blank" style="color: #4ecdc4; text-decoration: none; font-size: 1.1rem; display: block; margin-top: 1rem;">Visit ${this.currentAd.title}</a>` : '';
+                    
+                    adContent.innerHTML = `
+                        ${adMedia}
+                        ${clickLink}
+                    `;
+                    adContent.appendChild(adTitle);
+                    adContent.appendChild(countdown);
+                    adContent.appendChild(skipButton);
+                    adOverlay.appendChild(adContent);
+                    document.body.appendChild(adOverlay);
+                    
+                    // Start countdown
+                    let timeLeft = 15;
+                    countdown.textContent = `Ad will end in ${timeLeft} seconds`;
+                    
+                    this.countdownInterval = setInterval(() => {
+                        timeLeft--;
+                        countdown.textContent = `Ad will end in ${timeLeft} seconds`;
+                        
+                        if (timeLeft <= 0) {
+                            clearInterval(this.countdownInterval);
+                            this.hideAd();
+                        }
+                    }, 1000);
+                },
+                
+                // Hide the ad
+                hideAd() {
+                    console.log('Global AdInjectionSystem: Hiding ad');
+                    
+                    if (this.countdownInterval) {
+                        clearInterval(this.countdownInterval);
+                        this.countdownInterval = null;
+                    }
+                    
+                    const adOverlay = document.getElementById('ad-overlay');
+                    if (adOverlay) {
+                        adOverlay.remove();
+                    }
+                    
+                    this.isShowingAd = false;
+                    
+                    // Resume music if it was playing
+                    if (window.MusicPlayer && window.MusicPlayer.isPlaying) {
+                        window.MusicPlayer.audio.play().catch(e => console.error('Error resuming audio:', e));
+                    }
+                }
+            };
+            
+            // Initialize on DOM ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    window.adInjectionSystem.init();
+                });
+            } else {
+                window.adInjectionSystem.init();
+            }
+        }
+    </script>
+
 @yield('script')
 @yield('js')
 

@@ -1097,7 +1097,13 @@
                 <!-- Welcome Section -->
                 <section class="welcome-section">
                     @auth
-                        <h1 class="welcome-title">Welcome back, {{ Auth::user()->name }}!
+                        <h1 class="welcome-title">
+                            Welcome back, {{ Auth::user()->name }}
+                            @if(isset($subscriptionFeatures) && ($subscriptionFeatures['supporter_badge'] ?? false))
+                                <span class="supporter-badge" style="display: inline-block; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; font-size: 0.6rem; padding: 4px 10px; border-radius: 12px; margin-left: 10px; font-weight: 600; vertical-align: middle;">
+                                    ⭐ Supporter
+                                </span>
+                            @endif
                             <div class="user-Lord">
                                 <lord-icon src="https://cdn.lordicon.com/zsixeihu.json" trigger="loop" delay="2000"
                                     colors="primary:#110a5c,secondary:#e5d1fa,tertiary:#e5d1fa,quaternary:#c69cf4">
@@ -1196,9 +1202,9 @@
                                     <strong style="color: #b794f6;">Offline Downloads:</strong> 
                                     @if($subscriptionFeatures['offline_downloads'])
                                         @if($subscriptionFeatures['offline_download_limit'])
-                                            Up to {{ $subscriptionFeatures['offline_download_limit'] }} songs
+                                            {{ $downloadedSongsCount ?? 0 }}/{{ $subscriptionFeatures['offline_download_limit'] }} songs
                                         @else
-                                            Unlimited
+                                            {{ $downloadedSongsCount ?? 0 }} (unlimited)
                                         @endif
                                     @else
                                         Not available
@@ -1208,6 +1214,24 @@
                                     <strong style="color: #b794f6;">Audio Quality:</strong> 
                                     {{ $subscriptionFeatures['high_quality'] ? 'HD Audio' : 'Standard' }}
                                 </div>
+                                @if($subscriptionFeatures['exclusive_content'])
+                                    <div style="color: #fff;">
+                                        <strong style="color: #b794f6;">Early Access:</strong> 
+                                        <span style="color: #fbbf24;">⭐ Enabled</span>
+                                    </div>
+                                @endif
+                                @if($subscriptionFeatures['tip_artists'])
+                                    <div style="color: #fff;">
+                                        <strong style="color: #b794f6;">Tip Artists:</strong> 
+                                        <span style="color: #10b981;">✓ Enabled</span>
+                                    </div>
+                                @endif
+                                @if($subscriptionFeatures['personalized_recommendations'])
+                                    <div style="color: #fff;">
+                                        <strong style="color: #b794f6;">Recommendations:</strong> 
+                                        <span style="color: #10b981;">✓ Personalized</span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </section>
@@ -1227,7 +1251,14 @@
                     @if($currentSubscription && $currentPlan)
                         <div class="current-plan-badge" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.2)); border: 2px solid rgba(139, 92, 246, 0.5); border-radius: 12px; padding: 15px 20px; margin-bottom: 30px; text-align: center;">
                             <div style="color: #b794f6; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px;">Current Plan</div>
-                            <div style="color: #fff; font-size: 1.3rem; font-weight: 700;">{{ $currentPlan->title }}</div>
+                            <div style="color: #fff; font-size: 1.3rem; font-weight: 700;">
+                                {{ $currentPlan->title }}
+                                @if($subscriptionFeatures['supporter_badge'] ?? false)
+                                    <span class="supporter-badge" style="display: inline-block; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; margin-left: 8px; font-weight: 600;">
+                                        ⭐ Supporter
+                                    </span>
+                                @endif
+                            </div>
                             @if($currentSubscription->usersubscription_date && $currentSubscription->usersubscription_duration)
                                 @php
                                     $endDate = \Carbon\Carbon::parse($currentSubscription->usersubscription_date)->addDays($currentSubscription->usersubscription_duration);
@@ -1239,6 +1270,11 @@
                                     @else
                                         Expired
                                     @endif
+                                </div>
+                            @endif
+                            @if($subscriptionFeatures['offline_downloads'] ?? false)
+                                <div style="color: #b8a8d0; font-size: 0.85rem; margin-top: 8px;">
+                                    📥 Downloads: {{ $downloadedSongsCount ?? 0 }}{{ $downloadLimit ? "/{$downloadLimit}" : " (unlimited)" }}
                                 </div>
                             @endif
                         </div>
@@ -1725,8 +1761,13 @@
                         <div class="quick-playlist-item" onclick="createSmartPlaylist('recently-played')">⏰ Recently
                             Played</div>
                         <div class="quick-playlist-item" onclick="createSmartPlaylist('liked')">❤️ Liked Songs</div>
-                        <div class="quick-playlist-item" onclick="createSmartPlaylist('recommended')">✨ Recommended
-                        </div>
+                        @if(auth()->check() && (auth()->user()->hasUserFeature('personalized_recommendations') ?? false))
+                            <div class="quick-playlist-item" onclick="loadPersonalizedRecommendations()">✨ Personalized Recommendations
+                            </div>
+                        @else
+                            <div class="quick-playlist-item" onclick="alert('Personalized recommendations are only available for Super Listener subscribers. Please upgrade your plan.');" style="opacity: 0.6; cursor: not-allowed;">✨ Personalized Recommendations
+                            </div>
+                        @endif
                         <div class="quick-playlist-item" onclick="createSmartPlaylist('trending')">📈 Trending</div>
                     </div>
                 </div>
@@ -1766,6 +1807,41 @@
                 </div>
             </div>
         </section>
+        @endauth
+
+        @auth
+        <!-- My Downloads Section -->
+        @if(isset($subscriptionFeatures) && ($subscriptionFeatures['offline_downloads'] ?? false))
+        <section class="song_list" style="margin-top: 40px;">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <lord-icon src="https://cdn.lordicon.com/wtrpyxpe.json" trigger="loop"
+                            colors="primary:#320a5c,secondary:#c69cf4,tertiary:#a866ee,quaternary:#c69cf4"
+                            style="width:250px;height:250px">
+                        </lord-icon>
+                    </div>
+                    <div>
+                        <h1 class="section-title">My Downloads</h1>
+                        <p class="section-subtitle">Your offline music collection</p>
+                    </div>
+                </div>
+
+                <div class="favorites-header d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="text-white mb-0">Downloaded Songs</h3>
+                        <p class="text-muted mb-0">{{ $downloadedSongsCount ?? 0 }}{{ $downloadLimit ? "/{$downloadLimit}" : " (unlimited)" }} songs downloaded</p>
+                    </div>
+                </div>
+
+                <div class="favorites-grid" id="downloadsGrid">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        @endif
         @endauth
 
 @endsection
@@ -4442,9 +4518,75 @@ function updateSubscriptionStatus(subscription) {
     // This could include updating plan buttons, showing subscription info, etc.
     console.log('Subscription updated:', subscription);
     
-    // You can add more UI updates here based on your needs
-    // For example, change "Current Plan" buttons to show the new plan
+    // Reload page to show updated subscription features
+    setTimeout(() => {
+        window.location.reload();
+    }, 1500);
 }
+
+// Pass subscription features to global scope for music player
+@if(auth()->check() && isset($subscriptionFeatures))
+    window.userSubscriptionFeatures = @json($subscriptionFeatures);
+@else
+    window.userSubscriptionFeatures = {
+        ad_free: false,
+        unlimited_playlists: false,
+        playlist_limit: 3,
+        offline_downloads: false,
+        offline_download_limit: 0,
+        high_quality: false,
+        exclusive_content: false,
+        tip_artists: false,
+        personalized_recommendations: false,
+        supporter_badge: false,
+        trending_access: true,
+    };
+@endif
+
+// Load personalized recommendations
+async function loadPersonalizedRecommendations() {
+    try {
+        const response = await fetch('/api/recommendations?limit=10', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.data.length > 0) {
+            // Display recommendations in favorites grid
+            const favoritesGrid = document.getElementById('favoritesGrid');
+            if (favoritesGrid) {
+                favoritesGrid.innerHTML = data.data.map(song => `
+                    <div class="favorite-song-card" onclick="playSong(${song.id}, '${song.name.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', '${song.thumbnail}', '${song.music_file}')">
+                        <div class="favorite-song-header">
+                            <img src="${song.thumbnail || '/storage/default-music.jpg'}" alt="${song.name}" class="favorite-song-thumbnail" onerror="this.src='/storage/default-music.jpg'">
+                            <div class="favorite-song-info">
+                                <h5 class="favorite-song-title">${song.name}</h5>
+                                <p class="favorite-song-artist">${song.artist}</p>
+                            </div>
+                        </div>
+                        <div class="favorite-song-actions">
+                            <button class="favorite-song-btn play-btn" onclick="event.stopPropagation(); playSong(${song.id}, '${song.name.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', '${song.thumbnail}', '${song.music_file}')">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else {
+            alert(data.message || 'No personalized recommendations available at this time.');
+        }
+    } catch (error) {
+        console.error('Error loading recommendations:', error);
+        alert('Error loading personalized recommendations. Please try again.');
+    }
+}
+
+window.loadPersonalizedRecommendations = loadPersonalizedRecommendations;
 
 // Load playlists when page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -4452,8 +4594,102 @@ document.addEventListener('DOMContentLoaded', function() {
     @if(auth()->check())
     loadPlaylists();
     loadFavorites();
+    @if(isset($subscriptionFeatures) && ($subscriptionFeatures['offline_downloads'] ?? false))
+    loadMyDownloads();
+    @endif
     @endif
 });
+
+// Load user's downloaded songs
+async function loadMyDownloads() {
+    try {
+        const response = await fetch('/api/downloads/my', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+        });
+
+        const data = await response.json();
+        const downloadsGrid = document.getElementById('downloadsGrid');
+
+        if (!downloadsGrid) return;
+
+        if (data.success && data.data.length > 0) {
+            downloadsGrid.innerHTML = data.data.map(song => `
+                <div class="favorite-song-card" onclick="playSong(${song.id}, '${song.name.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', '${song.thumbnail}', '${song.music_file}')">
+                    <div class="favorite-song-header">
+                        <img src="${song.thumbnail || '/storage/default-music.jpg'}" alt="${song.name}" class="favorite-song-thumbnail" onerror="this.src='/storage/default-music.jpg'">
+                        <div class="favorite-song-info">
+                            <h5 class="favorite-song-title">${song.name}</h5>
+                            <p class="favorite-song-artist">${song.artist}</p>
+                            <small style="color: #b794f6;">Downloaded: ${new Date(song.downloaded_at).toLocaleDateString()}</small>
+                        </div>
+                    </div>
+                    <div class="favorite-song-actions">
+                        <button class="favorite-song-btn play-btn" onclick="event.stopPropagation(); playSong(${song.id}, '${song.name.replace(/'/g, "\\'")}', '${song.artist.replace(/'/g, "\\'")}', '${song.thumbnail}', '${song.music_file}')">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="favorite-song-btn remove-btn" onclick="event.stopPropagation(); removeDownload(${song.id})" title="Remove download">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            downloadsGrid.innerHTML = `
+                <div class="no-favorites">
+                    <i class="fas fa-download"></i>
+                    <h4>No Downloads Yet</h4>
+                    <p>Download songs to listen offline</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading downloads:', error);
+        const downloadsGrid = document.getElementById('downloadsGrid');
+        if (downloadsGrid) {
+            downloadsGrid.innerHTML = `
+                <div class="no-favorites">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h4>Error Loading Downloads</h4>
+                    <p>Please try again later</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Remove download
+async function removeDownload(musicId) {
+    if (!confirm('Remove this song from your downloads?')) return;
+
+    try {
+        const response = await fetch(`/api/download/${musicId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            loadMyDownloads(); // Reload downloads
+            alert('Download removed successfully');
+        } else {
+            alert(data.message || 'Error removing download');
+        }
+    } catch (error) {
+        console.error('Error removing download:', error);
+        alert('Error removing download. Please try again.');
+    }
+}
+
+window.loadMyDownloads = loadMyDownloads;
+window.removeDownload = removeDownload;
 </script>
 
 @endsection

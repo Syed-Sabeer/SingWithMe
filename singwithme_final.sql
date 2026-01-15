@@ -4036,6 +4036,25 @@ CREATE TABLE IF NOT EXISTS `artist_wallets` (
   CONSTRAINT `fk_artist_wallets_user` FOREIGN KEY (`artist_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Add user offline downloads tracking table
+CREATE TABLE IF NOT EXISTS `user_offline_downloads` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `music_id` bigint(20) UNSIGNED NOT NULL,
+  `downloaded_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `file_size` bigint(20) DEFAULT NULL COMMENT 'File size in bytes',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_user_music` (`user_id`, `music_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_music_id` (`music_id`),
+  KEY `idx_downloaded_at` (`downloaded_at`),
+  CONSTRAINT `fk_user_offline_downloads_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_offline_downloads_music` FOREIGN KEY (`music_id`) REFERENCES `artist_musics` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
 -- --------------------------------------------------------
 -- Add banner_image column to profiles table
 -- --------------------------------------------------------

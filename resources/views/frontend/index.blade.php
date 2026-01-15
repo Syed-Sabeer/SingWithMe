@@ -585,94 +585,50 @@
                         <div class="col-lg-8">
                             <div class="music-list-row">
                                 <div class="row">
-                                    <div class="col-lg-12 col-md-12">
-                                        <div class="music-list-box wow right-animation" data-wow-duration="0.8s"
-                                            data-wow-delay="0.2s">
-                                            <div class="music-list-image">
-                                                <div class="back-img"
-                                                    style="background-image: url(/public/FrontendAssets/songs/Lady-Gaga-Die-With-a-Smile-Ft.-Bruno-Mars.webp);">
+                                    @if(isset($featured_tracks) && $featured_tracks->count() > 0)
+                                        @foreach($featured_tracks->take(4) as $index => $track)
+                                            @php
+                                                $artist = $track->user;
+                                                $isCertifiedCreator = $artist && $artist->isCertifiedCreator();
+                                                $showEarlyAccess = isset($userFeatures['has_early_access']) && $userFeatures['has_early_access'] && $isCertifiedCreator;
+                                                $thumbnail = $track->thumbnail_image ? asset('storage/' . $track->thumbnail_image) : asset('FrontendAssets/images/default-music.jpg');
+                                            @endphp
+                                            <div class="col-lg-12 col-md-12">
+                                                <div class="music-list-box wow right-animation" data-wow-duration="0.8s"
+                                                    data-wow-delay="{{ 0.2 + ($index * 0.1) }}s">
+                                                    <div class="music-list-image" style="position: relative;">
+                                                        <div class="back-img"
+                                                            style="background-image: url('{{ $thumbnail }}');">
+                                                        </div>
+                                                        @if($showEarlyAccess)
+                                                            <span class="early-access-badge" style="position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; font-size: 0.7rem; padding: 4px 8px; border-radius: 12px; font-weight: 600; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                                                ⭐ Early Access
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="music-list-info">
+                                                        <div class="music-info">
+                                                            <h2 class="music-name">{{ $track->name }}</h2>
+                                                            <p class="music-artist">{{ $artist->name ?? 'Unknown Artist' }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="music_controls">
+                                                        <div data-id="{{ $track->id }}" class="music-controls-item play play_btn" 
+                                                            onclick="playFeaturedTrack({{ $track->id }}, '{{ addslashes($track->name) }}', '{{ addslashes($artist->name ?? 'Unknown') }}', '{{ $thumbnail }}', '{{ $track->music_file_url ?? '' }}')">
+                                                            <i class="fas fa-play music-controls-item--icon play-icon"></i>
+                                                            <div class="play-icon-background"></div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="music-list-info">
-                                                <div class="music-info">
-                                                    <h2 class="music-name">Die With a Smile</h2>
-                                                    <p class="music-artist">Lady Gaga</p>
-                                                </div>
-                                            </div>
-                                            <div class="music_controls">
-                                                <div data-id="1" class="music-controls-item play play_btn">
-                                                    <i class="fas fa-play music-controls-item--icon play-icon"></i>
-                                                    <div class="play-icon-background"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-12 col-md-12">
-                                        <div class="music-list-box wow right-animation" data-wow-duration="0.8s"
-                                            data-wow-delay="0.3s">
-                                            <div class="music-list-image">
-                                                <div class="back-img"
-                                                    style="background-image: url(/public/FrontendAssets/songs/dandelions.jpg);">
-                                                </div>
-                                            </div>
-                                            <div class="music-list-info">
-                                                <div class="music-info">
-                                                    <h2 class="music-name">Dandelions</h2>
-                                                    <p class="music-artist">Ruth B.</p>
-                                                </div>
-                                            </div>
-                                            <div class="music_controls">
-                                                <div data-id="2" class="music-controls-item play play_btn">
-                                                    <i class="fas fa-play music-controls-item--icon play-icon"></i>
-                                                    <div class="play-icon-background"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-12 col-md-12">
-                                        <div class="music-list-box wow right-animation" data-wow-duration="0.8s"
-                                            data-wow-delay="0.4s">
-                                            <div class="music-list-image">
-                                                <div class="back-img"
-                                                    style="background-image: url(/public/FrontendAssets/songs/wanna\ be\ yours.jpeg);">
-                                                </div>
-                                            </div>
-                                            <div class="music-list-info">
-                                                <div class="music-info">
-                                                    <h2 class="music-name">I wanna be yours</h2>
-                                                    <p class="music-artist">Arctic Monkeys</p>
-                                                </div>
-                                            </div>
-                                            <div class="music_controls">
-                                                <div data-id="3" class="music-controls-item play_btn">
-                                                    <i class="fas fa-play music-controls-item--icon play-icon"></i>
-                                                    <div class="play-icon-background"></div>
-                                                </div>
+                                        @endforeach
+                                    @else
+                                        <div class="col-lg-12 col-md-12">
+                                            <div class="text-center py-4 text-muted">
+                                                No featured tracks available at this time.
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="col-lg-12 col-md-12">
-                                        <div class="music-list-box wow right-animation" data-wow-duration="0.8s"
-                                            data-wow-delay="0.5s">
-                                            <div class="music-list-image">
-                                                <div class="back-img"
-                                                    style="background-image: url(/public/FrontendAssets/songs/Señorita.jpeg);">
-                                                </div>
-                                            </div>
-                                            <div class="music-list-info">
-                                                <div class="music-info">
-                                                    <h2 class="music-name">Señorita</h2>
-                                                    <p class="music-artist">Shawn Mendes & Camila Cabello</p>
-                                                </div>
-                                            </div>
-                                            <div class="music_controls">
-                                                <div data-id="4" class="music-controls-item play_btn">
-                                                    <i class="fas fa-play music-controls-item--icon play-icon"></i>
-                                                    <div class="play-icon-background"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    @endif
                                     <!-- <div class="col-lg-12 col-md-12">
                                     <div class="music-list-box wow right-animation" data-wow-duration="0.8s"
                                         data-wow-delay="0.6s">
@@ -1579,5 +1535,23 @@ window.addEventListener('scroll', function () {
         });
 
         // certified section
+        
+        // Play featured track function
+        function playFeaturedTrack(trackId, name, artist, thumbnail, musicFile) {
+            if (window.MusicPlayer) {
+                const track = {
+                    id: trackId,
+                    name: name,
+                    artist: artist,
+                    thumbnail: thumbnail,
+                    music_file: musicFile
+                };
+                window.MusicPlayer.loadTrack(track);
+                window.MusicPlayer.play();
+            } else {
+                console.error('Music player not available');
+            }
+        }
+        window.playFeaturedTrack = playFeaturedTrack;
     </script>
 @endsection

@@ -15,6 +15,7 @@ use App\Models\Blog;
 use App\Models\LiveVideo;
 use App\Models\User;
 use App\Models\ArtworkPhoto;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
@@ -40,8 +41,35 @@ public function index()
             ->orderByDesc('created_at')
             ->take(6)
             ->get();
+        // Get featured tracks - filter by early access if user has subscription
+        $user = auth()->user();
+        $hasEarlyAccess = false;
+        if ($user) {
+            $hasEarlyAccess = $user->hasUserFeature('exclusive_content');
+        }
+        
+        // Get Certified Creator artist IDs for early access filtering
+        $certifiedCreatorIds = [];
+        if ($hasEarlyAccess) {
+            // Super Listeners can see all tracks including from Certified Creators
+            $certifiedCreatorIds = \App\Models\User::where('is_artist', true)
+                ->get()
+                ->filter(function($artist) {
+                    return $artist->isCertifiedCreator();
+                })
+                ->pluck('id')
+                ->toArray();
+        }
+        
         $featured_tracks = \App\Models\ArtistMusic::with('user')
             ->where('is_featured', true)
+            ->when(!$hasEarlyAccess, function($query) use ($certifiedCreatorIds) {
+                // Regular users exclude tracks from Certified Creators (early access only)
+                if (!empty($certifiedCreatorIds)) {
+                    $query->whereNotIn('driver_id', $certifiedCreatorIds);
+                }
+                return $query;
+            })
             ->orderByDesc('created_at')
             ->take(6)
             ->get();
@@ -49,6 +77,12 @@ public function index()
             ->latest('created_at')
             ->take(3)
             ->get();
+
+        // Get user subscription features for frontend
+        $userFeatures = [
+            'has_early_access' => $hasEarlyAccess,
+            'has_supporter_badge' => $user ? $user->hasUserFeature('supporter_badge') : false,
+        ];
 
         return view('frontend.index',compact(
             'about_details',
@@ -58,7 +92,8 @@ public function index()
             'recent_artists',
             'featured_artists',
             'featured_tracks',
-            'latest_artworks'
+            'latest_artworks',
+            'userFeatures'
         ));
 }
 

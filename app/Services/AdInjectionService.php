@@ -37,9 +37,11 @@ class AdInjectionService
             
             // Check if this is a free plan (price = 0) or if ads are enabled
             $isFreePlan = $plan->price == 0;
-            $hasAdsEnabled = $plan->is_ads == 0; // 0 = show ads, 1 = no ads
+            // is_ads: 0 = show ads, 1 = ad-free (no ads)
+            $hasAdsEnabled = $plan->is_ads == 0; // 0 means ads are shown
             
-            // Show ads if it's a free plan OR if ads are explicitly enabled
+            // Show ads if it's a free plan OR if ads are explicitly enabled (is_ads = 0)
+            // Hide ads if user has ad-free subscription (is_ads = 1)
             $showAds = $isFreePlan || $hasAdsEnabled;
             
             Log::info('AdInjectionService: Subscription plan ad setting', [
@@ -163,6 +165,7 @@ class AdInjectionService
                     'id' => $ad->id,
                     'title' => $ad->title,
                     'file_url' => $ad->file_url,
+                    'file' => $ad->file, // Include file path for fallback
                     'link' => $ad->link,
                     'type' => $this->getAdType($ad->file)
                 ]

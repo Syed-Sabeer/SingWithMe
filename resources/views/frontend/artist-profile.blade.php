@@ -318,6 +318,20 @@
     object-fit: cover;
 }
 
+.artistProfileSec .song-row td:last-child {
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.artistProfileSec .song-row td:last-child:hover {
+    transform: scale(1.2);
+}
+
+.artistProfileSec .song-row td:last-child i.fas.fa-heart {
+    color: #ff3344;
+}
+
 .artistProfileSec .song-row.playing {
     color: #9465e4;
 }
@@ -1395,7 +1409,7 @@ h1,h2,h3 {
                                     <th>Artist</th>
                                     <th>Album</th>
                                     <th style="width: 80px;">Time</th>
-                                    <th style="width: 50px;"><i class="fa-solid fa-clock"></i></th>
+                                    <th style="width: 50px;"><i class="fa-solid fa-heart"></i></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1418,7 +1432,9 @@ h1,h2,h3 {
                                         <td>{{ $displayName }}</td>
                                         <td>Single</td>
                                         <td>3:30</td>
-                                        <td><i class="fa-regular fa-heart"></i></td>
+                                        <td onclick="event.stopPropagation(); toggleLike({{ $song->id }});" style="cursor: pointer;">
+                                            <i class="fa-regular fa-heart favorite-icon-{{ $song->id }}" data-song-id="{{ $song->id }}" title="Add to favorites"></i>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
@@ -1642,11 +1658,16 @@ h1,h2,h3 {
                 </td>
                 <td>${song.album}</td>
                 <td>${song.time}</td>
-                <td><i class="fa-regular fa-heart"></i></td>
+                <td onclick="event.stopPropagation(); toggleLike(${song.id});" style="cursor: pointer;">
+                    <i class="fa-regular fa-heart favorite-icon-${song.id}" data-song-id="${song.id}" title="Add to favorites"></i>
+                </td>
             `;
             row.onclick = () => playSong(index);
             songListBody.appendChild(row);
         });
+        
+        // Load favorite status for all songs
+        loadFavoriteStatus();
 
         // --- Menu Tab Functionality ---
         const tabLinks = document.querySelectorAll('.tab-link');
@@ -1672,6 +1693,129 @@ h1,h2,h3 {
 
         // Ensure the Home tab is active on load
         switchTab('home-content');
+        
+        // Toggle like status
+        async function toggleLike(songId) {
+            try {
+                const response = await fetch('/api/favorites/toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        music_id: songId
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update all favorite icons for this song (both tables)
+                    const icons = document.querySelectorAll(`.favorite-icon-${songId}, [data-song-id="${songId}"]`);
+                    
+                    icons.forEach(icon => {
+                        if (data.is_favorite) {
+                            icon.className = 'fas fa-heart favorite-icon-' + songId;
+                            icon.style.color = '#ff3344';
+                            icon.title = 'Remove from favorites';
+                        } else {
+                            icon.className = 'fa-regular fa-heart favorite-icon-' + songId;
+                            icon.style.color = '';
+                            icon.title = 'Add to favorites';
+                        }
+                    });
+                    
+                    // Show notification
+                    const toast = document.getElementById('toast');
+                    const toastMessage = document.getElementById('toastMessage');
+                    if (typeof showNotification === 'function') {
+                        showNotification(data.message, 'success');
+                    } else if (toast && toastMessage) {
+                        toastMessage.textContent = data.message;
+                        toast.classList.add('show');
+                        setTimeout(() => {
+                            if (toast) toast.classList.remove('show');
+                        }, 3000);
+                    } else {
+                        console.log(data.message);
+                    }
+                } else {
+                    const toast = document.getElementById('toast');
+                    const toastMessage = document.getElementById('toastMessage');
+                    if (typeof showNotification === 'function') {
+                        showNotification(data.message || 'Failed to update favorite status', 'error');
+                    } else if (toast && toastMessage) {
+                        toastMessage.textContent = data.message || 'Failed to update favorite status';
+                        toast.classList.add('show');
+                        setTimeout(() => {
+                            if (toast) toast.classList.remove('show');
+                        }, 3000);
+                    } else {
+                        alert(data.message || 'Failed to update favorite status');
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling like:', error);
+                const toast = document.getElementById('toast');
+                const toastMessage = document.getElementById('toastMessage');
+                if (typeof showNotification === 'function') {
+                    showNotification('Failed to update favorite status', 'error');
+                } else if (toast && toastMessage) {
+                    toastMessage.textContent = 'Failed to update favorite status';
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 3000);
+                } else {
+                    alert('Failed to update favorite status');
+                }
+            }
+        }
+
+        // Load favorite status for all songs
+        async function loadFavoriteStatus() {
+            try {
+                const response = await fetch('/api/favorites', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    }
+                });
+
+                if (!response.ok) {
+                    console.warn('Failed to load favorites:', response.status);
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if (data.success && data.data && Array.isArray(data.data)) {
+                    const favoriteIds = data.data.map(fav => fav.id || fav.music_id).filter(id => id);
+                    
+                    // Update icons for all favorited songs
+                    favoriteIds.forEach(songId => {
+                        const icons = document.querySelectorAll(`.favorite-icon-${songId}, [data-song-id="${songId}"]`);
+                        icons.forEach(icon => {
+                            icon.className = 'fas fa-heart favorite-icon-' + songId;
+                            icon.style.color = '#ff3344';
+                            icon.title = 'Remove from favorites';
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading favorite status:', error);
+            }
+        }
+        
+        // Load favorites when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadFavoriteStatus);
+        } else {
+            loadFavoriteStatus();
+        }
+        
+        window.toggleLike = toggleLike;
+        window.loadFavoriteStatus = loadFavoriteStatus;
     </script>
 
 

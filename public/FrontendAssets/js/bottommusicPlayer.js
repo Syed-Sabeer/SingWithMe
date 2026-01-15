@@ -91,7 +91,16 @@ window.MusicPlayer = {
         
         // Check if music file exists, if not use a fallback
         const musicFile = track.music_file || track.audio_url || '';
-        if (musicFile && musicFile.includes('storage/')) {
+        
+        // Check if user has HD audio feature and use appropriate quality
+        if (window.userSubscriptionFeatures && window.userSubscriptionFeatures.high_quality && musicFile) {
+            // For HD audio, use the original file (could be enhanced with quality parameter)
+            this.audio.src = musicFile;
+            if (this.audio) {
+                // Set audio quality/preload for better quality
+                this.audio.preload = 'auto';
+            }
+        } else if (musicFile && musicFile.includes('storage/')) {
             this.audio.src = musicFile;
         } else {
             // Use a silent audio data URL as fallback
@@ -129,7 +138,7 @@ window.MusicPlayer = {
         }
     },
     
-    // Track play for monthly analytics
+    // Track play for monthly analytics and royalty calculation
     async trackPlay() {
         if (!this.currentTrack || !this.currentTrack.id) {
             console.log('MusicPlayer: No current track to track play');
@@ -143,14 +152,17 @@ window.MusicPlayer = {
                 artist: this.currentTrack.artist
             });
             
+            // Track initial play (0 duration - will be updated when song ends)
             const response = await fetch('/api/monthly-plays/track', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                 },
                 body: JSON.stringify({
-                    music_id: this.currentTrack.id
+                    music_id: this.currentTrack.id,
+                    stream_duration: 0 // Initial play, duration will be tracked on song end
                 })
             });
             
@@ -172,7 +184,8 @@ window.MusicPlayer = {
                     monthly_play_id: data.data.monthly_play_id,
                     current_plays: data.data.current_plays,
                     month: data.data.month,
-                    year: data.data.year
+                    year: data.data.year,
+                    stream_logged: data.data.stream_logged
                 });
             } else {
                 console.warn('MusicPlayer: Failed to track play', data.message);
@@ -180,6 +193,55 @@ window.MusicPlayer = {
             
         } catch (error) {
             console.error('MusicPlayer: Error tracking play', error);
+        }
+    },
+    
+    // Track complete stream when song ends (for royalty calculation)
+    async trackCompleteStream() {
+        if (!this.currentTrack || !this.currentTrack.id || !this.audio) {
+            return;
+        }
+        
+        try {
+            // Get actual played duration (currentTime when song ends)
+            const streamDuration = Math.floor(this.audio.currentTime || this.audio.duration || 0);
+            
+            // Only track if stream is 30+ seconds (complete stream for royalty)
+            if (streamDuration < 30) {
+                console.log('MusicPlayer: Stream duration too short for royalty calculation', streamDuration);
+                return;
+            }
+            
+            console.log('MusicPlayer: Tracking complete stream for royalty calculation', {
+                music_id: this.currentTrack.id,
+                duration: streamDuration,
+                is_complete: true
+            });
+            
+            const response = await fetch('/api/monthly-plays/track', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                },
+                body: JSON.stringify({
+                    music_id: this.currentTrack.id,
+                    stream_duration: streamDuration
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    console.log('MusicPlayer: Complete stream tracked for royalty calculation', {
+                        stream_logged: data.data.stream_logged,
+                        is_complete: streamDuration >= 30
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('MusicPlayer: Error tracking complete stream', error);
         }
     },
     
@@ -250,6 +312,9 @@ window.MusicPlayer = {
         console.log('MusicPlayer: Song ended, checking for ads...');
         console.log('MusicPlayer: Ad injection system available:', !!window.adInjectionSystem);
         console.log('MusicPlayer: Ad system enabled:', window.adInjectionSystem ? window.adInjectionSystem.isEnabled : 'N/A');
+        
+        // Track complete stream for royalty calculation
+        this.trackCompleteStream();
         
         // Wait a bit for ad system to initialize if not available
         if (!window.adInjectionSystem) {
@@ -635,16 +700,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (id === 'info') {
                         // Open song info modal instead of notification
                         openSongInfoModal();
+                    } else if (id === 'download') {
+                        // Handle download with subscription check
+                        handleDownload();
                     } else {
                         showNotification(actions[id]);
                         if (id === 'share' && navigator.share) {
+                            const track = window.MusicPlayer?.currentTrack;
                             navigator.share({
-                                title: 'Beautiful Song',
-                                text: 'Check out this amazing song by Amazing Artist!',
+                                title: track?.name || 'Beautiful Song',
+                                text: `Check out "${track?.name || 'this song'}" by ${track?.artist || 'Amazing Artist'}!`,
                                 url: location.href
                             }).catch(() => { });
                         } else if (id === 'share') {
-                            navigator.clipboard.writeText(`Check out "Beautiful Song" by Amazing Artist: ${location.href}`);
+                            const track = window.MusicPlayer?.currentTrack;
+                            navigator.clipboard.writeText(`Check out "${track?.name || 'this song'}" by ${track?.artist || 'Amazing Artist'}: ${location.href}`);
                         }
                     }
                 };
@@ -728,6 +798,73 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Make functions globally available
-    window.openSongInfoModal = openSongInfoModal;
-    window.closeSongInfoModal = closeSongInfoModal;
+window.openSongInfoModal = openSongInfoModal;
+window.closeSongInfoModal = closeSongInfoModal;
+
+// Download handler with subscription check
+async function handleDownload() {
+    const track = window.MusicPlayer?.currentTrack;
+    if (!track || !track.id) {
+        showNotification('No song selected for download', 'error');
+        return;
+    }
+
+    try {
+        // Check download stats first
+        const statsResponse = await fetch('/api/download/stats', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+        });
+
+        if (statsResponse.ok) {
+            const stats = await statsResponse.json();
+            if (!stats.can_download) {
+                alert(stats.message || 'You have reached your download limit. Please upgrade your plan for more downloads.');
+                return;
+            }
+        }
+
+        // Proceed with download
+        const response = await fetch(`/api/download/${track.id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // For file downloads, create blob and download
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${track.name}.mp3`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            showNotification(`Downloaded: ${track.name}`, 'success');
+            
+            // Reload downloads if on user portal
+            if (typeof loadMyDownloads === 'function') {
+                setTimeout(() => loadMyDownloads(), 1000);
+            }
+        } else {
+            const data = await response.json();
+            showNotification(data.message || 'Download failed', 'error');
+        }
+    } catch (error) {
+        console.error('Download error:', error);
+        showNotification('Error downloading song. Please try again.', 'error');
+    }
+}
+
+window.handleDownload = handleDownload;
 });

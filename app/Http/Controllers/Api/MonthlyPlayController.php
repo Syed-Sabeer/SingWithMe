@@ -60,19 +60,29 @@ class MonthlyPlayController extends Controller
             $monthlyPlay = MonthlyPlay::incrementPlay($userId, $musicId);
 
             // Also log to stream_stats table for royalty calculation
-            // Mark as complete if stream duration is significant (e.g., > 30 seconds)
-            $streamDuration = $request->get('stream_duration', 0);
+            // Mark as complete if stream duration is significant (e.g., >= 30 seconds)
+            $streamDuration = (int) $request->get('stream_duration', 0);
             $isComplete = $streamDuration >= 30; // Consider complete if 30+ seconds
 
-            StreamStat::create([
-                'music_id' => $musicId,
-                'artist_id' => $music->driver_id,
-                'user_id' => $userId,
-                'stream_duration' => $streamDuration,
-                'ip_address' => $request->ip(),
-                'is_complete' => $isComplete,
-                'streamed_at' => now(),
-            ]);
+            // Only create stream stat if duration > 0 (to avoid duplicate entries for same play)
+            // If duration is 0, it's just a play start, not a complete stream
+            if ($streamDuration > 0) {
+                StreamStat::create([
+                    'music_id' => $musicId,
+                    'artist_id' => $music->driver_id,
+                    'user_id' => $userId,
+                    'stream_duration' => $streamDuration,
+                    'ip_address' => $request->ip(),
+                    'is_complete' => $isComplete,
+                    'streamed_at' => now(),
+                ]);
+                
+                Log::info('MonthlyPlayController: Stream stat logged', [
+                    'music_id' => $musicId,
+                    'duration' => $streamDuration,
+                    'is_complete' => $isComplete
+                ]);
+            }
 
             // Increment listeners count on the music track
             $music->increment('listeners');

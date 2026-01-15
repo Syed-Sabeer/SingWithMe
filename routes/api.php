@@ -81,6 +81,15 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('/favorites/check', [PlaylistController::class, 'checkFavorites']);
     Route::get('/favorites', [PlaylistController::class, 'getUserFavorites']);
     Route::get('/favorites/latest', [PlaylistController::class, 'getLatestFavorites']);
+    
+    // Download routes
+    Route::get('/download/stats', [\App\Http\Controllers\Api\DownloadController::class, 'getDownloadStats']);
+    Route::get('/download/{musicId}', [\App\Http\Controllers\Api\DownloadController::class, 'download']);
+    Route::delete('/download/{musicId}', [\App\Http\Controllers\Api\DownloadController::class, 'removeDownload']);
+    Route::get('/downloads/my', [\App\Http\Controllers\Api\DownloadController::class, 'getMyDownloads']);
+    
+    // Recommendations API (requires authentication)
+    Route::get('/recommendations', [\App\Http\Controllers\Api\RecommendationController::class, 'getRecommendations']);
 });
 
 // Public API routes (no authentication required)

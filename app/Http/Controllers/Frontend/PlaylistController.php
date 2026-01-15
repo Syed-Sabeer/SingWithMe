@@ -355,7 +355,13 @@ class PlaylistController extends Controller
                     });
             }
 
-            $songsData = $songs->map(function ($song) use ($userPlaylists) {
+            // Get user's subscription features for HD audio
+            $hasHDAudio = false;
+            if (auth()->check()) {
+                $hasHDAudio = auth()->user()->hasUserFeature('high_quality');
+            }
+
+            $songsData = $songs->map(function ($song) use ($userPlaylists, $hasHDAudio) {
                 return [
                     'id' => $song->id,
                     'name' => $song->name,
