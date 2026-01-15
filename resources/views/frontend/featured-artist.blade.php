@@ -451,7 +451,7 @@
     <div class="header">
         <h1>All Artists</h1>
         <p>Discover music creators from every genre</p>
-        <div class="artist-count"><span id="totalCount">48</span> artists available</div>
+        <div class="artist-count"><span id="totalCount">{{ count($artists ?? []) }}</span> artists available</div>
     </div>
 
     <div class="filter-bar">
@@ -479,7 +479,7 @@
                         <option value="New">New</option>
                     </select>
                     <select id="sortFilter">
-                        <option value="followers">Most Followers</option>
+                        <option value="subscribers" selected>Most Subscribers</option>
                         <option value="listeners">Most Monthly Listeners</option>
                         <option value="newest">Newly Added</option>
                     </select>
@@ -531,7 +531,12 @@
         const artistsPerPage = 12;
 
         function formatNumber(num) {
-            return num;
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
         }
 
         function createArtistCard(artist) {
@@ -619,10 +624,13 @@
             });
 
             filteredArtists.sort((a, b) => {
-                if (sortFilter === 'followers') {
-                    return parseFloat(b.followers) - parseFloat(a.followers);
+                if (sortFilter === 'subscribers') {
+                    return (b.subscribers || 0) - (a.subscribers || 0);
                 } else if (sortFilter === 'listeners') {
-                    return parseFloat(b.listeners) - parseFloat(a.listeners);
+                    return (b.listeners || 0) - (a.listeners || 0);
+                } else if (sortFilter === 'newest') {
+                    // For newest, we'd need a created_at field, but for now just keep original order
+                    return 0;
                 }
                 return 0;
             });

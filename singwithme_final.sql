@@ -111,6 +111,10 @@ INSERT INTO `artist_musics` (`id`, `driver_id`, `name`, `music_file`, `video_fil
 ALTER TABLE `artist_musics`
   ADD COLUMN IF NOT EXISTS `is_featured` tinyint(1) NOT NULL DEFAULT 0 AFTER `listeners`;
 
+-- Duration column for tracks (in seconds)
+ALTER TABLE `artist_musics`
+  ADD COLUMN IF NOT EXISTS `duration` int(11) DEFAULT NULL COMMENT 'Duration in seconds' AFTER `listeners`;
+
 -- ISRC code for tracks (manual entry)
 ALTER TABLE `artist_musics`
   ADD COLUMN IF NOT EXISTS `isrc_code` varchar(20) NULL DEFAULT NULL AFTER `is_featured`;
@@ -4085,6 +4089,39 @@ CREATE TABLE IF NOT EXISTS `artist_followers` (
   CONSTRAINT `fk_artist_followers_artist` FOREIGN KEY (`artist_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_artist_followers_follower` FOREIGN KEY (`follower_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+-- Artist Payment Details Table (for storing bank/PayPal details)
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `artist_payment_details` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `artist_id` bigint(20) UNSIGNED NOT NULL,
+  `payment_method` enum('bank_transfer','paypal','wise','other') NOT NULL DEFAULT 'bank_transfer',
+  `account_name` varchar(255) DEFAULT NULL COMMENT 'Account holder name',
+  `account_number` varchar(255) DEFAULT NULL COMMENT 'Bank account number or PayPal email',
+  `routing_number` varchar(50) DEFAULT NULL COMMENT 'Bank routing/SWIFT code',
+  `bank_name` varchar(255) DEFAULT NULL COMMENT 'Bank name',
+  `paypal_email` varchar(255) DEFAULT NULL COMMENT 'PayPal email address',
+  `wise_email` varchar(255) DEFAULT NULL COMMENT 'Wise email address',
+  `account_details_json` text DEFAULT NULL COMMENT 'Additional details as JSON',
+  `is_primary` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Primary payment method',
+  `is_verified` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Admin verified',
+  `verified_at` timestamp NULL DEFAULT NULL,
+  `verified_by` bigint(20) UNSIGNED DEFAULT NULL COMMENT 'Admin who verified',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_artist_id` (`artist_id`),
+  KEY `idx_payment_method` (`payment_method`),
+  KEY `idx_is_primary` (`is_primary`),
+  CONSTRAINT `fk_artist_payment_details_artist` FOREIGN KEY (`artist_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_artist_payment_details_verified_by` FOREIGN KEY (`verified_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Add attachment field to payout_requests table
+ALTER TABLE `payout_requests`
+  ADD COLUMN IF NOT EXISTS `attachment_file` varchar(255) DEFAULT NULL COMMENT 'Admin attachment file path' AFTER `admin_notes`;
 
 COMMIT;
 

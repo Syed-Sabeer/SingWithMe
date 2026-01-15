@@ -905,14 +905,24 @@ h1,h2,h3 {
             ? $songs->map(function ($song) use ($displayName) {
                   /** @var \App\Models\ArtistMusic $song */
                   $thumb = $song->thumbnail_image_url ?: 'https://via.placeholder.com/150x150?text=Track';
+                  
+                  // Format duration
+                  $duration = '0:00';
+                  if ($song->duration && $song->duration > 0) {
+                      $minutes = floor($song->duration / 60);
+                      $seconds = $song->duration % 60;
+                      $duration = sprintf('%d:%02d', $minutes, $seconds);
+                  }
+                  
                   return [
                       'id' => $song->id,
                       'title' => $song->name,
                       'album' => $displayName,
-                      'isrc_code' => $song->isrc_code, // Add ISRC code
-                      // Duration not stored yet, so show placeholder
-                      'time' => '3:30',
+                      'isrc_code' => $song->isrc_code,
+                      'duration' => $song->duration ?? null, // Duration in seconds
+                      'time' => $duration, // Formatted duration
                       'img' => $thumb,
+                      'music_file' => $song->music_file_url, // Add music file URL for playback
                   ];
               })->values()
             : collect();
@@ -1431,7 +1441,17 @@ h1,h2,h3 {
                                         </td>
                                         <td>{{ $displayName }}</td>
                                         <td>Single</td>
-                                        <td>3:30</td>
+                                        <td>
+                                            @php
+                                                $duration = '0:00';
+                                                if ($song->duration && $song->duration > 0) {
+                                                    $minutes = floor($song->duration / 60);
+                                                    $seconds = $song->duration % 60;
+                                                    $duration = sprintf('%d:%02d', $minutes, $seconds);
+                                                }
+                                            @endphp
+                                            {{ $duration }}
+                                        </td>
                                         <td onclick="event.stopPropagation(); toggleLike({{ $song->id }});" style="cursor: pointer;">
                                             <i class="fa-regular fa-heart favorite-icon-{{ $song->id }}" data-song-id="{{ $song->id }}" title="Add to favorites"></i>
                                         </td>
@@ -1614,30 +1634,90 @@ h1,h2,h3 {
         }
 
         function startPlayback() {
+            if (currentSongIndex < 0 || currentSongIndex >= songs.length) return;
+            
+            const song = songs[currentSongIndex];
+            if (!song.music_file) {
+                console.error('No music file available for song:', song.title);
+                alert('Audio file not available for this song');
+                return;
+            }
+            
             isPlaying = true;
             masterPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
 
-            let progress = 0;
-            clearInterval(timer);
-            timer = setInterval(() => {
-                if (progress < 100) {
-                    progress += 0.5;
-                    progressFill.style.width = progress + '%';
-                } else {
-                    clearInterval(timer);
-                    playSong((currentSongIndex + 1) % songs.length);
+            // Use the global MusicPlayer if available
+            if (window.MusicPlayer && song.music_file) {
+                const track = {
+                    id: song.id,
+                    name: song.title,
+                    artist: song.album,
+                    thumbnail: song.img,
+                    music_file: song.music_file,
+                    isrc_code: song.isrc_code || null
+                };
+                window.MusicPlayer.loadTrack(track);
+                window.MusicPlayer.play();
+            } else {
+                // Fallback: use local audio element
+                let localAudio = document.getElementById('local-audio-player');
+                if (!localAudio) {
+                    localAudio = new Audio();
+                    localAudio.id = 'local-audio-player';
+                    localAudio.style.display = 'none';
+                    document.body.appendChild(localAudio);
+                    
+                    localAudio.addEventListener('ended', () => {
+                        playSong((currentSongIndex + 1) % songs.length);
+                    });
+                    
+                    localAudio.addEventListener('timeupdate', () => {
+                        if (localAudio.duration) {
+                            const progress = (localAudio.currentTime / localAudio.duration) * 100;
+                            progressFill.style.width = progress + '%';
+                            document.getElementById('curr-time').innerText = formatTime(localAudio.currentTime);
+                        }
+                    });
                 }
-            }, 500);
+                
+                localAudio.src = song.music_file;
+                localAudio.play().catch(err => {
+                    console.error('Error playing audio:', err);
+                    alert('Error playing audio. Please check if the file exists.');
+                });
+            }
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? "0" + secs : secs}`;
         }
 
         masterPlay.onclick = () => {
             if (!songs.length) return;
-            if (currentSongIndex === -1) playSong(0);
-            else {
+            if (currentSongIndex === -1) {
+                playSong(0);
+            } else {
                 isPlaying = !isPlaying;
                 masterPlay.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
-                if (!isPlaying) clearInterval(timer);
-                else startPlayback();
+                
+                if (window.MusicPlayer) {
+                    if (isPlaying) {
+                        window.MusicPlayer.play();
+                    } else {
+                        window.MusicPlayer.pause();
+                    }
+                } else {
+                    const localAudio = document.getElementById('local-audio-player');
+                    if (localAudio) {
+                        if (isPlaying) {
+                            localAudio.play();
+                        } else {
+                            localAudio.pause();
+                        }
+                    }
+                }
             }
         };
 
@@ -1646,10 +1726,53 @@ h1,h2,h3 {
             playSong(0);
         };
 
+        // Function to calculate duration if not available
+        function calculateDurationIfNeeded(song, index) {
+            if (song.duration && song.duration > 0) {
+                return; // Duration already available
+            }
+            
+            if (!song.music_file) {
+                return; // No file to calculate from
+            }
+            
+            const audio = new Audio();
+            audio.preload = 'metadata';
+            
+            audio.addEventListener('loadedmetadata', () => {
+                if (audio.duration && isFinite(audio.duration)) {
+                    const minutes = Math.floor(audio.duration / 60);
+                    const seconds = Math.floor(audio.duration % 60);
+                    const formatted = `${minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+                    
+                    // Update song object
+                    songs[index].duration = audio.duration;
+                    songs[index].time = formatted;
+                    
+                    // Update display
+                    const row = document.querySelector(`.song-row[data-song-index="${index}"]`);
+                    if (row) {
+                        const timeCell = row.querySelector('.song-duration');
+                        if (timeCell) {
+                            timeCell.textContent = formatted;
+                        }
+                    }
+                    
+                    // Update player time if this is the current song
+                    if (currentSongIndex === index) {
+                        document.getElementById('total-time').innerText = formatted;
+                    }
+                }
+            });
+            
+            audio.src = song.music_file;
+        }
+
         // Initial Song List Setup (top "Musics" table)
         songs.forEach((song, index) => {
             const row = document.createElement('tr');
             row.classList.add('song-row');
+            row.setAttribute('data-song-index', index);
             row.innerHTML = `
                 <td>${index + 1}</td>
                 <td class="song-title-cell">
@@ -1657,13 +1780,16 @@ h1,h2,h3 {
                     ${song.title}
                 </td>
                 <td>${song.album}</td>
-                <td>${song.time}</td>
+                <td class="song-duration">${song.time}</td>
                 <td onclick="event.stopPropagation(); toggleLike(${song.id});" style="cursor: pointer;">
                     <i class="fa-regular fa-heart favorite-icon-${song.id}" data-song-id="${song.id}" title="Add to favorites"></i>
                 </td>
             `;
             row.onclick = () => playSong(index);
             songListBody.appendChild(row);
+            
+            // Calculate duration if not available
+            calculateDurationIfNeeded(song, index);
         });
         
         // Load favorite status for all songs

@@ -159,6 +159,10 @@ Route::middleware(['artist'])->group(function () {
     Route::post('artist/royalty/payout-request', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'requestPayout'])->name('artist.royalty.request-payout');
     Route::get('artist/royalty/transactions', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'transactionHistory'])->name('artist.royalty.transactions');
     Route::get('artist/royalty/export/csv', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'exportEarningsCSV'])->name('artist.royalty.export.csv');
+    
+    // Artist Payment Details
+    Route::post('artist/payment-details/save', [\App\Http\Controllers\Artist\ArtistPaymentDetailsController::class, 'save'])->name('artist.payment-details.save');
+    Route::get('artist/payment-details', [\App\Http\Controllers\Artist\ArtistPaymentDetailsController::class, 'index'])->name('artist.payment-details');
     Route::get('artist/royalty/export/pdf', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'exportRoyaltyReportPDF'])->name('artist.royalty.export.pdf');
     Route::get('artist/royalty/per-track', [\App\Http\Controllers\Artist\ArtistRoyaltyController::class, 'perTrackEarnings'])->name('artist.royalty.per-track');
 
@@ -254,9 +258,58 @@ Route::get('playlist-detail', function () {
     return view('frontend.playlist-detail');
 })->name('playlist.detail');
 
-// featured-artist page
+// featured-artist page - Show all artists sorted by highest subscribers
 Route::get('featured-artist', function () {
-    return view('frontend.featured-artist');
+    // Get all artists with their subscriber counts, sorted by highest subscribers
+    $artists = \App\Models\User::where('is_artist', true)
+        ->with('profile')
+        ->withCount('artistFollowers as subscriber_count')
+        ->orderBy('subscriber_count', 'desc')
+        ->get()
+        ->map(function ($artist) {
+            // Get artist profile image (from profile table or default)
+            $profileImage = null;
+            if ($artist->profile && isset($artist->profile->profile_picture) && $artist->profile->profile_picture) {
+                $profileImage = asset('storage/' . $artist->profile->profile_picture);
+            } elseif (isset($artist->profile_picture) && $artist->profile_picture) {
+                $profileImage = asset('storage/' . $artist->profile_picture);
+            } else {
+                // Default image
+                $profileImage = asset('FrontendAssets/images/default-artist.jpg');
+            }
+            
+            // Get total listeners from their songs
+            $totalListeners = \App\Models\ArtistMusic::where('driver_id', $artist->id)
+                ->sum('listeners');
+            
+            // Determine status badge based on subscriber count
+            $status = 'New';
+            if ($artist->subscriber_count >= 1000) {
+                $status = 'Trending';
+            } elseif ($artist->subscriber_count >= 500) {
+                $status = 'Featured';
+            } elseif ($artist->subscriber_count >= 100) {
+                $status = 'Rising';
+            }
+            
+            // Check if artist is featured
+            if ($artist->is_featured) {
+                $status = 'Featured';
+            }
+            
+            return [
+                'id' => $artist->id,
+                'name' => $artist->name ?? $artist->username ?? 'Unknown Artist',
+                'genre' => ($artist->profile && isset($artist->profile->genre)) ? $artist->profile->genre : 'Various',
+                'subscribers' => $artist->subscriber_count ?? 0,
+                'listeners' => $totalListeners ?? 0,
+                'status' => $status,
+                'image' => $profileImage,
+                'is_featured' => (bool) $artist->is_featured,
+            ];
+        });
+    
+    return view('frontend.featured-artist', compact('artists'));
 })->name('featured-artist');
 
 // profile-setup

@@ -19,6 +19,7 @@ class ArtistMusic extends Model
         'listeners',
         'is_featured',
         'isrc_code',
+        'duration',
     ];
 
     protected $casts = [

@@ -97,6 +97,13 @@ class AdminRoyaltyController extends Controller
 
         DB::beginTransaction();
         try {
+            // Handle file attachment
+            $attachmentPath = null;
+            if ($request->hasFile('attachment_file')) {
+                $file = $request->file('attachment_file');
+                $attachmentPath = $file->store('payout-attachments', 'public');
+            }
+
             // Deduct from wallet
             $wallet->deduct($payoutRequest->requested_amount);
 
@@ -105,6 +112,7 @@ class AdminRoyaltyController extends Controller
                 'status' => 'processing',
                 'approved_by' => auth()->id(),
                 'admin_notes' => $request->admin_notes,
+                'attachment_file' => $attachmentPath,
                 'processed_at' => now(),
             ]);
 
@@ -187,10 +195,18 @@ class AdminRoyaltyController extends Controller
             $wallet->decrement('total_paid_out', $payoutRequest->requested_amount);
         }
 
+        // Handle file attachment
+        $attachmentPath = null;
+        if ($request->hasFile('attachment_file')) {
+            $file = $request->file('attachment_file');
+            $attachmentPath = $file->store('payout-attachments', 'public');
+        }
+
         $payoutRequest->update([
             'status' => 'rejected',
             'rejected_by' => auth()->id(),
             'admin_notes' => $request->admin_notes,
+            'attachment_file' => $attachmentPath,
         ]);
 
         // Notify artist about payout rejection

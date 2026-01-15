@@ -164,10 +164,22 @@ class ArtistRoyaltyController extends Controller
         $requestedAmount = $request->amount;
 
         if ($requestedAmount > $availableBalance) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Requested amount exceeds available balance. Available: $' . number_format($availableBalance, 2)
+                ], 400);
+            }
             return back()->with('error', 'Requested amount exceeds available balance. Available: $' . number_format($availableBalance, 2));
         }
 
         if ($requestedAmount < 50) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Minimum payout amount is $50.00.'
+                ], 400);
+            }
             return back()->with('error', 'Minimum payout amount is $50.00.');
         }
 
@@ -193,6 +205,13 @@ class ArtistRoyaltyController extends Controller
             }
         } catch (\Throwable $e) {
             // Ignore notification failures
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Payout request submitted successfully. It will be processed within 3-5 business days.'
+            ]);
         }
 
         return back()->with('success', 'Payout request submitted successfully. It will be processed within 3-5 business days.');

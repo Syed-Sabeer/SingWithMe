@@ -12,6 +12,33 @@ use App\Services\ISRCService;
 
 class ArtistMusicController extends Controller
 {
+    /**
+     * Get audio duration from file
+     * Uses ffprobe (FFmpeg) if available, otherwise returns 0 (will be calculated on frontend)
+     */
+    private function getAudioDuration($filePath)
+    {
+        if (!file_exists($filePath)) {
+            return 0;
+        }
+
+        // Use shell command if available (ffprobe from FFmpeg)
+        if (function_exists('shell_exec')) {
+            // Try ffprobe (FFmpeg) - most reliable method
+            $ffprobe = @shell_exec("ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($filePath) . " 2>&1");
+            if ($ffprobe && is_numeric(trim($ffprobe))) {
+                $duration = (float) trim($ffprobe);
+                if ($duration > 0) {
+                    return $duration;
+                }
+            }
+        }
+
+        // If ffprobe is not available, return 0
+        // Duration will be calculated on the frontend using the Audio API
+        return 0;
+    }
+
     public function store(Request $request)
     {
 
@@ -57,6 +84,21 @@ class ArtistMusicController extends Controller
             $musicFileName = 'music_' . time() . '_' . Str::random(10) . '.' . $musicFile->getClientOriginalExtension();
             $musicPath = $musicFile->storeAs('artist_music', $musicFileName, 'public');
             $data['music_file'] = $musicPath;
+            
+            // Calculate duration from audio file
+            try {
+                $fullPath = Storage::disk('public')->path($musicPath);
+                $duration = $this->getAudioDuration($fullPath);
+                if ($duration > 0) {
+                    $data['duration'] = (int) $duration;
+                }
+            } catch (\Exception $e) {
+                // If duration calculation fails, leave it null
+                \Log::warning('Failed to calculate audio duration', [
+                    'file' => $musicPath,
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
 
 

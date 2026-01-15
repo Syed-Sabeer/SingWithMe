@@ -76,6 +76,104 @@ class ArtistController extends Controller
             }
         }
         
+        // Get dynamic earnings data for Monthly Earnings section
+        $earningsData = [];
+        $wallet = null;
+        $paymentDetails = null;
+        $payoutHistory = [];
+        
+        if (Auth::check() && Auth::user()->is_artist) {
+            $artistId = Auth::id();
+            
+            // Get wallet
+            $wallet = \App\Models\ArtistWallet::getOrCreateForArtist($artistId);
+            
+            // Get payment details
+            $paymentDetails = \App\Models\ArtistPaymentDetail::where('artist_id', $artistId)
+                ->where('is_primary', true)
+                ->first();
+            
+            // Get royalty calculations for earnings data
+            $royaltyCalculations = \App\Models\RoyaltyCalculation::where('artist_id', $artistId)
+                ->orderBy('calculation_period', 'desc')
+                ->get();
+            
+            // Calculate monthly earnings data
+            $monthlyEarnings = [];
+            foreach ($royaltyCalculations as $calc) {
+                $monthKey = $calc->calculation_period->format('Y-m');
+                $monthlyEarnings[$monthKey] = [
+                    'period' => $calc->calculation_period,
+                    'amount' => (float) $calc->artist_royalty_amount,
+                    'gross' => (float) $calc->total_gross_revenue,
+                    'streams' => (int) $calc->total_streams,
+                ];
+            }
+            
+            // Calculate summary statistics
+            $totalRevenue = $royaltyCalculations->sum('artist_royalty_amount');
+            $averageMonthly = $royaltyCalculations->count() > 0 
+                ? $royaltyCalculations->avg('artist_royalty_amount') 
+                : 0;
+            
+            $highestMonth = $royaltyCalculations->sortByDesc('artist_royalty_amount')->first();
+            $highestMonthAmount = $highestMonth ? (float) $highestMonth->artist_royalty_amount : 0;
+            $highestMonthName = $highestMonth ? $highestMonth->calculation_period->format('F Y') : 'N/A';
+            
+            // Calculate growth rate (compare last 2 periods - most recent vs previous)
+            $growthRate = 0;
+            $growthChange = 0;
+            if ($royaltyCalculations->count() >= 2) {
+                $sorted = $royaltyCalculations->sortByDesc('calculation_period')->values();
+                $current = (float) $sorted[0]->artist_royalty_amount;
+                $previous = (float) $sorted[1]->artist_royalty_amount;
+                if ($previous > 0) {
+                    $growthRate = (($current - $previous) / $previous) * 100;
+                    $growthChange = $current - $previous;
+                }
+            }
+            
+            // Get last 6 months for default view
+            $last6Months = collect($monthlyEarnings)->take(6)->reverse();
+            
+            // Get payout history
+            $payoutHistory = \App\Models\PayoutRequest::where('artist_id', $artistId)
+                ->whereIn('status', ['completed', 'processing'])
+                ->orderBy('requested_at', 'desc')
+                ->take(10)
+                ->get()
+                ->map(function($payout) {
+                    return [
+                        'date' => $payout->requested_at->format('F j, Y'),
+                        'amount' => '$' . number_format($payout->requested_amount, 2),
+                        'status' => ucfirst($payout->status),
+                    ];
+                });
+            
+            // Get all monthly earnings for chart (not just last 6)
+            $allMonthlyEarnings = collect($monthlyEarnings)->sortBy(function($earning) {
+                return $earning['period'];
+            })->values();
+            
+            $earningsData = [
+                'monthly_earnings' => $monthlyEarnings,
+                'last_6_months' => $last6Months,
+                'all_months' => $allMonthlyEarnings,
+                'total_revenue' => $totalRevenue,
+                'average_monthly' => $averageMonthly,
+                'highest_month_amount' => $highestMonthAmount,
+                'highest_month_name' => $highestMonthName,
+                'growth_rate' => $growthRate,
+                'growth_change' => $growthChange,
+                'chart_data' => $allMonthlyEarnings->map(function($earning) {
+                    return [
+                        'month' => $earning['period']->format('M Y'),
+                        'amount' => $earning['amount'],
+                    ];
+                })->values(),
+            ];
+        }
+        
         return view("frontend.artist.artisit-portal", compact(
             'faqs', 
             'artworkPhotos', 
@@ -86,7 +184,11 @@ class ArtistController extends Controller
             'currentArtistSubscription',
             'currentArtistPlan',
             'hasUnlimitedUploads',
-            'songsPerMonth'
+            'songsPerMonth',
+            'earningsData',
+            'wallet',
+            'paymentDetails',
+            'payoutHistory'
         ));
     }
 

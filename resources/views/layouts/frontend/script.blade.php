@@ -39,15 +39,19 @@
             values: [14200, 17400, 20100, 26100]
         };
 
-        const ctx = document.getElementById('earningsChart').getContext('2d');
-        
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)');
-        gradient.addColorStop(1, 'rgba(139, 92, 246, 0.01)');
+        // Only initialize chart if canvas exists and no dynamic data is provided
+        // Dynamic chart initialization is handled in auth-artist-portal.blade.php
+        const ctxElement = document.getElementById('earningsChart');
+        if (ctxElement && !window.hasDynamicEarningsChart) {
+            const ctx = ctxElement.getContext('2d');
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)');
+            gradient.addColorStop(1, 'rgba(139, 92, 246, 0.01)');
 
-        let chart = new Chart(ctx, {
-            type: 'line',
-            data: {
+            let chart = new Chart(ctx, {
+                type: 'line',
+                data: {
                 labels: data6Months.labels,
                 datasets: [{
                     label: 'Earnings ($)',

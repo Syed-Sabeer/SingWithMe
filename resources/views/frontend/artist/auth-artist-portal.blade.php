@@ -1080,22 +1080,29 @@ a .payout-btn {
                             <div class="earnings-summary">
                                 <div class="summary-item">
                                     <div class="summary-label">Average Monthly</div>
-                                    <div class="summary-value">$7,538</div>
-                                    <div class="summary-change positive">↑ 12.5%</div>
+                                    <div class="summary-value">${{ number_format($earningsData['average_monthly'] ?? 0, 0) }}</div>
+                                    @if(isset($earningsData['growth_rate']) && $earningsData['growth_rate'] != 0)
+                                    <div class="summary-change {{ ($earningsData['growth_rate'] ?? 0) > 0 ? 'positive' : '' }}">
+                                        @if(($earningsData['growth_rate'] ?? 0) > 0)↑@elseif(($earningsData['growth_rate'] ?? 0) < 0)↓@endif 
+                                        {{ number_format(abs($earningsData['growth_rate'] ?? 0), 1) }}%
+                                    </div>
+                                    @else
+                                    <div class="summary-change">No data</div>
+                                    @endif
                                 </div>
                                 <div class="summary-item">
                                     <div class="summary-label">Highest Month</div>
-                                    <div class="summary-value">$9,800</div>
-                                    <div class="summary-change">December</div>
+                                    <div class="summary-value">${{ number_format($earningsData['highest_month_amount'] ?? 0, 0) }}</div>
+                                    <div class="summary-change">{{ $earningsData['highest_month_name'] ?? 'N/A' }}</div>
                                 </div>
                                 <div class="summary-item">
                                     <div class="summary-label">Growth Rate</div>
-                                    <div class="summary-value">+18%</div>
-                                    <div class="summary-change positive">↑ vs last period</div>
+                                    <div class="summary-value">{{ ($earningsData['growth_rate'] ?? 0) >= 0 ? '+' : '' }}{{ number_format($earningsData['growth_rate'] ?? 0, 0) }}%</div>
+                                    <div class="summary-change {{ ($earningsData['growth_rate'] ?? 0) > 0 ? 'positive' : '' }}">↑ vs last period</div>
                                 </div>
                                 <div class="summary-item">
                                     <div class="summary-label">Total Revenue</div>
-                                    <div class="summary-value">$45.2K</div>
+                                    <div class="summary-value">${{ number_format(($earningsData['total_revenue'] ?? 0) / 1000, 1) }}K</div>
                                     <div class="summary-change">Last 6 months</div>
                                 </div>
                             </div>
@@ -1107,20 +1114,20 @@ a .payout-btn {
                 <!-- Payout Section -->
                 <div class="payout-section py-4">
                     <h2>Request Payout</h2>
-                    <button class="payout-btn" onclick="openModall()">Withdraw Funds</button>
+                    <button class="payout-btn" type="button" onclick="if(typeof window.openModall==='function'){window.openModall();}else{const modal=document.getElementById('withdrawModal');if(modal){modal.classList.add('active');document.body.style.overflow='hidden';}else{console.error('Withdraw modal not found');}}">Withdraw Funds</button>
                 </div>
                 <div class="withdrawalPayment_popup">
                     {{--<button class="demo-trigger" >Open Withdraw Funds</button>--}}
                     <div class="modal-overlay" id="withdrawModal">
                         <div class="modal">
                             <div class="modal-header">
-                                <button class="modal-close" onclick="closeModall()">×</button>
+                                <button class="modal-close" type="button" onclick="if(window.closeModall){window.closeModall();}else{console.error('closeModall function not available');}">×</button>
                                 <h2 class="modal-title">Withdraw Funds</h2>
                                 <p class="modal-subtitle">Request payout from your available balance</p>
                                 
                                 <div class="balance-display">
                                     <div class="balance-label">Available Balance</div>
-                                    <div class="balance-amount" id="availableBalance">£1,250.00</div>
+                                    <div class="balance-amount" id="availableBalance">${{ number_format($wallet->available_balance ?? 0, 2) }}</div>
                                 </div>
                             </div>
 
@@ -1129,38 +1136,116 @@ a .payout-btn {
                                     <div class="form-section">
                                         <label class="form-label required">Withdrawal Amount</label>
                                         <div class="input-wrapper">
-                                            <span class="currency-symbol">£</span>
+                                            <span class="currency-symbol">$</span>
                                             <input 
                                                 type="number" 
                                                 class="form-input" 
                                                 id="withdrawAmount" 
                                                 placeholder="0.00"
-                                                min="10"
+                                                min="50"
                                                 step="0.01"
                                             >
                                         </div>
-                                        <p class="helper-text">Minimum withdrawal: £10.00</p>
+                                        <p class="helper-text">Minimum withdrawal: $50.00</p>
                                         <p class="error-text" id="amountError">Please enter a valid amount</p>
-                                        <button class="auto-fill-btn" onclick="fillFullBalance()">Withdraw Full Balance</button>
+                                        <button class="auto-fill-btn" type="button" onclick="if(window.fillFullBalance){window.fillFullBalance();}">Withdraw Full Balance</button>
                                     </div>
 
                                     <div class="form-section">
                                         <label class="form-label required">Payout Method</label>
-                                        <select class="form-select" id="payoutMethod" onchange="updateAccountDetails()">
+                                        <select class="form-select" id="payoutMethod" onchange="if(window.updateAccountDetails){window.updateAccountDetails();}">
                                             <option value="">Select payout method</option>
-                                            <option value="bank">Bank Transfer</option>
-                                            <option value="paypal">PayPal</option>
-                                            <option value="wise">Wise (TransferWise)</option>
+                                            <option value="bank_transfer" {{ $paymentDetails && $paymentDetails->payment_method == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                            <option value="paypal" {{ $paymentDetails && $paymentDetails->payment_method == 'paypal' ? 'selected' : '' }}>PayPal</option>
+                                            <option value="wise" {{ $paymentDetails && $paymentDetails->payment_method == 'wise' ? 'selected' : '' }}>Wise (TransferWise)</option>
                                         </select>
 
-                                        <div class="account-info" id="accountInfo" style="display: none;">
+                                        <div class="account-info" id="accountInfo" style="display: {{ $paymentDetails ? 'block' : 'none' }};">
+                                            @if($paymentDetails)
                                             <div class="account-info-row">
                                                 <span class="account-info-label">Account:</span>
-                                                <span class="account-info-value" id="accountDisplay">••••••1234</span>
+                                                <span class="account-info-value" id="accountDisplay">{{ $paymentDetails->masked_account_number }}</span>
                                             </div>
                                             <div class="account-info-row">
                                                 <span class="account-info-label">Account Name:</span>
-                                                <span class="account-info-value">Luna Starlight</span>
+                                                <span class="account-info-value">{{ $paymentDetails->account_name ?? auth()->user()->name }}</span>
+                                            </div>
+                                            @if($paymentDetails->payment_method == 'paypal' && $paymentDetails->paypal_email)
+                                            <div class="account-info-row">
+                                                <span class="account-info-label">PayPal Email:</span>
+                                                <span class="account-info-value">{{ substr($paymentDetails->paypal_email, 0, 3) }}***@{{ substr(strrchr($paymentDetails->paypal_email, '@'), 1) }}</span>
+                                            </div>
+                                            @endif
+                                            @endif
+                                        </div>
+                                        
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-secondary btn-sm" onclick="if(window.openPaymentDetailsModal){window.openPaymentDetailsModal();}else{console.error('openPaymentDetailsModal not available');}">
+                                                <i class="fas fa-edit"></i> {{ $paymentDetails ? 'Update' : 'Add' }} Payment Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Payment Details Modal -->
+                                    <div class="modal-overlay" id="paymentDetailsModal" style="display: none;">
+                                        <div class="modal" style="max-width: 600px;">
+                                            <div class="modal-header">
+                                                <button class="modal-close" type="button" onclick="if(window.closePaymentDetailsModal){window.closePaymentDetailsModal();}">×</button>
+                                                <h2 class="modal-title">{{ $paymentDetails ? 'Update' : 'Add' }} Payment Details</h2>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form id="paymentDetailsForm" action="{{ route('artist.payment-details.save') }}" method="POST">
+                                                    @csrf
+                                                    <div class="form-section">
+                                                        <label class="form-label required">Payment Method</label>
+                                                        <select class="form-select" name="payment_method" id="paymentMethodSelect" required onchange="if(window.togglePaymentFields){window.togglePaymentFields();}">
+                                                            <option value="">Select method</option>
+                                                            <option value="bank_transfer" {{ $paymentDetails && $paymentDetails->payment_method == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                                            <option value="paypal" {{ $paymentDetails && $paymentDetails->payment_method == 'paypal' ? 'selected' : '' }}>PayPal</option>
+                                                            <option value="wise" {{ $paymentDetails && $paymentDetails->payment_method == 'wise' ? 'selected' : '' }}>Wise (TransferWise)</option>
+                                                        </select>
+                                                        <script>
+                                                            // Initialize payment fields on page load if payment method is already selected
+                                                            document.addEventListener('DOMContentLoaded', function() {
+                                                                const select = document.getElementById('paymentMethodSelect');
+                                                                if (select && select.value) {
+                                                                    if (window.togglePaymentFields) {
+                                                                        window.togglePaymentFields();
+                                                                    }
+                                                                }
+                                                            });
+                                                        </script>
+                                                    </div>
+                                                    
+                                                    <div class="form-section" id="bankFields" style="display: none;">
+                                                        <label class="form-label required">Account Holder Name</label>
+                                                        <input type="text" class="form-input" name="account_name" id="account_name" value="{{ $paymentDetails->account_name ?? '' }}" data-required="bank_transfer">
+                                                        
+                                                        <label class="form-label required">Bank Name</label>
+                                                        <input type="text" class="form-input" name="bank_name" id="bank_name" value="{{ $paymentDetails->bank_name ?? '' }}" data-required="bank_transfer">
+                                                        
+                                                        <label class="form-label required">Account Number</label>
+                                                        <input type="text" class="form-input" name="account_number" id="account_number" value="{{ $paymentDetails->account_number ?? '' }}" data-required="bank_transfer">
+                                                        
+                                                        <label class="form-label">Routing/SWIFT Code</label>
+                                                        <input type="text" class="form-input" name="routing_number" id="routing_number" value="{{ $paymentDetails->routing_number ?? '' }}">
+                                                    </div>
+                                                    
+                                                    <div class="form-section" id="paypalFields" style="display: none;">
+                                                        <label class="form-label required">PayPal Email</label>
+                                                        <input type="email" class="form-input" name="paypal_email" id="paypal_email" value="{{ $paymentDetails->paypal_email ?? '' }}" data-required="paypal">
+                                                    </div>
+                                                    
+                                                    <div class="form-section" id="wiseFields" style="display: none;">
+                                                        <label class="form-label required">Wise Email</label>
+                                                        <input type="email" class="form-input" name="wise_email" id="wise_email" value="{{ $paymentDetails->wise_email ?? '' }}" data-required="wise">
+                                                    </div>
+                                                    
+                                                    <div class="modal-actions">
+                                                        <button type="button" class="btn btn-secondary" onclick="if(window.closePaymentDetailsModal){window.closePaymentDetailsModal();}">Cancel</button>
+                                                        <button type="submit" class="btn btn-primary">Save Payment Details</button>
+                                                    </div>
+                                                </form>
                                             </div>
                                         </div>
                                     </div>
@@ -1173,11 +1258,11 @@ a .payout-btn {
                                         </div>
                                         <div class="info-item">
                                             <span class="info-label">Platform Fee (2%):</span>
-                                            <span class="info-value" id="platformFee">£0.00</span>
+                                            <span class="info-value" id="platformFee">$0.00</span>
                                         </div>
                                         <div class="info-item">
                                             <span class="info-label">Net Amount:</span>
-                                            <span class="info-value highlight" id="netAmount">£0.00</span>
+                                            <span class="info-value highlight" id="netAmount">$0.00</span>
                                         </div>
                                     </div>
 
@@ -1193,8 +1278,8 @@ a .payout-btn {
                                     </div>
 
                                     <div class="modal-actions">
-                                        <button class="btn btn-secondary" onclick="closeModall()">Cancel</button>
-                                        <button class="btn btn-primary" id="submitBtn" onclick="submitWithdrawal()">
+                                        <button class="btn btn-secondary" type="button" onclick="if(window.closeModall){window.closeModall();}">Cancel</button>
+                                        <button class="btn btn-primary" id="submitBtn" type="button" onclick="if(window.submitWithdrawal){window.submitWithdrawal();}">
                                             <span class="loading-spinner"></span>
                                             <span class="btn-text">Submit Withdrawal Request</span>
                                         </button>
@@ -1205,7 +1290,7 @@ a .payout-btn {
                                     <div class="success-icon">✅</div>
                                     <div class="success-title">Withdrawal Request Submitted!</div>
                                     <p class="success-text">
-                                        Your withdrawal request of <strong id="successAmount">£0.00</strong> has been submitted successfully. 
+                                        Your withdrawal request of <strong id="successAmount">$0.00</strong> has been submitted successfully. 
                                         The funds will be processed within 3–5 business days and sent to your selected payout method.
                                     </p>
                                     <button class="btn btn-primary" onclick="closeModall()" style="margin-top: 20px;">Done</button>
@@ -1294,21 +1379,17 @@ a .payout-btn {
                             </tr>
                         </thead>
                         <tbody>
+                            @forelse($payoutHistory as $payout)
                             <tr>
-                                <td>June 15, 2025</td>
-                                <td>$5,000</td>
-                                <td>Completed</td>
+                                <td>{{ $payout['date'] }}</td>
+                                <td>{{ $payout['amount'] }}</td>
+                                <td>{{ $payout['status'] }}</td>
                             </tr>
+                            @empty
                             <tr>
-                                <td>May 10, 2025</td>
-                                <td>$3,200</td>
-                                <td>Completed</td>
+                                <td colspan="3" style="text-align: center; color: #b8a8d0;">No payout history yet</td>
                             </tr>
-                            <tr>
-                                <td>April 6, 2025</td>
-                                <td>$2,750</td>
-                                <td>Completed</td>
-                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -2691,62 +2772,458 @@ a .payout-btn {
         </script>
 
         <script>
-            //withdrawal payment popup js
-
-            const availableBalance = 1250.00;
-
-            function openModall() {
-                document.getElementById('withdrawModal').classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-
-            function closeModall() {
-                document.getElementById('withdrawModal').classList.remove('active');
-                document.body.style.overflow = 'auto';
-                resetForm();
-            }
-
-            function fillFullBalance() {
-                document.getElementById('withdrawAmount').value = availableBalance.toFixed(2);
-                calculateFees();
-            }
-
-            function updateAccountDetails() {
-                const method = document.getElementById('payoutMethod').value;
-                const accountInfo = document.getElementById('accountInfo');
-                const accountDisplay = document.getElementById('accountDisplay');
-
-                if (method) {
-                    accountInfo.style.display = 'block';
-                    
-                    switch(method) {
-                        case 'bank':
-                            accountDisplay.textContent = 'UK Bank ••••1234';
-                            break;
-                        case 'paypal':
-                            accountDisplay.textContent = 'luna••••@email.com';
-                            break;
-                        case 'wise':
-                            accountDisplay.textContent = 'Wise ••••5678';
-                            break;
-                    }
+            // Monthly Earnings Chart - Dynamic Data
+            @if(isset($earningsData) && !empty($earningsData['chart_data']))
+            window.earningsChartData = @json($earningsData['chart_data'] ?? []);
+            window.hasDynamicEarningsChart = true; // Flag to prevent default chart initialization
+            const monthlyEarningsData = @json($earningsData['monthly_earnings'] ?? []);
+            const earningsChartData = window.earningsChartData;
+            
+            let earningsChart = null;
+            
+            window.initEarningsChart = function(period = '6') {
+                const ctx = document.getElementById('earningsChart');
+                if (!ctx) {
+                    console.warn('Earnings chart canvas not found');
+                    return;
+                }
+                
+                // Filter data based on period
+                let filteredData = [];
+                if (period === 'all') {
+                    filteredData = earningsChartData;
                 } else {
-                    accountInfo.style.display = 'none';
+                    const months = parseInt(period);
+                    filteredData = earningsChartData.slice(-months);
+                }
+                
+                if (filteredData.length === 0) {
+                    console.warn('No earnings data available for chart');
+                    ctx.parentElement.innerHTML = '<p style="color: #b8a8d0; text-align: center; padding: 40px;">No earnings data available yet. Start uploading music to earn royalties!</p>';
+                    return;
+                }
+                
+                if (earningsChart) {
+                    earningsChart.destroy();
+                }
+                
+                // Wait for Chart.js to be available
+                if (typeof Chart === 'undefined') {
+                    console.warn('Chart.js not loaded, retrying...');
+                    setTimeout(() => initEarningsChart(period), 500);
+                    return;
+                }
+                
+                const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)');
+                gradient.addColorStop(1, 'rgba(139, 92, 246, 0.01)');
+                
+                earningsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: filteredData.map(d => d.month),
+                        datasets: [{
+                            label: 'Monthly Earnings',
+                            data: filteredData.map(d => d.amount),
+                            borderColor: 'rgba(139, 92, 246, 1)',
+                            backgroundColor: gradient,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: 'rgba(139, 92, 246, 1)',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Earnings: $' + context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#b8a8d0',
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(184, 168, 208, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#b8a8d0'
+                                },
+                                grid: {
+                                    color: 'rgba(184, 168, 208, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Filter button handlers
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const period = this.dataset.period;
+                    if (window.initEarningsChart) {
+                        window.initEarningsChart(period);
+                    }
+                });
+            });
+            
+            // Initialize chart on page load
+            function initChartWhenReady() {
+                if (typeof Chart !== 'undefined' && window.initEarningsChart) {
+                    window.initEarningsChart('6');
+                } else if (typeof Chart === 'undefined') {
+                    setTimeout(initChartWhenReady, 100);
                 }
             }
+            
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initChartWhenReady);
+            } else {
+                initChartWhenReady();
+            }
+            @else
+            // No earnings data available
+            document.addEventListener('DOMContentLoaded', function() {
+                const ctx = document.getElementById('earningsChart');
+                if (ctx) {
+                    ctx.parentElement.innerHTML = '<p style="color: #b8a8d0; text-align: center; padding: 40px;">No earnings data available yet. Start uploading music to earn royalties!</p>';
+                }
+            });
+            @endif
+            
+            //withdrawal payment popup js
+            // Make availableBalance globally accessible
+            window.availableBalance = {{ $wallet ? $wallet->available_balance : 0 }};
+            const availableBalance = window.availableBalance;
 
-            function calculateFees() {
-                const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+            // Make functions globally accessible
+            window.openModall = function() {
+                const modal = document.getElementById('withdrawModal');
+                if (modal) {
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                    console.log('Withdraw modal opened');
+                } else {
+                    console.error('Withdraw modal element not found');
+                }
+            };
+
+            window.closeModall = function() {
+                const modal = document.getElementById('withdrawModal');
+                if (modal) {
+                    modal.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                    if (window.resetForm) {
+                        window.resetForm();
+                    }
+                    console.log('Withdraw modal closed');
+                }
+            };
+            
+            // Make resetForm globally accessible
+            window.resetForm = function() {
+                const withdrawAmount = document.getElementById('withdrawAmount');
+                const payoutMethod = document.getElementById('payoutMethod');
+                const confirmCheckbox = document.getElementById('confirmCheckbox');
+                const accountInfo = document.getElementById('accountInfo');
+                const platformFee = document.getElementById('platformFee');
+                const netAmount = document.getElementById('netAmount');
+                const withdrawForm = document.getElementById('withdrawForm');
+                const successMessage = document.getElementById('successMessage');
+                const amountError = document.getElementById('amountError');
+                
+                if (withdrawAmount) withdrawAmount.value = '';
+                if (payoutMethod) payoutMethod.value = '';
+                if (confirmCheckbox) confirmCheckbox.checked = false;
+                if (accountInfo) accountInfo.style.display = 'none';
+                if (platformFee) platformFee.textContent = '$0.00';
+                if (netAmount) netAmount.textContent = '$0.00';
+                if (withdrawForm) withdrawForm.style.display = 'block';
+                if (successMessage) successMessage.classList.remove('show');
+                if (withdrawAmount) withdrawAmount.classList.remove('error');
+                if (amountError) amountError.classList.remove('show');
+            };
+
+            window.fillFullBalance = function() {
+                const withdrawAmount = document.getElementById('withdrawAmount');
+                if (withdrawAmount) {
+                    const balance = window.availableBalance || availableBalance || 0;
+                    withdrawAmount.value = balance.toFixed(2);
+                    if (window.calculateFees) {
+                        window.calculateFees();
+                    }
+                }
+            };
+
+            window.updateAccountDetails = function() {
+                const method = document.getElementById('payoutMethod').value;
+                const accountInfo = document.getElementById('accountInfo');
+                
+                // Check if payment details exist for this method
+                @if($paymentDetails)
+                    const paymentMethod = '{{ $paymentDetails->payment_method }}';
+                    if (method === paymentMethod) {
+                        accountInfo.style.display = 'block';
+                    } else {
+                        accountInfo.style.display = 'none';
+                        alert('Please add payment details for ' + method.replace('_', ' ') + ' first.');
+                        if (window.openPaymentDetailsModal) {
+                            window.openPaymentDetailsModal();
+                        }
+                    }
+                @else
+                    if (method) {
+                        accountInfo.style.display = 'none';
+                        alert('Please add payment details first.');
+                        if (window.openPaymentDetailsModal) {
+                            window.openPaymentDetailsModal();
+                        }
+                    } else {
+                        accountInfo.style.display = 'none';
+                    }
+                @endif
+            }
+            
+            window.openPaymentDetailsModal = function() {
+                const modal = document.getElementById('paymentDetailsModal');
+                if (modal) {
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                    if (window.togglePaymentFields) {
+                        window.togglePaymentFields();
+                    }
+                }
+            };
+            
+            window.closePaymentDetailsModal = function() {
+                const modal = document.getElementById('paymentDetailsModal');
+                if (modal) {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }
+            };
+            
+            window.togglePaymentFields = function() {
+                const method = document.getElementById('paymentMethodSelect')?.value || '';
+                const bankFields = document.getElementById('bankFields');
+                const paypalFields = document.getElementById('paypalFields');
+                const wiseFields = document.getElementById('wiseFields');
+                
+                // Get all input fields
+                const accountName = document.getElementById('account_name');
+                const bankName = document.getElementById('bank_name');
+                const accountNumber = document.getElementById('account_number');
+                const routingNumber = document.getElementById('routing_number');
+                const paypalEmail = document.getElementById('paypal_email');
+                const wiseEmail = document.getElementById('wise_email');
+                
+                // Show/hide fields and toggle required attribute
+                if (method === 'bank_transfer') {
+                    if (bankFields) bankFields.style.display = 'block';
+                    if (paypalFields) paypalFields.style.display = 'none';
+                    if (wiseFields) wiseFields.style.display = 'none';
+                    
+                    // Set required for bank fields
+                    if (accountName) accountName.setAttribute('required', 'required');
+                    if (bankName) bankName.setAttribute('required', 'required');
+                    if (accountNumber) accountNumber.setAttribute('required', 'required');
+                    if (routingNumber) routingNumber.removeAttribute('required');
+                    
+                    // Remove required from other fields
+                    if (paypalEmail) paypalEmail.removeAttribute('required');
+                    if (wiseEmail) wiseEmail.removeAttribute('required');
+                } else if (method === 'paypal') {
+                    if (bankFields) bankFields.style.display = 'none';
+                    if (paypalFields) paypalFields.style.display = 'block';
+                    if (wiseFields) wiseFields.style.display = 'none';
+                    
+                    // Set required for PayPal field
+                    if (paypalEmail) paypalEmail.setAttribute('required', 'required');
+                    
+                    // Remove required from other fields
+                    if (accountName) accountName.removeAttribute('required');
+                    if (bankName) bankName.removeAttribute('required');
+                    if (accountNumber) accountNumber.removeAttribute('required');
+                    if (routingNumber) routingNumber.removeAttribute('required');
+                    if (wiseEmail) wiseEmail.removeAttribute('required');
+                } else if (method === 'wise') {
+                    if (bankFields) bankFields.style.display = 'none';
+                    if (paypalFields) paypalFields.style.display = 'none';
+                    if (wiseFields) wiseFields.style.display = 'block';
+                    
+                    // Set required for Wise field
+                    if (wiseEmail) wiseEmail.setAttribute('required', 'required');
+                    
+                    // Remove required from other fields
+                    if (accountName) accountName.removeAttribute('required');
+                    if (bankName) bankName.removeAttribute('required');
+                    if (accountNumber) accountNumber.removeAttribute('required');
+                    if (routingNumber) routingNumber.removeAttribute('required');
+                    if (paypalEmail) paypalEmail.removeAttribute('required');
+                } else {
+                    // No method selected - hide all
+                    if (bankFields) bankFields.style.display = 'none';
+                    if (paypalFields) paypalFields.style.display = 'none';
+                    if (wiseFields) wiseFields.style.display = 'none';
+                    
+                    // Remove required from all fields
+                    if (accountName) accountName.removeAttribute('required');
+                    if (bankName) bankName.removeAttribute('required');
+                    if (accountNumber) accountNumber.removeAttribute('required');
+                    if (routingNumber) routingNumber.removeAttribute('required');
+                    if (paypalEmail) paypalEmail.removeAttribute('required');
+                    if (wiseEmail) wiseEmail.removeAttribute('required');
+                }
+            };
+            
+            // Initialize fields on page load if payment method is already selected
+            document.addEventListener('DOMContentLoaded', function() {
+                const methodSelect = document.getElementById('paymentMethodSelect');
+                if (methodSelect && methodSelect.value) {
+                    if (window.togglePaymentFields) {
+                        window.togglePaymentFields();
+                    }
+                }
+            });
+            
+            // Handle payment details form submission
+            document.addEventListener('DOMContentLoaded', function() {
+                const paymentDetailsForm = document.getElementById('paymentDetailsForm');
+                if (paymentDetailsForm) {
+                    paymentDetailsForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        const form = this;
+                        
+                        // Validate visible required fields only
+                        const method = document.getElementById('paymentMethodSelect')?.value;
+                        if (!method) {
+                            alert('Please select a payment method');
+                            return;
+                        }
+                        
+                        // Check required fields for selected method
+                        const requiredFields = form.querySelectorAll(`input[data-required="${method}"]`);
+                        let isValid = true;
+                        let firstInvalidField = null;
+                        
+                        requiredFields.forEach(field => {
+                            if (!field.value || field.value.trim() === '') {
+                                isValid = false;
+                                if (!firstInvalidField) {
+                                    firstInvalidField = field;
+                                }
+                            }
+                        });
+                        
+                        if (!isValid) {
+                            if (firstInvalidField) {
+                                firstInvalidField.focus();
+                                firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                            alert('Please fill in all required fields for the selected payment method');
+                            return;
+                        }
+                        
+                        const formData = new FormData(form);
+                        
+                        fetch(form.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                                'Accept': 'application/json',
+                            }
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                return response.json();
+                            }
+                            return response.text().then(text => {
+                                try {
+                                    return JSON.parse(text);
+                                } catch {
+                                    return { success: false, message: 'Error saving payment details' };
+                                }
+                            });
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success',
+                                        text: 'Payment details saved successfully!',
+                                        confirmButtonColor: '#9f54f5',
+                                        background: '#1a1a1a',
+                                        color: 'white',
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    alert('Payment details saved successfully!');
+                                    location.reload();
+                                }
+                            } else {
+                                alert(data.message || 'Error saving payment details. Please try again.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Error saving payment details. Please try again.');
+                        });
+                    });
+                }
+            });
+
+            window.calculateFees = function() {
+                const amount = parseFloat(document.getElementById('withdrawAmount')?.value || 0);
                 const fee = amount * 0.02;
                 const net = amount - fee;
 
-                document.getElementById('platformFee').textContent = '£' + fee.toFixed(2);
-                document.getElementById('netAmount').textContent = '£' + net.toFixed(2);
-            }
+                const platformFee = document.getElementById('platformFee');
+                const netAmount = document.getElementById('netAmount');
+                if (platformFee) platformFee.textContent = '$' + fee.toFixed(2);
+                if (netAmount) netAmount.textContent = '$' + net.toFixed(2);
+            };
 
-            document.getElementById('withdrawAmount').addEventListener('input', calculateFees);
+            // Set up event listener for withdraw amount input
+            document.addEventListener('DOMContentLoaded', function() {
+                const withdrawAmount = document.getElementById('withdrawAmount');
+                if (withdrawAmount) {
+                    withdrawAmount.addEventListener('input', function() {
+                        if (window.calculateFees) {
+                            window.calculateFees();
+                        }
+                    });
+                }
+            });
 
-            function validateForm() {
+            window.validateForm = function() {
                 const amount = parseFloat(document.getElementById('withdrawAmount').value);
                 const method = document.getElementById('payoutMethod').value;
                 const confirmed = document.getElementById('confirmCheckbox').checked;
@@ -2756,14 +3233,15 @@ a .payout-btn {
                 let isValid = true;
 
                 // Validate amount
-                if (!amount || amount < 10 || amount > availableBalance) {
+                const balance = window.availableBalance || availableBalance || 0;
+                if (!amount || amount < 50 || amount > balance) {
                     amountInput.classList.add('error');
                     amountError.classList.add('show');
                     
-                    if (amount > availableBalance) {
+                    if (amount > balance) {
                         amountError.textContent = 'Amount exceeds available balance';
                     } else {
-                        amountError.textContent = 'Please enter a valid amount (minimum £10.00)';
+                        amountError.textContent = 'Please enter a valid amount (minimum $50.00)';
                     }
                     isValid = false;
                 } else {
@@ -2786,46 +3264,170 @@ a .payout-btn {
                 return isValid;
             }
 
-            function submitWithdrawal() {
-                if (!validateForm()) {
+            window.submitWithdrawal = function() {
+                if (!window.validateForm || !window.validateForm()) {
                     return;
                 }
 
                 const submitBtn = document.getElementById('submitBtn');
+                if (!submitBtn) {
+                    console.error('Submit button not found');
+                    return;
+                }
+                
                 submitBtn.classList.add('loading');
                 submitBtn.disabled = true;
 
-                // Simulate API call
-                setTimeout(() => {
-                    const amount = parseFloat(document.getElementById('withdrawAmount').value);
-                    const net = amount - (amount * 0.02);
-                    
-                    document.getElementById('successAmount').textContent = '£' + net.toFixed(2);
-                    document.getElementById('withdrawForm').style.display = 'none';
-                    document.getElementById('successMessage').classList.add('show');
-                    
+                const amount = parseFloat(document.getElementById('withdrawAmount')?.value || 0);
+                const method = document.getElementById('payoutMethod')?.value;
+                
+                if (!amount || amount <= 0) {
+                    alert('Please enter a valid withdrawal amount');
                     submitBtn.classList.remove('loading');
                     submitBtn.disabled = false;
-                }, 2000);
-            }
+                    return;
+                }
+                
+                if (!method) {
+                    alert('Please select a payout method');
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                // Get payment details
+                @if($paymentDetails)
+                    const paymentMethod = '{{ $paymentDetails->payment_method }}';
+                    let accountDetails = {};
+                    
+                    if (paymentMethod === 'bank_transfer') {
+                        accountDetails = {
+                            account_name: '{{ addslashes($paymentDetails->account_name ?? '') }}',
+                            account_number: '{{ addslashes($paymentDetails->account_number ?? '') }}',
+                            bank_name: '{{ addslashes($paymentDetails->bank_name ?? '') }}',
+                            routing_number: '{{ addslashes($paymentDetails->routing_number ?? '') }}',
+                            payment_method: 'bank_transfer'
+                        };
+                    } else if (paymentMethod === 'paypal') {
+                        accountDetails = {
+                            paypal_email: '{{ addslashes($paymentDetails->paypal_email ?? '') }}',
+                            payment_method: 'paypal'
+                        };
+                    } else if (paymentMethod === 'wise') {
+                        accountDetails = {
+                            wise_email: '{{ addslashes($paymentDetails->wise_email ?? '') }}',
+                            payment_method: 'wise'
+                        };
+                    }
+                    
+                    // Check if selected method matches saved payment details
+                    if (method !== paymentMethod) {
+                        alert('Selected payout method does not match your saved payment details. Please update your payment details first.');
+                        if (window.openPaymentDetailsModal) {
+                            window.openPaymentDetailsModal();
+                        }
+                        submitBtn.classList.remove('loading');
+                        submitBtn.disabled = false;
+                        return;
+                    }
+                @else
+                    alert('Please add payment details first.');
+                    if (window.openPaymentDetailsModal) {
+                        window.openPaymentDetailsModal();
+                    }
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                    return;
+                @endif
 
-            function resetForm() {
-                document.getElementById('withdrawAmount').value = '';
-                document.getElementById('payoutMethod').value = '';
-                document.getElementById('confirmCheckbox').checked = false;
-                document.getElementById('accountInfo').style.display = 'none';
-                document.getElementById('platformFee').textContent = '£0.00';
-                document.getElementById('netAmount').textContent = '£0.00';
-                document.getElementById('withdrawForm').style.display = 'block';
-                document.getElementById('successMessage').classList.remove('show');
-                document.getElementById('withdrawAmount').classList.remove('error');
-                document.getElementById('amountError').classList.remove('show');
+                // Get CSRF token
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                if (!csrfToken) {
+                    alert('CSRF token not found. Please refresh the page and try again.');
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                // Submit payout request
+                fetch('{{ route("artist.royalty.request-payout") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                        payout_method: method,
+                        account_details: JSON.stringify(accountDetails),
+                        currency: 'USD',
+                    })
+                })
+                .then(async response => {
+                    const contentType = response.headers.get('content-type');
+                    let data;
+                    
+                    if (contentType && contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        const text = await response.text();
+                        try {
+                            data = JSON.parse(text);
+                        } catch (e) {
+                            console.error('Failed to parse response:', text);
+                            throw new Error('Invalid response from server');
+                        }
+                    }
+                    
+                    if (data.success) {
+                        const net = amount - (amount * 0.02);
+                        const successAmountEl = document.getElementById('successAmount');
+                        const withdrawFormEl = document.getElementById('withdrawForm');
+                        const successMessageEl = document.getElementById('successMessage');
+                        
+                        if (successAmountEl) successAmountEl.textContent = '$' + net.toFixed(2);
+                        if (withdrawFormEl) withdrawFormEl.style.display = 'none';
+                        if (successMessageEl) successMessageEl.classList.add('show');
+                        
+                        // Show success message
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success',
+                                text: 'Withdrawal request submitted successfully!',
+                                confirmButtonColor: '#9f54f5',
+                                background: '#1a1a1a',
+                                color: 'white',
+                            });
+                        }
+                    } else {
+                        const errorMsg = data.message || data.error || 'Error submitting payout request. Please try again.';
+                        alert(errorMsg);
+                    }
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error submitting withdrawal:', error);
+                    alert('Error submitting payout request: ' + (error.message || 'Please try again.'));
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                });
             }
 
             // Close modal on overlay click
-            document.getElementById('withdrawModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeModall();
+            document.addEventListener('DOMContentLoaded', function() {
+                const withdrawModal = document.getElementById('withdrawModal');
+                if (withdrawModal) {
+                    withdrawModal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            if (window.closeModall) {
+                                window.closeModall();
+                            }
+                        }
+                    });
                 }
             });
 

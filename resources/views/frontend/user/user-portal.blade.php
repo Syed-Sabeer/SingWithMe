@@ -814,6 +814,7 @@
     .playlistSection .create-btn {
         display: block !important;
         visibility: visible !important;
+        opacity: 1 !important;
         background: linear-gradient(135deg, #8b5cf6, #a855f7);
         color: white;
         border: none;
@@ -821,10 +822,13 @@
         border-radius: 8px;
         font-size: 16px;
         font-weight: 600;
-        cursor: pointer;
+        cursor: pointer !important;
         margin: 20px auto;
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        pointer-events: auto !important;
+        z-index: 1000 !important;
+        position: relative;
     }
 
     .playlistSection .create-btn:hover {
@@ -855,6 +859,8 @@
 
     .playlistSection .overlay.active {
         display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     .playlistSection .overlay .popup {
@@ -1590,8 +1596,8 @@
                                 </div>
                             </div>
 
-                            <!-- removed inline onclick; now handled in scoped JS -->
-                            <button type="button" class="create-btn">
+                            <!-- Create New Playlist Button -->
+                            <button type="button" class="create-btn" id="createPlaylistBtn" onclick="(function(e){e.preventDefault();e.stopPropagation();const section=document.querySelector('.playlistSection');if(section){const overlay=section.querySelector('.overlay');if(overlay){overlay.classList.add('active');overlay.setAttribute('aria-hidden','false');overlay.style.display='flex';document.body.style.overflow='hidden';console.log('Modal opened via inline onclick');}else{console.error('Overlay not found');}}else{console.error('Playlist section not found');}})(event);" style="pointer-events: auto !important; z-index: 1000 !important; position: relative !important; cursor: pointer !important;">
                                 <span>+</span> Create New Playlist
                             </button>
                         </div>
@@ -1891,17 +1897,30 @@
             let ps_selectedSongs = new Map();
 
             function initializePlaylistModal() {
+                console.log('initializePlaylistModal: Starting initialization...');
+                
                 // scope to the playlist section so no globals are created
                 const section = document.querySelector('.playlistSection');
                 if (!section) {
                     console.warn('Playlist section not found, skipping initialization');
+                    // Try again after a short delay
+                    setTimeout(initializePlaylistModal, 500);
                     return;
                 }
+
+                console.log('initializePlaylistModal: Section found', section);
 
                 const overlay = section.querySelector('.overlay');
                 const openBtn = section.querySelector('.create-btn');
                 const closeBtn = section.querySelector('.close-btn');
                 const form = section.querySelector('form.playlistForm');
+                
+                console.log('initializePlaylistModal: Elements found', {
+                    overlay: !!overlay,
+                    openBtn: !!openBtn,
+                    closeBtn: !!closeBtn,
+                    form: !!form
+                });
                 
                 // Safety check - if required elements are missing, exit
                 if (!overlay || !openBtn || !closeBtn || !form) {
@@ -1912,6 +1931,8 @@
                         form: !!form,
                         section: !!section
                     });
+                    // Try again after a short delay
+                    setTimeout(initializePlaylistModal, 500);
                     return;
                 }
                 
@@ -1941,16 +1962,43 @@
                 let ps_selectedPrivacy = 'public';
                 let searchTimeout = null;
 
-                // Open popup
-                openBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                // Open popup handler
+                function openPlaylistModal(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
                     console.log('Create playlist button clicked');
-                    overlay.classList.add('active');
-                    overlay.setAttribute('aria-hidden', 'false');
-                    document.body.style.overflow = 'hidden';
-                    console.log('Modal opened, overlay active:', overlay.classList.contains('active'));
-                });
+                    console.log('Overlay element:', overlay);
+                    console.log('Overlay classes before:', overlay ? overlay.className : 'overlay is null');
+                    
+                    if (overlay) {
+                        overlay.classList.add('active');
+                        overlay.setAttribute('aria-hidden', 'false');
+                        overlay.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                        console.log('Modal opened, overlay active:', overlay.classList.contains('active'));
+                        console.log('Overlay classes after:', overlay.className);
+                        console.log('Overlay display style:', overlay.style.display);
+                    } else {
+                        console.error('Overlay not found when trying to open modal');
+                    }
+                }
+                
+                // Add event listener directly to the button
+                openBtn.addEventListener('click', openPlaylistModal, true);
+                
+                // Also add direct onclick as fallback
+                openBtn.onclick = function(e) {
+                    openPlaylistModal(e);
+                };
+                
+                // Make it globally accessible for debugging
+                window.openPlaylistModal = openPlaylistModal;
+                window.playlistModalOverlay = overlay;
+                window.playlistModalOpenBtn = openBtn;
+                
+                console.log('Playlist modal initialized successfully. Button:', openBtn);
 
                 // Close popup when clicking overlay (outside the popup)
                 overlay.addEventListener('click', (e) => {
@@ -1979,13 +2027,21 @@
                 // Escape key closes popup when active - handled in global keydown listener
 
                 function closePopup() {
-                    overlay.classList.remove('active');
-                    overlay.setAttribute('aria-hidden', 'true');
-                    document.body.style.overflow = '';
-                    if (musicSearchInput) musicSearchInput.value = '';
-                    // Clear search results from songs grid
-                    updateSelectedSongsGrid();
+                    if (overlay) {
+                        overlay.classList.remove('active');
+                        overlay.setAttribute('aria-hidden', 'true');
+                        overlay.style.display = 'none';
+                        document.body.style.overflow = '';
+                        if (musicSearchInput) musicSearchInput.value = '';
+                        // Clear search results from songs grid
+                        if (typeof updateSelectedSongsGrid === 'function') {
+                            updateSelectedSongsGrid();
+                        }
+                    }
                 }
+                
+                // Make closePopup globally accessible
+                window.closePlaylistModal = closePopup;
 
 
                 // Cover upload triggers
@@ -2345,28 +2401,73 @@
             }
             
             // Initialize when DOM is ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initializePlaylistModal);
-            } else {
-                // DOM is already loaded, initialize immediately
-                initializePlaylistModal();
+            function initPlaylistModalWhenReady() {
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        console.log('DOMContentLoaded: Initializing playlist modal');
+                        initializePlaylistModal();
+                    });
+                } else {
+                    // DOM is already loaded, initialize immediately
+                    console.log('DOM already loaded: Initializing playlist modal immediately');
+                    initializePlaylistModal();
+                }
             }
+            
+            // Call initialization
+            initPlaylistModalWhenReady();
+            
+            // Also try after window load
+            window.addEventListener('load', function() {
+                console.log('Window loaded: Re-initializing playlist modal');
+                setTimeout(initializePlaylistModal, 100);
+            });
             
             // Fallback: Direct button click handler (in case initialization fails)
             document.addEventListener('click', function(e) {
-                if (e.target.closest('.create-btn') && e.target.closest('.playlistSection')) {
-                    const section = e.target.closest('.playlistSection');
-                    const overlay = section ? section.querySelector('.overlay') : null;
+                const createBtn = e.target.closest('.create-btn');
+                const playlistSection = e.target.closest('.playlistSection');
+                
+                if (createBtn && playlistSection) {
+                    console.log('Fallback click handler triggered for create playlist button');
+                    const overlay = playlistSection.querySelector('.overlay');
                     if (overlay) {
                         e.preventDefault();
                         e.stopPropagation();
                         overlay.classList.add('active');
                         overlay.setAttribute('aria-hidden', 'false');
+                        overlay.style.display = 'flex';
                         document.body.style.overflow = 'hidden';
                         console.log('Fallback: Modal opened via direct click handler');
+                    } else {
+                        console.error('Fallback: Overlay not found in playlist section');
                     }
                 }
-            });
+            }, true); // Use capture phase to catch early
+            
+            // Additional fallback: Try to find button by ID
+            document.addEventListener('click', function(e) {
+                if (e.target.id === 'createPlaylistBtn' || e.target.closest('#createPlaylistBtn')) {
+                    console.log('ID-based fallback handler triggered');
+                    const playlistSection = document.querySelector('.playlistSection');
+                    if (playlistSection) {
+                        const overlay = playlistSection.querySelector('.overlay');
+                        if (overlay) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            overlay.classList.add('active');
+                            overlay.setAttribute('aria-hidden', 'false');
+                            overlay.style.display = 'flex';
+                            document.body.style.overflow = 'hidden';
+                            console.log('ID-based fallback: Modal opened');
+                        } else {
+                            console.error('ID-based fallback: Overlay not found');
+                        }
+                    } else {
+                        console.error('ID-based fallback: Playlist section not found');
+                    }
+                }
+            }, true);
         </script>
         <script>
 

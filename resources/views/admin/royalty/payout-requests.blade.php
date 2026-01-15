@@ -1,5 +1,9 @@
 @extends('layouts.app.master')
 
+@php
+use Illuminate\Support\Facades\Storage;
+@endphp
+
 @section('title', 'Payout Requests')
 
 @section('css')
@@ -14,6 +18,24 @@
     .status-processing { background: #cfe2ff; color: #084298; }
     .status-completed { background: #d1e7dd; color: #0f5132; }
     .status-rejected { background: #f8d7da; color: #842029; }
+    .account-details-display {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 0;
+    }
+    .account-details-display p {
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+    .account-details-display p:last-child {
+        margin-bottom: 0;
+    }
+    .account-details-display strong {
+        color: #495057;
+        min-width: 150px;
+        display: inline-block;
+    }
 </style>
 @endsection
 
@@ -146,7 +168,7 @@
                                     <div class="modal fade" id="approveModal{{ $request->id }}" tabindex="-1">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
-                                                <form action="{{ route('admin.royalty.payout.approve', $request->id) }}" method="POST">
+                                                <form action="{{ route('admin.royalty.payout.approve', $request->id) }}" method="POST" enctype="multipart/form-data">
                                                     @csrf
                                                     <div class="modal-header">
                                                         <h5 class="modal-title">Approve Payout Request</h5>
@@ -158,7 +180,12 @@
                                                         <p><strong>Payment Method:</strong> {{ ucfirst(str_replace('_', ' ', $request->payout_method)) }}</p>
                                                         <div class="mb-3">
                                                             <label class="form-label">Admin Notes</label>
-                                                            <textarea name="admin_notes" class="form-control" rows="3"></textarea>
+                                                            <textarea name="admin_notes" class="form-control" rows="3" placeholder="Add any notes about this payout..."></textarea>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Attachment File (Optional)</label>
+                                                            <input type="file" name="attachment_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                                            <small class="form-text text-muted">Upload receipt, transaction proof, or any related document</small>
                                                         </div>
                                                         <div class="alert alert-warning">
                                                             This will deduct ${{ number_format($request->requested_amount, 2) }} from the artist's wallet.
@@ -177,7 +204,7 @@
                                     <div class="modal fade" id="rejectModal{{ $request->id }}" tabindex="-1">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
-                                                <form action="{{ route('admin.royalty.payout.reject', $request->id) }}" method="POST">
+                                                <form action="{{ route('admin.royalty.payout.reject', $request->id) }}" method="POST" enctype="multipart/form-data">
                                                     @csrf
                                                     <div class="modal-header">
                                                         <h5 class="modal-title">Reject Payout Request</h5>
@@ -187,8 +214,13 @@
                                                         <p><strong>Artist:</strong> {{ $request->artist->name }}</p>
                                                         <p><strong>Amount:</strong> ${{ number_format($request->requested_amount, 2) }}</p>
                                                         <div class="mb-3">
-                                                            <label class="form-label">Rejection Reason</label>
-                                                            <textarea name="admin_notes" class="form-control" rows="3" required></textarea>
+                                                            <label class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+                                                            <textarea name="admin_notes" class="form-control" rows="3" required placeholder="Please provide a reason for rejection..."></textarea>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Attachment File (Optional)</label>
+                                                            <input type="file" name="attachment_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                                            <small class="form-text text-muted">Upload any supporting documents if needed</small>
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer">
@@ -259,7 +291,35 @@
                                                         </tr>
                                                         <tr>
                                                             <th>Account Details</th>
-                                                            <td>{{ $request->account_details }}</td>
+                                                            <td>
+                                                                @php
+                                                                    $accountDetails = json_decode($request->account_details, true);
+                                                                @endphp
+                                                                @if($accountDetails && is_array($accountDetails))
+                                                                    @if($request->payout_method === 'bank_transfer')
+                                                                        <div class="account-details-display">
+                                                                            <p><strong>Account Holder Name:</strong> {{ $accountDetails['account_name'] ?? 'N/A' }}</p>
+                                                                            <p><strong>Bank Name:</strong> {{ $accountDetails['bank_name'] ?? 'N/A' }}</p>
+                                                                            <p><strong>Account Number:</strong> {{ $accountDetails['account_number'] ?? 'N/A' }}</p>
+                                                                            @if(!empty($accountDetails['routing_number']))
+                                                                                <p><strong>Routing/SWIFT Code:</strong> {{ $accountDetails['routing_number'] }}</p>
+                                                                            @endif
+                                                                        </div>
+                                                                    @elseif($request->payout_method === 'paypal')
+                                                                        <div class="account-details-display">
+                                                                            <p><strong>PayPal Email:</strong> {{ $accountDetails['paypal_email'] ?? 'N/A' }}</p>
+                                                                        </div>
+                                                                    @elseif($request->payout_method === 'wise')
+                                                                        <div class="account-details-display">
+                                                                            <p><strong>Wise Email:</strong> {{ $accountDetails['wise_email'] ?? 'N/A' }}</p>
+                                                                        </div>
+                                                                    @else
+                                                                        <pre class="mb-0">{{ $request->account_details }}</pre>
+                                                                    @endif
+                                                                @else
+                                                                    <pre class="mb-0">{{ $request->account_details }}</pre>
+                                                                @endif
+                                                            </td>
                                                         </tr>
                                                         <tr>
                                                             <th>Status</th>
@@ -285,6 +345,16 @@
                                                         <tr>
                                                             <th>Admin Notes</th>
                                                             <td>{{ $request->admin_notes }}</td>
+                                                        </tr>
+                                                        @endif
+                                                        @if($request->attachment_file)
+                                                        <tr>
+                                                            <th>Attachment</th>
+                                                            <td>
+                                                                <a href="{{ asset('storage/' . $request->attachment_file) }}" target="_blank" class="btn btn-sm btn-info">
+                                                                    <i class="fas fa-download"></i> Download Attachment
+                                                                </a>
+                                                            </td>
                                                         </tr>
                                                         @endif
                                                     </table>
