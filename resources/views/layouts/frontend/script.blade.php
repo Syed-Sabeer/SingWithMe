@@ -175,14 +175,21 @@
                     const createdAt = n.created_at ? new Date(n.created_at) : new Date();
                     const time = createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     const date = createdAt.toLocaleString();
+                    // Map 'payment' type to 'tip' for tip-related notifications
+                    let notificationType = n.notification_type || n.type || 'system';
+                    if (notificationType === 'payment' && n.title && (n.title.includes('Tip') || n.message.includes('tip'))) {
+                        notificationType = 'tip';
+                    }
                     return {
                         id: n.id,
-                        type: n.notification_type || n.type || 'system',
+                        type: notificationType,
                         title: n.title || 'Notification',
                         message: n.message || '',
                         time,
                         date,
                         unread: !n.read_at && !n.is_read,
+                        action_url: n.action_url || null,
+                        metadata: n.metadata || null,
                     };
                 });
 
@@ -201,7 +208,10 @@
         function getNotificationIcon(type) {
             const icons = {
                 tip: '<svg fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>',
+                payment: '<svg fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>',
                 subscription: '<svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>',
+                earnings: '<svg fill="currentColor" viewBox="0 0 20 20"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path></svg>',
+                payout: '<svg fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"></path><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"></path></svg>',
                 system: '<svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>'
             };
             return icons[type] || icons.system;
@@ -212,14 +222,19 @@
             const quickList = document.getElementById('quickNotificationsList');
             const quickNotifications = notificationsData.slice(0, 5);
             
-            quickList.innerHTML = quickNotifications.map(notif => `
-                <div class="notification-item ${notif.unread ? 'unread' : ''}" onclick="markAsRead(${notif.id})" tabindex="0">
+            quickList.innerHTML = quickNotifications.map(notif => {
+                const clickHandler = notif.action_url 
+                    ? `onclick="markAsRead(${notif.id}); window.location.href='${notif.action_url}';"`
+                    : `onclick="markAsRead(${notif.id})"`;
+                return `
+                <div class="notification-item ${notif.unread ? 'unread' : ''}" ${clickHandler} tabindex="0" style="cursor: pointer;">
                     <div class="notification-content">
                         <div class="notification-icon ${notif.type}">
                             ${getNotificationIcon(notif.type)}
                         </div>
                         <div class="notification-body">
                             <div class="notification-title">${notif.title}</div>
+                            <div class="notification-message" style="font-size: 0.85em; color: #b8b8d4; margin-top: 4px;">${notif.message}</div>
                             <div class="notification-time">
                                 ${notif.unread ? '<span class="unread-dot"></span>' : ''}
                                 ${notif.time}
@@ -227,7 +242,8 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
 
             updateBadges();
         }
@@ -251,8 +267,12 @@
                 return;
             }
 
-            fullList.innerHTML = filteredNotifications.map(notif => `
-                <div class="full-notification-item ${notif.unread ? 'unread' : ''}" onclick="markAsRead(${notif.id})" tabindex="0">
+            fullList.innerHTML = filteredNotifications.map(notif => {
+                const clickHandler = notif.action_url 
+                    ? `onclick="markAsRead(${notif.id}); window.location.href='${notif.action_url}';"`
+                    : `onclick="markAsRead(${notif.id})"`;
+                return `
+                <div class="full-notification-item ${notif.unread ? 'unread' : ''}" ${clickHandler} tabindex="0" style="cursor: pointer;">
                     <div class="full-notification-content">
                         <div class="notification-icon ${notif.type}">
                             ${getNotificationIcon(notif.type)}
@@ -267,7 +287,8 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         // Update badge counts

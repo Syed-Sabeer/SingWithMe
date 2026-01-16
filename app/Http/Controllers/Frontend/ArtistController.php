@@ -64,16 +64,83 @@ class ArtistController extends Controller
         $currentArtistPlan = null;
         $hasUnlimitedUploads = false;
         $songsPerMonth = null;
+        $artistSubscriptionFeatures = [];
         
         if (Auth::check() && Auth::user()->is_artist) {
-            $currentArtistSubscription = Auth::user()->activeArtistSubscription;
-            if ($currentArtistSubscription) {
+            $user = Auth::user();
+            $currentArtistSubscription = $user->activeArtistSubscription;
+            if ($currentArtistSubscription && $currentArtistSubscription->subscriptionPlan) {
                 $currentArtistPlan = $currentArtistSubscription->subscriptionPlan;
-                if ($currentArtistPlan) {
-                    $hasUnlimitedUploads = (bool) $currentArtistPlan->is_unlimited_uploads;
-                    $songsPerMonth = $currentArtistPlan->songs_per_month;
+                $hasUnlimitedUploads = (bool) $currentArtistPlan->is_unlimited_uploads;
+                $songsPerMonth = $currentArtistPlan->songs_per_month;
+                
+                // Get all subscription features for display
+                $artistSubscriptionFeatures = [
+                    'unlimited_uploads' => (bool) $currentArtistPlan->is_unlimited_uploads,
+                    'songs_per_month' => $currentArtistPlan->songs_per_month ?? 3,
+                    'featured_rotation' => (bool) $currentArtistPlan->is_featured_rotation,
+                    'featured_rotation_weeks' => $currentArtistPlan->featured_rotation_weeks ?? 0,
+                    'priority_search' => (bool) $currentArtistPlan->is_priority_search,
+                    'custom_banner' => (bool) $currentArtistPlan->is_custom_banner,
+                    'isrc_codes' => (bool) ($currentArtistPlan->is_isrc_codes ?? true), // Always accessible
+                    'early_access_insights' => (bool) $currentArtistPlan->is_early_access_insights,
+                    'certified_badge' => (bool) $currentArtistPlan->is_certified_badge,
+                    'showcase_placement' => (bool) $currentArtistPlan->is_showcase_placement,
+                    'royalty_tracking' => (bool) ($currentArtistPlan->is_royalty_tracking ?? true), // Always accessible
+                    'playlist_highlighted' => (bool) $currentArtistPlan->is_playlist_highlighted,
+                    'advanced_analytics' => (bool) $currentArtistPlan->is_advanced_analytics,
+                    'showcase_invitations' => (bool) $currentArtistPlan->is_showcase_invitations,
+                    'profile_customization' => true, // Always accessible
+                ];
+            } else {
+                // Free plan (Starter Artist) - find the free plan from the plans list
+                // Try multiple ways to find the free/starter plan
+                $freePlan = \App\Models\ArtistSubscriptionPlan::where('is_active', true)
+                    ->where(function($query) {
+                        $query->where('monthly_fee', 0)
+                            ->orWhere('plan_slug', 'starter-artist')
+                            ->orWhere('plan_name', 'LIKE', '%Starter%')
+                            ->orWhere('plan_name', 'LIKE', '%Free%');
+                    })
+                    ->orderBy('monthly_fee', 'asc')
+                    ->first();
+                
+                // If still not found, get the first plan with monthly_fee = 0
+                if (!$freePlan) {
+                    $freePlan = \App\Models\ArtistSubscriptionPlan::where('is_active', true)
+                        ->where('monthly_fee', 0)
+                        ->first();
                 }
+                
+                // If found, set it as current plan
+                if ($freePlan) {
+                    $currentArtistPlan = $freePlan;
+                }
+                
+                // Free plan (Starter Artist) features - always set this array
+                $artistSubscriptionFeatures = [
+                    'unlimited_uploads' => false,
+                    'songs_per_month' => 3,
+                    'featured_rotation' => false,
+                    'featured_rotation_weeks' => 0,
+                    'priority_search' => false,
+                    'custom_banner' => false,
+                    'isrc_codes' => true, // Always accessible
+                    'early_access_insights' => false,
+                    'certified_badge' => false,
+                    'showcase_placement' => false,
+                    'royalty_tracking' => true, // Always accessible
+                    'playlist_highlighted' => false,
+                    'advanced_analytics' => false,
+                    'showcase_invitations' => false,
+                    'profile_customization' => true, // Always accessible
+                ];
             }
+        }
+        
+        // Ensure artistSubscriptionFeatures is always an array (even if empty)
+        if (!isset($artistSubscriptionFeatures) || !is_array($artistSubscriptionFeatures)) {
+            $artistSubscriptionFeatures = [];
         }
         
         // Get dynamic earnings data for Monthly Earnings section
@@ -150,6 +217,14 @@ class ArtistController extends Controller
                     ];
                 });
             
+            // Get recent tips received
+            $recentTips = \App\Models\ArtistTip::where('artist_id', $artistId)
+                ->where('status', 'sent_to_artist')
+                ->with('user')
+                ->orderBy('sent_to_artist_at', 'desc')
+                ->take(5)
+                ->get();
+            
             // Get all monthly earnings for chart (not just last 6)
             $allMonthlyEarnings = collect($monthlyEarnings)->sortBy(function($earning) {
                 return $earning['period'];
@@ -188,7 +263,9 @@ class ArtistController extends Controller
             'earningsData',
             'wallet',
             'paymentDetails',
-            'payoutHistory'
+            'payoutHistory',
+            'recentTips',
+            'artistSubscriptionFeatures'
         ));
     }
 
@@ -231,8 +308,14 @@ class ArtistController extends Controller
 
             // Check if current user can tip artists (Super Listener only)
             $canTipArtist = false;
+            $isSubscribed = false;
             if (Auth::check()) {
                 $canTipArtist = Auth::user()->hasUserFeature('tip_artists');
+                
+                // Check if current user is subscribed to this artist
+                $isSubscribed = \App\Models\ArtistFollower::where('artist_id', $artist->id)
+                    ->where('follower_id', Auth::id())
+                    ->exists();
             }
             
             return view('frontend.artist-profile', compact(
@@ -241,7 +324,8 @@ class ArtistController extends Controller
                 'songs',
                 'artworks',
                 'listenerPlans',
-                'canTipArtist'
+                'canTipArtist',
+                'isSubscribed'
             ));
         } catch (\Exception $e) {
             Log::error('Error loading public artist profile', [

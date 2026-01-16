@@ -95,9 +95,14 @@ class DownloadController extends Controller
                 ], 404);
             }
             
-            // Return file download response
-            return response()->download($filePath, $music->name . '.mp3', [
+            // Clean filename for download
+            $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $music->name) . '.mp3';
+            
+            // Return file download response with proper headers to handle ID3 tags
+            // Use standard download() method which handles binary files correctly
+            return response()->download($filePath, $filename, [
                 'Content-Type' => 'audio/mpeg',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             ])->deleteFileAfterSend(false);
 
         } catch (\Exception $e) {

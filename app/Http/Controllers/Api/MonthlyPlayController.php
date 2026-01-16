@@ -64,24 +64,49 @@ class MonthlyPlayController extends Controller
             $streamDuration = (int) $request->get('stream_duration', 0);
             $isComplete = $streamDuration >= 30; // Consider complete if 30+ seconds
 
-            // Only create stream stat if duration > 0 (to avoid duplicate entries for same play)
-            // If duration is 0, it's just a play start, not a complete stream
+            // Only create/update stream stat if duration > 0 (when song ends)
+            // If duration is 0, it's just a play start - we'll track it when song ends
             if ($streamDuration > 0) {
-                StreamStat::create([
-                    'music_id' => $musicId,
-                    'artist_id' => $music->driver_id,
-                    'user_id' => $userId,
-                    'stream_duration' => $streamDuration,
-                    'ip_address' => $request->ip(),
-                    'is_complete' => $isComplete,
-                    'streamed_at' => now(),
-                ]);
+                // Check if there's an existing incomplete stream from this user for this song (within last 10 minutes)
+                // This handles the case where song started (duration 0) and now ended (actual duration)
+                $existingStream = StreamStat::where('music_id', $musicId)
+                    ->where('user_id', $userId)
+                    ->where('stream_duration', 0)
+                    ->where('created_at', '>=', now()->subMinutes(10))
+                    ->orderBy('created_at', 'desc')
+                    ->first();
                 
-                Log::info('MonthlyPlayController: Stream stat logged', [
-                    'music_id' => $musicId,
-                    'duration' => $streamDuration,
-                    'is_complete' => $isComplete
-                ]);
+                if ($existingStream) {
+                    // Update existing stream with actual duration
+                    $existingStream->update([
+                        'stream_duration' => $streamDuration,
+                        'is_complete' => $isComplete,
+                        'streamed_at' => now(),
+                    ]);
+                    
+                    Log::info('MonthlyPlayController: Updated existing stream stat', [
+                        'music_id' => $musicId,
+                        'duration' => $streamDuration,
+                        'is_complete' => $isComplete
+                    ]);
+                } else {
+                    // Create new stream stat
+                    StreamStat::create([
+                        'music_id' => $musicId,
+                        'artist_id' => $music->driver_id,
+                        'user_id' => $userId,
+                        'stream_duration' => $streamDuration,
+                        'ip_address' => $request->ip(),
+                        'is_complete' => $isComplete,
+                        'streamed_at' => now(),
+                    ]);
+                    
+                    Log::info('MonthlyPlayController: Stream stat logged', [
+                        'music_id' => $musicId,
+                        'duration' => $streamDuration,
+                        'is_complete' => $isComplete
+                    ]);
+                }
             }
 
             // Increment listeners count on the music track

@@ -352,18 +352,8 @@ Route::get('artist-agreement', function () {
 })->name('artist-agreement');
 
 // Tip Artist page - Only for Super Listener plan
-Route::get('tip-artist', function () {
-    if (!auth()->check()) {
-        return redirect()->route('user.portal')->with('error', 'Please login to access this feature.');
-    }
-    
-    $user = auth()->user();
-    if (!$user->hasUserFeature('tip_artists')) {
-        return redirect()->route('user.portal')->with('error', 'This feature is only available for Super Listener subscribers. Please upgrade your plan.');
-    }
-    
-    return view('frontend.tip-artist');
-})->middleware('auth')->name('tip-artist');
+Route::get('tip-artist', [\App\Http\Controllers\TipController::class, 'index'])->middleware('auth')->name('tip-artist');
+Route::post('api/tip/process', [\App\Http\Controllers\TipController::class, 'processTip'])->middleware('auth')->name('api.tip.process');
 
 // Analytics & Insights Dashboard page
 Route::get('dashboard-analytics-insights', function () {
@@ -699,6 +689,10 @@ Route::delete('contacts/{id}', [AdminContactController::class, 'destroy'])->name
     Route::post('royalty/set-platform-revenue', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'setPlatformRevenue'])->name('royalty.set-platform-revenue');
     Route::post('royalty/calculate', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'calculateRoyalties'])->name('royalty.calculate');
     Route::get('royalty/report', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'generateReport'])->name('royalty.report');
+
+    // Tip Management Routes (View only - tips are sent directly to artists)
+    Route::get('tips', [\App\Http\Controllers\Admin\AdminTipController::class, 'index'])->name('tips.index');
+    Route::get('tips/{id}', [\App\Http\Controllers\Admin\AdminTipController::class, 'show'])->name('tips.show');
 
     // Notification Management Routes
     Route::get('notifications/templates', [\App\Http\Controllers\Admin\AdminNotificationController::class, 'templates'])->name('notifications.templates');

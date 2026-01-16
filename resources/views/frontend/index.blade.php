@@ -534,11 +534,11 @@
                                 data-wow-delay="0.2s">
                                 <div class="music-card">
                                     <div class="music-card__content">
-                                        <img class="music-image" src="/public/FrontendAssets/images/singWithMe/song-img.jpg" alt="">
+                                        <img class="music-image" id="featured-track-image" src="/public/FrontendAssets/images/singWithMe/song-img.jpg" alt="Track Image">
                                         <div class="music-info">
                                             <div>
-                                            <h2 class="music-name">Frau Power</h2>
-                                            <p class="music-artist">nick karvounis</p>
+                                            <h2 class="music-name" id="featured-track-name">Select a track to play</h2>
+                                            <p class="music-artist" id="featured-track-artist">Artist name will appear here</p>
                                             </div>
                                             <div class="Parent-visualizerDots">
                                             <div class="music-visualizerDots">
@@ -548,10 +548,10 @@
                                             </div>
                                             <div>
                                                 <ul class="dropdown_Musicplaylist">
-                                                <li> <a href="javascript:;">Add to Playlist</a></li>
-                                                <li> <a href="javascript:;">Add to Favorites</a></li>
-                                                <li> <a href="javascript:;">Share</a></li>
-                                                <li> <a href="/tip-artist">Artist Tip</a></li>
+                                                <li> <a href="javascript:;" onclick="addCurrentTrackToPlaylist()">Add to Playlist</a></li>
+                                                <li> <a href="javascript:;" onclick="addCurrentTrackToFavorites()">Add to Favorites</a></li>
+                                                <li> <a href="javascript:;" onclick="shareCurrentTrack()">Share</a></li>
+                                                <li> <a href="javascript:;" id="current-track-tip-link" onclick="tipCurrentTrackArtist()">Artist Tip</a></li>
                                             </ul>
                                             </div>
                                             </div>
@@ -614,7 +614,7 @@
                                                     </div>
                                                     <div class="music_controls">
                                                         <div data-id="{{ $track->id }}" class="music-controls-item play play_btn" 
-                                                            onclick="playFeaturedTrack({{ $track->id }}, '{{ addslashes($track->name) }}', '{{ addslashes($artist->name ?? 'Unknown') }}', '{{ $thumbnail }}', '{{ $track->music_file_url ?? '' }}')">
+                                                            onclick="playFeaturedTrack({{ $track->id }}, '{{ addslashes($track->name) }}', '{{ addslashes($artist->name ?? 'Unknown') }}', '{{ $thumbnail }}', '{{ $track->music_file_url ?? '' }}', '{{ $track->isrc_code ?? '' }}', {{ $artist->id ?? 'null' }})">
                                                             <i class="fas fa-play music-controls-item--icon play-icon"></i>
                                                             <div class="play-icon-background"></div>
                                                         </div>
@@ -1536,15 +1536,102 @@ window.addEventListener('scroll', function () {
 
         // certified section
         
+        // Store current track info for dropdown menu actions
+        let currentFeaturedTrack = {
+            id: null,
+            name: null,
+            artist: null,
+            thumbnail: null,
+            musicFile: null,
+            artistId: null
+        };
+        
         // Play featured track function
-        function playFeaturedTrack(trackId, name, artist, thumbnail, musicFile) {
+        function playFeaturedTrack(trackId, name, artist, thumbnail, musicFile, isrcCode, artistId) {
+            // Store current track info
+            currentFeaturedTrack = {
+                id: trackId,
+                name: name,
+                artist: artist,
+                thumbnail: thumbnail,
+                musicFile: musicFile,
+                isrcCode: isrcCode || null,
+                artistId: artistId || null
+            };
+            
+            // Update the music card UI with track details
+            const trackImage = document.getElementById('featured-track-image');
+            const trackName = document.getElementById('featured-track-name');
+            const trackArtist = document.getElementById('featured-track-artist');
+            
+            if (trackImage) {
+                trackImage.src = thumbnail || '/public/FrontendAssets/images/singWithMe/song-img.jpg';
+                trackImage.alt = name || 'Track Image';
+                trackImage.onerror = function() {
+                    // Fallback to default image if thumbnail fails to load
+                    this.src = '/public/FrontendAssets/images/singWithMe/song-img.jpg';
+                };
+            }
+            
+            if (trackName) {
+                trackName.textContent = name || 'Unknown Track';
+            }
+            
+            if (trackArtist) {
+                trackArtist.textContent = artist || 'Unknown Artist';
+            }
+            
+            // Update visualizer dots to show playing state
+            const visualizerDots = document.querySelector('.music-visualizerDots');
+            if (visualizerDots) {
+                visualizerDots.classList.add('playing');
+            }
+            
+            // Update play button state
+            const playButton = document.querySelector('#play');
+            const playIcon = playButton?.querySelector('.play-icon');
+            if (playButton && playIcon) {
+                playButton.classList.add('playing');
+                playIcon.classList.remove('fa-play');
+                playIcon.classList.add('fa-pause');
+            }
+            
+            // Update all play buttons in the featured tracks list
+            document.querySelectorAll('.play_btn').forEach(btn => {
+                btn.classList.remove('playing');
+                const icon = btn.querySelector('.play-icon');
+                if (icon) {
+                    icon.classList.remove('fa-pause');
+                    icon.classList.add('fa-play');
+                }
+            });
+            
+            // Mark the clicked button as playing
+            const clickedButton = document.querySelector(`.play_btn[data-id="${trackId}"]`);
+            if (clickedButton) {
+                clickedButton.classList.add('playing');
+                const clickedIcon = clickedButton.querySelector('.play-icon');
+                if (clickedIcon) {
+                    clickedIcon.classList.remove('fa-play');
+                    clickedIcon.classList.add('fa-pause');
+                }
+            }
+            
+            // Update artist tip link if artist ID is available
+            const tipLink = document.getElementById('current-track-tip-link');
+            if (tipLink && artistId) {
+                tipLink.href = `/tip-artist?artist=${artistId}`;
+            }
+            
+            // Load and play track in global music player
             if (window.MusicPlayer) {
                 const track = {
                     id: trackId,
                     name: name,
                     artist: artist,
                     thumbnail: thumbnail,
-                    music_file: musicFile
+                    music_file: musicFile,
+                    isrc_code: isrcCode || null
                 };
                 window.MusicPlayer.loadTrack(track);
                 window.MusicPlayer.play();
@@ -1553,5 +1640,132 @@ window.addEventListener('scroll', function () {
             }
         }
         window.playFeaturedTrack = playFeaturedTrack;
+        
+        // Add current track to playlist
+        async function addCurrentTrackToPlaylist() {
+            if (!currentFeaturedTrack.id) {
+                alert('Please select a track first');
+                return;
+            }
+            
+            // Check if user is logged in
+            @auth
+                // Open playlist modal or show playlist selection
+                if (typeof window.openPlaylistModal === 'function') {
+                    window.openPlaylistModal(event);
+                    // Store track ID to add after playlist selection
+                    window.pendingTrackToAdd = currentFeaturedTrack.id;
+                } else {
+                    alert('Playlist feature is not available. Please go to your user portal to add songs to playlists.');
+                }
+            @else
+                alert('Please log in to add songs to playlists');
+            @endauth
+        }
+        window.addCurrentTrackToPlaylist = addCurrentTrackToPlaylist;
+        
+        // Add current track to favorites
+        async function addCurrentTrackToFavorites() {
+            if (!currentFeaturedTrack.id) {
+                alert('Please select a track first');
+                return;
+            }
+            
+            @auth
+                try {
+                    const response = await fetch('/api/favorites/toggle', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            music_id: currentFeaturedTrack.id
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        if (typeof showNotification === 'function') {
+                            showNotification(data.message, 'success');
+                        } else {
+                            alert(data.message);
+                        }
+                    } else {
+                        if (typeof showNotification === 'function') {
+                            showNotification(data.message || 'Failed to update favorites', 'error');
+                        } else {
+                            alert(data.message || 'Failed to update favorites');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error toggling favorite:', error);
+                    alert('Error updating favorite status. Please try again.');
+                }
+            @else
+                alert('Please log in to add songs to favorites');
+            @endauth
+        }
+        window.addCurrentTrackToFavorites = addCurrentTrackToFavorites;
+        
+        // Share current track
+        function shareCurrentTrack() {
+            if (!currentFeaturedTrack.id) {
+                alert('Please select a track first');
+                return;
+            }
+            
+            const shareUrl = `${window.location.origin}/songs-details?id=${currentFeaturedTrack.id}`;
+            const shareText = `Check out "${currentFeaturedTrack.name}" by ${currentFeaturedTrack.artist} on SingWithMe!`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: currentFeaturedTrack.name,
+                    text: shareText,
+                    url: shareUrl
+                }).catch(err => {
+                    console.log('Error sharing:', err);
+                    copyToClipboard(shareUrl);
+                });
+            } else {
+                copyToClipboard(shareUrl);
+            }
+        }
+        window.shareCurrentTrack = shareCurrentTrack;
+        
+        // Copy to clipboard helper
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                if (typeof showNotification === 'function') {
+                    showNotification('Link copied to clipboard!', 'success');
+                } else {
+                    alert('Link copied to clipboard!');
+                }
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy link. Please copy manually: ' + text);
+            }
+            document.body.removeChild(textarea);
+        }
+        
+        // Tip current track artist
+        function tipCurrentTrackArtist() {
+            if (!currentFeaturedTrack.artistId) {
+                alert('Artist information not available');
+                return;
+            }
+            
+            window.location.href = `/tip-artist?artist=${currentFeaturedTrack.artistId}`;
+        }
+        window.tipCurrentTrackArtist = tipCurrentTrackArtist;
     </script>
 @endsection

@@ -47,8 +47,17 @@ class ArtistMusic extends Model
     public function getVideoFileUrlAttribute()
     {
         if ($this->video_file) {
-            // Use relative URL to avoid domain issues
-            return '/storage/' . $this->video_file; 
+            // Remove any existing storage/ or public/ prefix to avoid duplication
+            $path = $this->video_file;
+            $path = preg_replace('#^(storage/|public/storage/|public/)#', '', $path);
+            
+            // Ensure it starts with storage/ for proper asset generation
+            if (strpos($path, 'storage/') !== 0) {
+                $path = 'storage/' . $path;
+            }
+            
+            // Use asset() helper to generate proper URL
+            return asset($path);
         }
         return null;
     }
@@ -57,8 +66,17 @@ class ArtistMusic extends Model
     public function getThumbnailImageUrlAttribute()
     {
         if ($this->thumbnail_image) {
-            // Use relative URL to avoid domain issues
-            return '/storage/' . $this->thumbnail_image;
+            // Remove any existing storage/ or public/ prefix to avoid duplication
+            $path = $this->thumbnail_image;
+            $path = preg_replace('#^(storage/|public/storage/|public/)#', '', $path);
+            
+            // Ensure it starts with storage/ for proper asset generation
+            if (strpos($path, 'storage/') !== 0) {
+                $path = 'storage/' . $path;
+            }
+            
+            // Use asset() helper to generate proper URL
+            return asset($path);
         }
         return null;
     }

@@ -4123,6 +4123,35 @@ CREATE TABLE IF NOT EXISTS `artist_payment_details` (
 ALTER TABLE `payout_requests`
   ADD COLUMN IF NOT EXISTS `attachment_file` varchar(255) DEFAULT NULL COMMENT 'Admin attachment file path' AFTER `admin_notes`;
 
+-- --------------------------------------------------------
+-- Artist Tips Table (User -> Admin -> Artist flow)
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `artist_tips` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) UNSIGNED NOT NULL COMMENT 'User who sent the tip',
+  `artist_id` bigint(20) UNSIGNED NOT NULL COMMENT 'Artist receiving the tip',
+  `amount` decimal(10,2) NOT NULL COMMENT 'Tip amount',
+  `platform_fee` decimal(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Platform fee (5%)',
+  `total_amount` decimal(10,2) NOT NULL COMMENT 'Total amount paid by user',
+  `payment_method` varchar(50) NOT NULL COMMENT 'stripe, paypal, google-pay, apple-pay, square',
+  `payment_method_id` varchar(255) DEFAULT NULL COMMENT 'Payment gateway transaction ID',
+  `status` enum('pending','paid','sent_to_artist','failed','cancelled') NOT NULL DEFAULT 'pending' COMMENT 'pending: user paid, admin needs to send | paid: admin received | sent_to_artist: admin sent to artist',
+  `admin_notes` text DEFAULT NULL COMMENT 'Admin notes when sending to artist',
+  `user_message` text DEFAULT NULL COMMENT 'Optional message from user to artist',
+  `paid_at` timestamp NULL DEFAULT NULL COMMENT 'When user payment was completed',
+  `sent_to_artist_at` timestamp NULL DEFAULT NULL COMMENT 'When admin sent tip to artist',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_artist_id` (`artist_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_paid_at` (`paid_at`),
+  CONSTRAINT `fk_artist_tips_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_artist_tips_artist` FOREIGN KEY (`artist_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

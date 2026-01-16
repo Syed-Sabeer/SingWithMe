@@ -997,7 +997,7 @@
 
                     <div class="left-panel">
                         <div class="logo">SINGWITHME</div>
-                        <div class="tagline">Start your 30-day free trial now</div>
+                        {{-- <div class="tagline">Start your 30-day free trial now</div> --}}
                         <div class="platform-icons">
                             <div class="icon"><lord-icon src="https://cdn.lordicon.com/zsixeihu.json" trigger="loop"
                                     delay="2000"
@@ -1106,8 +1106,8 @@
                         <h1 class="welcome-title">
                             Welcome back, {{ Auth::user()->name }}
                             @if(isset($subscriptionFeatures) && ($subscriptionFeatures['supporter_badge'] ?? false))
-                                <span class="supporter-badge" style="display: inline-block; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; font-size: 0.6rem; padding: 4px 10px; border-radius: 12px; margin-left: 10px; font-weight: 600; vertical-align: middle;">
-                                    ⭐ Supporter
+                                <span class="supporter-badge" style="display: inline-block; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff !important; font-size: 0.6rem; padding: 4px 10px; border-radius: 12px; margin-left: 10px; font-weight: 600; vertical-align: middle;">
+                                   <span style="color: #fff !important;"> ⭐ Supporter </span>
                                 </span>
                             @endif
                             <div class="user-Lord">
@@ -1597,7 +1597,7 @@
                             </div>
 
                             <!-- Create New Playlist Button -->
-                            <button type="button" class="create-btn" id="createPlaylistBtn" onclick="(function(e){e.preventDefault();e.stopPropagation();const section=document.querySelector('.playlistSection');if(section){const overlay=section.querySelector('.overlay');if(overlay){overlay.classList.add('active');overlay.setAttribute('aria-hidden','false');overlay.style.display='flex';document.body.style.overflow='hidden';console.log('Modal opened via inline onclick');}else{console.error('Overlay not found');}}else{console.error('Playlist section not found');}})(event);" style="pointer-events: auto !important; z-index: 1000 !important; position: relative !important; cursor: pointer !important;">
+                            <button type="button" class="create-btn" id="createPlaylistBtn" onclick="if(typeof window.openPlaylistModal==='function'){window.openPlaylistModal(event);}else{const section=document.querySelector('.playlistSection');if(section){const overlay=section.querySelector('.overlay');if(overlay){overlay.classList.add('active');overlay.setAttribute('aria-hidden','false');overlay.style.display='flex';document.body.style.overflow='hidden';setTimeout(function(){if(typeof window.initializeMusicSearch==='function'){window.initializeMusicSearch();}},200);}}}}" style="pointer-events: auto !important; z-index: 1000 !important; position: relative !important; cursor: pointer !important;">
                                 <span>+</span> Create New Playlist
                             </button>
                         </div>
@@ -1663,8 +1663,9 @@
                                                 <!-- changed id -> class (selected-count) -->
                                                 <span class="selected-count" style="display:none;">0 selected</span>
                                             </label>
-                                            <div id="selectedSongsGrid" class="songs-grid">
+                                            <div id="selectedSongsGrid" class="songs-grid" style="min-height: 100px;">
                                                 <!-- Selected songs will be dynamically added here -->
+                                                <div style="text-align: center; color: #6b7280; padding: 20px;">Start typing in the search box above to find songs...</div>
                                             </div>
                                         </div>
 
@@ -1961,6 +1962,9 @@
                 // local-scoped state (won't pollute global scope)
                 let ps_selectedPrivacy = 'public';
                 let searchTimeout = null;
+                
+                // Make searchTimeout accessible globally for the search function
+                window.playlistSearchTimeout = null;
 
                 // Open popup handler
                 function openPlaylistModal(e) {
@@ -1980,6 +1984,58 @@
                         console.log('Modal opened, overlay active:', overlay.classList.contains('active'));
                         console.log('Overlay classes after:', overlay.className);
                         console.log('Overlay display style:', overlay.style.display);
+                        
+                        // Re-initialize music search when modal opens (in case it wasn't initialized before)
+                        setTimeout(() => {
+                            if (typeof window.initializeMusicSearch === 'function') {
+                                console.log('Re-initializing music search on modal open');
+                                window.initializeMusicSearch();
+                            } else {
+                                console.warn('initializeMusicSearch function not available, attempting direct initialization');
+                                // Direct initialization as fallback
+                                const searchInput = document.getElementById('musicSearchInput');
+                                const songsGrid = document.getElementById('selectedSongsGrid');
+                                if (searchInput && songsGrid) {
+                                    // Clone to remove old listeners
+                                    const newInput = searchInput.cloneNode(true);
+                                    searchInput.parentNode.replaceChild(newInput, searchInput);
+                                    
+                                    // Add search listener
+                                    newInput.addEventListener('input', function() {
+                                        const query = this.value.trim();
+                                        console.log('Search input (fallback):', query);
+                                        
+                                        if (window.playlistSearchTimeout) {
+                                            clearTimeout(window.playlistSearchTimeout);
+                                        }
+                                        
+                                        if (query.length < 2) {
+                                            if (typeof updateSelectedSongsGrid === 'function') {
+                                                updateSelectedSongsGrid();
+                                            } else if (typeof window.updateSelectedSongsGrid === 'function') {
+                                                window.updateSelectedSongsGrid();
+                                            } else {
+                                                songsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Start typing to search for songs...</div>';
+                                            }
+                                            return;
+                                        }
+                                        
+                                        window.playlistSearchTimeout = setTimeout(() => {
+                                            console.log('Fallback: Executing search for:', query);
+                                            if (typeof searchMusic === 'function') {
+                                                searchMusic(query, songsGrid);
+                                            } else if (typeof window.searchMusic === 'function') {
+                                                window.searchMusic(query, songsGrid);
+                                            } else {
+                                                console.error('searchMusic function not found in fallback');
+                                                songsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #ef4444;">Search function not available. Please refresh the page.</div>';
+                                            }
+                                        }, 300);
+                                    });
+                                    console.log('Fallback search initialized');
+                                }
+                            }
+                        }, 200);
                     } else {
                         console.error('Overlay not found when trying to open modal');
                     }
@@ -2070,84 +2126,138 @@
                     });
                 }
 
-                // Music search functionality
-                if (musicSearchInput) {
-                    musicSearchInput.addEventListener('input', function() {
-                    const query = this.value.trim();
+                // Music search functionality - initialize when modal opens
+                function initializeMusicSearch() {
+                    const searchInput = document.getElementById('musicSearchInput');
+                    const songsGrid = document.getElementById('selectedSongsGrid');
                     
-                    // Clear previous timeout
-                    if (searchTimeout) {
-                        clearTimeout(searchTimeout);
+                    console.log('initializeMusicSearch called', {
+                        searchInput: !!searchInput,
+                        songsGrid: !!songsGrid
+                    });
+                    
+                    if (!searchInput || !songsGrid) {
+                        console.warn('Music search elements not found:', {
+                            searchInput: !!searchInput,
+                            songsGrid: !!songsGrid
+                        });
+                        return false;
                     }
                     
-                    if (query.length < 2) {
-                        updateSelectedSongsGrid();
-                        return;
-                    }
+                    // Remove any existing listener by cloning the input
+                    const newSearchInput = searchInput.cloneNode(true);
+                    searchInput.parentNode.replaceChild(newSearchInput, searchInput);
                     
-                    // Debounce search
-                    searchTimeout = setTimeout(() => {
-                        searchMusic(query);
-                    }, 300);
+                    // Add event listener to the new search input
+                    newSearchInput.addEventListener('input', function(e) {
+                        const query = this.value.trim();
+                        
+                        console.log('Search input changed:', query, 'Length:', query.length);
+                        
+                        // Clear previous timeout
+                        if (window.playlistSearchTimeout) {
+                            clearTimeout(window.playlistSearchTimeout);
+                        }
+                        
+                        if (query.length < 2) {
+                            console.log('Query too short, clearing results');
+                            if (typeof updateSelectedSongsGrid === 'function') {
+                                updateSelectedSongsGrid();
+                            } else if (typeof window.updateSelectedSongsGrid === 'function') {
+                                window.updateSelectedSongsGrid();
+                            } else {
+                                songsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;">Start typing to search for songs...</div>';
+                            }
+                            return;
+                        }
+                        
+                        // Debounce search
+                        console.log('Setting timeout for search');
+                        window.playlistSearchTimeout = setTimeout(() => {
+                            console.log('Executing search for:', query);
+                            if (typeof searchMusic === 'function') {
+                                searchMusic(query, songsGrid);
+                            } else if (typeof window.searchMusic === 'function') {
+                                window.searchMusic(query, songsGrid);
+                            } else {
+                                console.error('searchMusic function not found');
+                                songsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #ef4444;">Search function not available. Please refresh the page.</div>';
+                            }
+                        }, 300);
+                    });
+                    
+                    // Also add keyup as fallback
+                    newSearchInput.addEventListener('keyup', function(e) {
+                        if (e.key === 'Enter') {
+                            const query = this.value.trim();
+                            if (query.length >= 2) {
+                                if (window.playlistSearchTimeout) {
+                                    clearTimeout(window.playlistSearchTimeout);
+                                }
+                                searchMusic(query, songsGrid);
+                            }
+                        }
+                    });
+                    
+                    console.log('Music search initialized successfully');
+                    return true;
+                }
+                
+                // Make it globally accessible
+                window.initializeMusicSearch = initializeMusicSearch;
+                
+                // Initialize search when modal opens (if elements exist)
+                if (musicSearchInput && selectedSongsGrid) {
+                    console.log('Initializing music search on page load');
+                    initializeMusicSearch();
+                } else {
+                    console.warn('Music search elements not found on initial load:', {
+                        musicSearchInput: !!musicSearchInput,
+                        selectedSongsGrid: !!selectedSongsGrid
+                    });
+                }
+                
+                // Also initialize when DOM is ready (fallback)
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function() {
+                        setTimeout(() => {
+                            if (typeof window.initializeMusicSearch === 'function') {
+                                window.initializeMusicSearch();
+                            }
+                        }, 500);
                     });
                 }
 
-                async function searchMusic(query) {
+                async function searchMusic(query, songsGrid = null) {
+                    const grid = songsGrid || selectedSongsGrid || document.getElementById('selectedSongsGrid');
+                    
+                    if (!grid) {
+                        console.error('Selected songs grid not found');
+                        return;
+                    }
+                    
                     try {
                         // Show loading in songs grid
-                        selectedSongsGrid.innerHTML = '<div class="search-loading" style="text-align: center; padding: 20px; color: #6b7280;">Searching...</div>';
+                        grid.innerHTML = '<div class="search-loading" style="text-align: center; padding: 20px; color: #6b7280;">Searching...</div>';
                         
                         console.log('Searching for:', query);
                         console.log('Current location:', window.location.href);
                         console.log('Origin:', window.location.origin);
                         
-                        // Try different URL patterns
-                        const urls = [
-                            `${window.location.origin}/music-search?q=${encodeURIComponent(query)}`,
-                            `${window.location.origin}/api/music/search?q=${encodeURIComponent(query)}`,
-                            `/music-search?q=${encodeURIComponent(query)}`,
-                            `/api/music/search?q=${encodeURIComponent(query)}`,
-                            `./music-search?q=${encodeURIComponent(query)}`,
-                            `./api/music/search?q=${encodeURIComponent(query)}`
-                        ];
+                        // Use the correct URL pattern (from routes/web.php)
+                        const url = `${window.location.origin}/music-search?q=${encodeURIComponent(query)}`;
                         
-                        let response = null;
-                        let lastError = null;
+                        console.log('Trying URL:', url);
                         
-                        for (const url of urls) {
-                            try {
-                                console.log('Trying URL:', url);
-                                response = await fetch(url, {
-                                    method: 'GET',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                    }
-                                });
-                                
-                                console.log('Response status for', url, ':', response.status);
-                                
-                                if (response.ok) {
-                                    console.log('Success with URL:', url);
-                                    break;
-                                } else {
-                                    const errorText = await response.text();
-                                    console.log('Error with URL', url, ':', errorText.substring(0, 100));
-                                    lastError = new Error(`HTTP error! status: ${response.status}`);
-                                }
-                            } catch (err) {
-                                console.log('Fetch error with URL', url, ':', err.message);
-                                lastError = err;
-                                continue;
+                        const response = await fetch(url, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
                             }
-                        }
-                        
-                        if (!response || !response.ok) {
-                            throw lastError || new Error('All URL attempts failed');
-                        }
+                        });
                         
                         console.log('Response status:', response.status);
-                        console.log('Response headers:', response.headers);
                         
                         if (!response.ok) {
                             const errorText = await response.text();
@@ -2155,32 +2265,70 @@
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
                         
+                        // Check content type
+                        const contentType = response.headers.get('content-type');
+                        console.log('Response content-type:', contentType);
+                        
                         // Check if response is HTML instead of JSON
                         const responseText = await response.text();
-                        console.log('Raw response:', responseText.substring(0, 200));
+                        console.log('Raw response (first 200 chars):', responseText.substring(0, 200));
                         
                         if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
                             console.error('Received HTML instead of JSON:', responseText.substring(0, 500));
                             throw new Error('Server returned HTML instead of JSON');
                         }
                         
-                        const data = JSON.parse(responseText);
-                        console.log('Response data:', data);
+                        let data;
+                        try {
+                            data = JSON.parse(responseText);
+                        } catch (parseError) {
+                            console.error('JSON parse error:', parseError);
+                            console.error('Response text:', responseText);
+                            throw new Error('Invalid JSON response from server');
+                        }
                         
-                        if (data.success && data.data.length > 0) {
-                            displaySearchResultsInGrid(data.data);
+                        console.log('Response data:', data);
+                        console.log('Data success:', data.success);
+                        console.log('Data array length:', data.data ? data.data.length : 0);
+                        
+                        if (data.success && data.data && Array.isArray(data.data) && data.data.length > 0) {
+                            console.log('Displaying', data.data.length, 'search results');
+                            displaySearchResultsInGrid(data.data, grid);
                         } else {
-                            selectedSongsGrid.innerHTML = '<div class="search-no-results" style="text-align: center; padding: 20px; color: #6b7280;">No songs found</div>';
+                            console.log('No results found or empty data');
+                            grid.innerHTML = '<div class="search-no-results" style="text-align: center; padding: 20px; color: #6b7280;">No songs found. Try a different search term.</div>';
                         }
                     } catch (error) {
                         console.error('Search error:', error);
-                        selectedSongsGrid.innerHTML = '<div class="search-no-results" style="text-align: center; padding: 20px; color: #6b7280;">Error searching songs. Please try again.</div>';
+                        console.error('Error stack:', error.stack);
+                        grid.innerHTML = '<div class="search-no-results" style="text-align: center; padding: 20px; color: #ef4444;">Error searching songs: ' + error.message + '. Please try again.</div>';
                     }
                 }
+                
+                // Make searchMusic globally accessible
+                window.searchMusic = searchMusic;
 
-                function displaySearchResultsInGrid(songs) {
-                    console.log('Displaying search results:', songs);
-                    selectedSongsGrid.innerHTML = songs.map(song => {
+                function displaySearchResultsInGrid(songs, songsGrid = null) {
+                    const grid = songsGrid || selectedSongsGrid || document.getElementById('selectedSongsGrid');
+                    
+                    if (!grid) {
+                        console.error('Selected songs grid not found for displaying results');
+                        return;
+                    }
+                    
+                    if (!songs || !Array.isArray(songs) || songs.length === 0) {
+                        console.warn('No songs to display or invalid songs array');
+                        grid.innerHTML = '<div class="search-no-results" style="text-align: center; padding: 20px; color: #6b7280;">No songs found</div>';
+                        return;
+                    }
+                    
+                    console.log('Displaying search results:', songs.length, 'songs');
+                    grid.innerHTML = songs.map(song => {
+                        // Ensure song has required properties
+                        if (!song || !song.id || !song.name) {
+                            console.warn('Invalid song object:', song);
+                            return '';
+                        }
                         // Escape special characters in song data
                         const escapedName = song.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
                         const escapedArtist = song.artist.replace(/'/g, "\\'").replace(/"/g, '\\"');
@@ -2203,8 +2351,15 @@
                                 </div>
                             </div>
                         `;
-                    }).join('');
+                    }).filter(html => html !== '').join('');
+                    
+                    if (grid.innerHTML.trim() === '') {
+                        grid.innerHTML = '<div class="search-no-results" style="text-align: center; padding: 20px; color: #6b7280;">No valid songs found</div>';
+                    }
                 }
+                
+                // Make displaySearchResultsInGrid globally accessible
+                window.displaySearchResultsInGrid = displaySearchResultsInGrid;
 
                 // Global function to add song to playlist
                 window.addSongToPlaylist = function(musicId, name, artist, thumbnail) {
@@ -2251,12 +2406,18 @@
                 };
 
                 function updateSelectedSongsGrid() {
-                    if (ps_selectedSongs.size === 0) {
-                        selectedSongsGrid.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px;">No songs selected</div>';
+                    const grid = selectedSongsGrid || document.getElementById('selectedSongsGrid');
+                    if (!grid) {
+                        console.warn('Selected songs grid not found in updateSelectedSongsGrid');
                         return;
                     }
                     
-                    selectedSongsGrid.innerHTML = Array.from(ps_selectedSongs.values()).map(song => `
+                    if (ps_selectedSongs.size === 0) {
+                        grid.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px;">No songs selected. Search and add songs to your playlist.</div>';
+                        return;
+                    }
+                    
+                    grid.innerHTML = Array.from(ps_selectedSongs.values()).map(song => `
                         <div class="selected-song-item">
                             <img src="${song.thumbnail || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMyAxMEgxM1YyMkgxM1YxMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTE5IDEwSDE5VjIySDE5VjEwWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'}" alt="Album Cover" class="selected-song-thumbnail" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMyAxMEgxM1YyMkgxM1YxMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTE5IDEwSDE5VjIySDE5VjEwWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'">
                             <div class="selected-song-info">
@@ -2267,6 +2428,9 @@
                         </div>
                     `).join('');
                 }
+                
+                // Make updateSelectedSongsGrid globally accessible
+                window.updateSelectedSongsGrid = updateSelectedSongsGrid;
 
                 // Global function to remove song from playlis
                 window.removeSongFromPlaylist = function(musicId) {

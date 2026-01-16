@@ -203,19 +203,15 @@ window.MusicPlayer = {
         }
         
         try {
-            // Get actual played duration (currentTime when song ends)
+            // Get actual played duration (currentTime when song ends or full duration)
             const streamDuration = Math.floor(this.audio.currentTime || this.audio.duration || 0);
             
-            // Only track if stream is 30+ seconds (complete stream for royalty)
-            if (streamDuration < 30) {
-                console.log('MusicPlayer: Stream duration too short for royalty calculation', streamDuration);
-                return;
-            }
-            
-            console.log('MusicPlayer: Tracking complete stream for royalty calculation', {
+            // Track ALL streams regardless of duration (for analytics)
+            // Complete streams (30+ seconds) are used for royalty calculation
+            console.log('MusicPlayer: Tracking stream completion', {
                 music_id: this.currentTrack.id,
                 duration: streamDuration,
-                is_complete: true
+                is_complete: streamDuration >= 30
             });
             
             const response = await fetch('/api/monthly-plays/track', {
@@ -234,11 +230,14 @@ window.MusicPlayer = {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    console.log('MusicPlayer: Complete stream tracked for royalty calculation', {
+                    console.log('MusicPlayer: Stream tracked successfully', {
                         stream_logged: data.data.stream_logged,
-                        is_complete: streamDuration >= 30
+                        is_complete: streamDuration >= 30,
+                        duration: streamDuration
                     });
                 }
+            } else {
+                console.error('MusicPlayer: Failed to track stream', response.status, response.statusText);
             }
         } catch (error) {
             console.error('MusicPlayer: Error tracking complete stream', error);
@@ -827,38 +826,55 @@ async function handleDownload() {
             }
         }
 
-        // Proceed with download
-        const response = await fetch(`/api/download/${track.id}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-            }
-        });
+        // Proceed with download - use fetch but check content-type before parsing
+        const downloadUrl = `/api/download/${track.id}`;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
+        try {
+            const response = await fetch(downloadUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'audio/mpeg, application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
 
-        const data = await response.json();
-
-        if (response.ok) {
-            // For file downloads, create blob and download
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${track.name}.mp3`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
+            // Check content type to determine if it's a file or JSON error
+            const contentType = response.headers.get('content-type') || '';
             
-            showNotification(`Downloaded: ${track.name}`, 'success');
-            
-            // Reload downloads if on user portal
-            if (typeof loadMyDownloads === 'function') {
-                setTimeout(() => loadMyDownloads(), 1000);
+            if (response.ok && (contentType.includes('audio/mpeg') || contentType.includes('application/octet-stream'))) {
+                // Success - it's a binary file, create blob and download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${track.name}.mp3`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                showNotification(`Downloaded: ${track.name}`, 'success');
+                
+                // Reload downloads if on user portal
+                if (typeof loadMyDownloads === 'function') {
+                    setTimeout(() => loadMyDownloads(), 1000);
+                }
+            } else {
+                // Error response - try to parse as JSON
+                const text = await response.text();
+                try {
+                    const data = JSON.parse(text);
+                    showNotification(data.message || 'Download failed', 'error');
+                } catch (jsonError) {
+                    // If JSON parsing fails, show generic error
+                    console.error('Failed to parse error response:', jsonError, 'Response text:', text.substring(0, 100));
+                    showNotification('Download failed. Please try again.', 'error');
+                }
             }
-        } else {
-            const data = await response.json();
-            showNotification(data.message || 'Download failed', 'error');
+        } catch (error) {
+            console.error('Download error:', error);
+            showNotification('Error downloading song. Please try again.', 'error');
         }
     } catch (error) {
         console.error('Download error:', error);

@@ -375,6 +375,73 @@ class User  extends Authenticatable implements MustVerifyEmail
         return $subscription->subscriptionPlan->title ?? 'Free Listener';
     }
 
+    /**
+     * Get song upload limit for current artist subscription
+     */
+    public function getSongUploadLimit()
+    {
+        if (!$this->is_artist) {
+            return 0;
+        }
+        
+        $subscription = $this->activeArtistSubscription;
+        
+        if (!$subscription || !$subscription->subscriptionPlan) {
+            // Free plan: 3 songs per month
+            return 3;
+        }
+        
+        $plan = $subscription->subscriptionPlan;
+        
+        if ($plan->is_unlimited_uploads) {
+            return null; // Unlimited
+        }
+        
+        return $plan->songs_per_month ?? 3;
+    }
+
+    /**
+     * Check if artist can upload more songs this month
+     */
+    public function canUploadSong()
+    {
+        if (!$this->is_artist) {
+            return false;
+        }
+        
+        $limit = $this->getSongUploadLimit();
+        
+        if ($limit === null) {
+            return true; // Unlimited
+        }
+        
+        $currentMonthStart = now()->startOfMonth();
+        $currentMonthEnd = now()->endOfMonth();
+        $uploadsThisMonth = \App\Models\ArtistMusic::where('driver_id', $this->id)
+            ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
+            ->count();
+        
+        return $uploadsThisMonth < $limit;
+    }
+
+    /**
+     * Get current artist subscription plan name
+     */
+    public function getCurrentArtistSubscriptionPlanName()
+    {
+        if (!$this->is_artist) {
+            return 'Not an Artist';
+        }
+        
+        $subscription = $this->activeArtistSubscription;
+        
+        if (!$subscription || !$subscription->subscriptionPlan) {
+            return 'Starter Artist';
+        }
+        
+        return $subscription->subscriptionPlan->plan_name ?? 'Starter Artist';
+    }
+
     public function marketplaceItems()
     {
         return $this->hasMany(MarketplaceItem::class, 'artist_id');

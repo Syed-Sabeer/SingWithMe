@@ -118,22 +118,68 @@ class TrackCollaborationController extends Controller
 
     public function show($id)
     {
-        $collaboration = TrackCollaboration::with(['music', 'primaryArtist', 'ownershipSplits.artist', 'revenueDistributions.artist'])
+        try {
+            $collaboration = TrackCollaboration::with([
+                'music', 
+                'primaryArtist', 
+                'ownershipSplits.artist', 
+                'revenueDistributions' => function($query) {
+                    $query->where('artist_id', Auth::id());
+                }
+            ])
             ->findOrFail($id);
 
-        // Check if user is part of this collaboration
-        $isPartOf = $collaboration->ownershipSplits->contains('artist_id', Auth::id());
-        if (!$isPartOf && $collaboration->primary_artist_id !== Auth::id()) {
-            abort(403, 'You are not part of this collaboration.');
+            // Check if user is part of this collaboration
+            $isPartOf = $collaboration->ownershipSplits->contains('artist_id', Auth::id());
+            if (!$isPartOf && $collaboration->primary_artist_id !== Auth::id()) {
+                abort(403, 'You are not part of this collaboration.');
+            }
+
+            // Get revenue distributions for current user
+            $userRevenue = $collaboration->revenueDistributions()
+                ->where('artist_id', Auth::id())
+                ->latest('period_date')
+                ->paginate(20);
+
+            // Ensure we have the music relationship loaded
+            if (!$collaboration->music) {
+                return redirect()->route('artist.portal')
+                    ->with('error', 'The track associated with this collaboration no longer exists.');
+            }
+
+            // Ensure we have the primaryArtist relationship loaded
+            if (!$collaboration->primaryArtist) {
+                return redirect()->route('artist.portal')
+                    ->with('error', 'The primary artist for this collaboration no longer exists.');
+            }
+
+            // Debug: Log collaboration data
+            \Log::info('Collaboration show page data', [
+                'collaboration_id' => $collaboration->id,
+                'music_id' => $collaboration->music_id,
+                'music_name' => $collaboration->music->name ?? 'N/A',
+                'primary_artist_id' => $collaboration->primary_artist_id,
+                'primary_artist_name' => $collaboration->primaryArtist->name ?? 'N/A',
+                'ownership_splits_count' => $collaboration->ownershipSplits->count(),
+                'revenue_distributions_count' => $collaboration->revenueDistributions->count(),
+                'user_revenue_count' => $userRevenue->count(),
+                'user_id' => Auth::id()
+            ]);
+
+            return view('artist.collaborations.show', compact('collaboration', 'userRevenue'));
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return redirect()->route('artist.portal')
+                ->with('error', 'Collaboration not found.');
+        } catch (\Exception $e) {
+            \Log::error('Error loading collaboration: ' . $e->getMessage(), [
+                'collaboration_id' => $id,
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->route('artist.portal')
+                ->with('error', 'An error occurred while loading the collaboration. Please try again.');
         }
-
-        // Get revenue distributions for current user
-        $userRevenue = $collaboration->revenueDistributions()
-            ->where('artist_id', Auth::id())
-            ->latest('period_date')
-            ->paginate(20);
-
-        return view('artist.collaborations.show', compact('collaboration', 'userRevenue'));
     }
 
     public function approveSplit($collaborationId, $splitId)

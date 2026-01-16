@@ -1,6 +1,28 @@
 @extends('layouts.frontend.master')
 
 @section('content')
+@if(session('success'))
+    <div class="alert alert-success" style="background: rgba(0, 242, 254, 0.2); border: 1px solid rgba(0, 242, 254, 0.5); color: #00f2fe; padding: 15px; border-radius: 10px; margin: 20px 0;">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger" style="background: rgba(255, 51, 68, 0.2); border: 1px solid rgba(255, 51, 68, 0.5); color: #ff3344; padding: 15px; border-radius: 10px; margin: 20px 0;">
+        {{ session('error') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div class="alert alert-danger" style="background: rgba(255, 51, 68, 0.2); border: 1px solid rgba(255, 51, 68, 0.5); color: #ff3344; padding: 15px; border-radius: 10px; margin: 20px 0;">
+        <ul style="margin: 0; padding-left: 20px;">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <style>
     .collaboration-detail-section {
         background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
@@ -72,30 +94,40 @@
                     <i class="fas fa-arrow-left"></i> Back to Portal
                 </a>
 
+                @if(!isset($collaboration) || !$collaboration)
+                    <div class="alert alert-danger" style="background: rgba(255, 51, 68, 0.2); border: 1px solid rgba(255, 51, 68, 0.5); color: #ff3344; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h4 style="color: #ff3344; margin-bottom: 10px;">No Collaboration Data Found</h4>
+                        <p>Unable to load collaboration details. Please check if the collaboration exists and you have access to it.</p>
+                        <a href="{{ route('artist.portal') }}" class="btn" style="background: rgba(183, 148, 246, 0.3); color: #b794f6; border: 1px solid rgba(183, 148, 246, 0.5); padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 10px;">
+                            Return to Portal
+                        </a>
+                    </div>
+                @else
+
                 <!-- Collaboration Header -->
                 <div class="collaboration-header-card">
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h1 style="color: #fbfbfb; font-size: 2.5rem; margin-bottom: 15px;">
                                 <i class="fas fa-music" style="color: #b794f6; margin-right: 15px;"></i>
-                                {{ $collaboration->music->name }}
+                                {{ $collaboration->music->name ?? 'Unknown Track' }}
                             </h1>
                             <div style="margin-bottom: 20px;">
                                 <span class="badge" style="background: rgba(183, 148, 246, 0.3); color: #b794f6; padding: 8px 16px; border-radius: 20px; margin-right: 10px; font-size: 1rem;">
-                                    {{ ucfirst($collaboration->collaboration_type) }}
+                                    {{ ucfirst($collaboration->collaboration_type ?? 'collaboration') }}
                                 </span>
-                                <span class="badge" style="background: {{ $collaboration->status === 'active' ? 'rgba(0, 242, 254, 0.3)' : 'rgba(241, 196, 15, 0.3)' }}; color: {{ $collaboration->status === 'active' ? '#00f2fe' : '#f1c40f' }}; padding: 8px 16px; border-radius: 20px; font-size: 1rem;">
-                                    {{ ucfirst($collaboration->status) }}
+                                <span class="badge" style="background: {{ ($collaboration->status ?? 'pending') === 'active' ? 'rgba(0, 242, 254, 0.3)' : 'rgba(241, 196, 15, 0.3)' }}; color: {{ ($collaboration->status ?? 'pending') === 'active' ? '#00f2fe' : '#f1c40f' }}; padding: 8px 16px; border-radius: 20px; font-size: 1rem;">
+                                    {{ ucfirst($collaboration->status ?? 'pending') }}
                                 </span>
                             </div>
                             <p style="color: #b8a8d0; font-size: 1.1rem; margin-bottom: 0;">
-                                Primary Artist: <strong style="color: #fbfbfb;">{{ $collaboration->primaryArtist->name }}</strong>
+                                Primary Artist: <strong style="color: #fbfbfb;">{{ $collaboration->primaryArtist->name ?? 'Unknown Artist' }}</strong>
                             </p>
                         </div>
                         <div class="col-md-4 text-end">
                             @php
                                 $userOwnership = $collaboration->ownershipSplits->where('artist_id', auth()->id())->first()->ownership_percentage ?? 0;
-                                $totalEarnings = $collaboration->revenueDistributions->where('artist_id', auth()->id())->sum('artist_share_after_split');
+                                $totalEarnings = $collaboration->revenueDistributions->where('artist_id', auth()->id())->sum('artist_share_after_split') ?? 0;
                             @endphp
                             <div style="background: rgba(0, 242, 254, 0.1); padding: 20px; border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.3);">
                                 <div style="color: #b8a8d0; font-size: 0.9rem; margin-bottom: 8px;">Your Ownership</div>
@@ -117,43 +149,50 @@
                         <i class="fas fa-users" style="color: #b794f6; margin-right: 10px;"></i>
                         Ownership Distribution
                     </h2>
-                    <div class="row">
-                        @foreach($collaboration->ownershipSplits as $split)
-                            <div class="col-md-6 mb-3">
-                                <div style="background: rgba(183, 148, 246, 0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(183, 148, 246, 0.3);">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                        <div>
-                                            <h4 style="color: #fbfbfb; margin: 0; font-size: 1.2rem;">
-                                                {{ $split->artist->name }}
-                                                @if($split->is_primary)
-                                                    <span style="color: #b794f6; font-size: 0.9rem;">(Primary Artist)</span>
+                    @if($collaboration->ownershipSplits && $collaboration->ownershipSplits->count() > 0)
+                        <div class="row">
+                            @foreach($collaboration->ownershipSplits as $split)
+                                <div class="col-md-6 mb-3">
+                                    <div style="background: rgba(183, 148, 246, 0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(183, 148, 246, 0.3);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                            <div>
+                                                <h4 style="color: #fbfbfb; margin: 0; font-size: 1.2rem;">
+                                                    {{ $split->artist->name ?? 'Unknown Artist' }}
+                                                    @if($split->is_primary)
+                                                        <span style="color: #b794f6; font-size: 0.9rem;">(Primary Artist)</span>
+                                                    @endif
+                                                </h4>
+                                                @if($split->role)
+                                                    <p style="color: #b8a8d0; margin: 5px 0 0 0; font-size: 0.9rem;">
+                                                        Role: {{ $split->role }}
+                                                    </p>
                                                 @endif
-                                            </h4>
-                                            @if($split->role)
-                                                <p style="color: #b8a8d0; margin: 5px 0 0 0; font-size: 0.9rem;">
-                                                    Role: {{ $split->role }}
-                                                </p>
-                                            @endif
-                                        </div>
-                                        <div style="text-align: right;">
-                                            <div style="color: #b794f6; font-size: 1.8rem; font-weight: bold;">
-                                                {{ number_format($split->ownership_percentage, 2) }}%
                                             </div>
-                                            @if($split->approved_by_artist)
-                                                <span style="color: #00f2fe; font-size: 0.85rem;">
-                                                    <i class="fas fa-check-circle"></i> Approved
-                                                </span>
-                                            @elseif(!$split->is_primary)
-                                                <span style="color: #f1c40f; font-size: 0.85rem;">
-                                                    <i class="fas fa-clock"></i> Pending
-                                                </span>
-                                            @endif
+                                            <div style="text-align: right;">
+                                                <div style="color: #b794f6; font-size: 1.8rem; font-weight: bold;">
+                                                    {{ number_format($split->ownership_percentage ?? 0, 2) }}%
+                                                </div>
+                                                @if($split->approved_by_artist)
+                                                    <span style="color: #00f2fe; font-size: 0.85rem;">
+                                                        <i class="fas fa-check-circle"></i> Approved
+                                                    </span>
+                                                @elseif(!$split->is_primary)
+                                                    <span style="color: #f1c40f; font-size: 0.85rem;">
+                                                        <i class="fas fa-clock"></i> Pending
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        @endforeach
-                    </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-5" style="background: rgba(183, 148, 246, 0.1); border-radius: 10px; border: 1px solid rgba(183, 148, 246, 0.3);">
+                            <i class="fas fa-users" style="font-size: 3rem; color: #b794f6; margin-bottom: 20px; opacity: 0.5;"></i>
+                            <p style="color: #b8a8d0; font-size: 1.1rem;">No ownership splits found for this collaboration.</p>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Revenue Distribution History -->
@@ -163,7 +202,7 @@
                         Your Revenue Distribution History
                     </h2>
                     
-                    @if($userRevenue->count() > 0)
+                    @if($userRevenue && $userRevenue->count() > 0)
                         <div style="overflow-x: auto;">
                             <table class="revenue-table">
                                 <thead>
@@ -238,6 +277,7 @@
                         </p>
                     </div>
                 </div>
+                @endif
             </div>
         </div>
     </div>

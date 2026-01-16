@@ -169,6 +169,19 @@
                   <li><a class="lan-4" href="{{route('admin.royalty.index')}}">Royalty Calculations</a></li>
                   <li><a class="lan-4" href="{{route('admin.royalty.payout-requests')}}">Payout Requests</a></li>
                 </ul>
+              </li>
+
+              <li class="sidebar-list"><i class="fa-solid fa-thumbtack"></i>
+                <a class="sidebar-link sidebar-title" href="#">
+                  <svg class="stroke-icon">
+                    <use href="{{asset('AdminAssets/svg/icon-sprite.svg#stroke-ecommerce')}}"></use>
+                  </svg>
+                  <svg class="fill-icon">
+                    <use href="{{asset('AdminAssets/svg/icon-sprite.svg#fill-ecommerce')}}"></use>
+                  </svg><span class="lan-3">Tip Management</span></a>
+                <ul class="sidebar-submenu">
+                  <li><a class="lan-4" href="{{route('admin.tips.index')}}">All Tips</a></li>
+                </ul>
               </li>                 
 
                 </ul>

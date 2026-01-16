@@ -197,12 +197,47 @@
     overflow-y: auto;
     padding-right: 10px;
     display: none;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 1;
 }
 .main-content h2, .main-content h2 + p {
     color:white !important;
 }
 .artistProfileSec .main-content.active {
-    display: block;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Ensure all content sections are visible */
+.artistProfileSec .main-content .secartistAbout,
+.artistProfileSec .main-content .artworkUploaded-Sec,
+.artistProfileSec .main-content .liked-songs-section {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.artistProfileSec .main-content .bio-section,
+.artistProfileSec .main-content .detail-card,
+.artistProfileSec .main-content .social-section,
+.artistProfileSec .main-content .artist-header,
+.artistProfileSec .main-content .songs-table {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.artistProfileSec .main-content .bio-section .section-title,
+.artistProfileSec .main-content .bio-section .bio-text,
+.artistProfileSec .main-content .artist-header .header-content,
+.artistProfileSec .main-content .artist-header .artist-info {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #ffffff !important;
 }
 
 .artistProfileSec .main-content::-webkit-scrollbar {
@@ -904,7 +939,21 @@ h1,h2,h3 {
         $playlist = isset($songs)
             ? $songs->map(function ($song) use ($displayName) {
                   /** @var \App\Models\ArtistMusic $song */
-                  $thumb = $song->thumbnail_image_url ?: 'https://via.placeholder.com/150x150?text=Track';
+                  // Get thumbnail with proper path handling
+                  $thumb = 'https://via.placeholder.com/150x150?text=Track';
+                  if ($song->thumbnail_image) {
+                      // Remove any existing storage/ or public/ prefix
+                      $thumbPath = $song->thumbnail_image;
+                      $thumbPath = preg_replace('#^(storage/|public/storage/|public/)#', '', $thumbPath);
+                      
+                      // Ensure it starts with storage/ for proper asset generation
+                      if (strpos($thumbPath, 'storage/') !== 0) {
+                          $thumbPath = 'storage/' . $thumbPath;
+                      }
+                      $thumb = asset($thumbPath);
+                  } elseif ($song->thumbnail_image_url) {
+                      $thumb = $song->thumbnail_image_url;
+                  }
                   
                   // Format duration
                   $duration = '0:00';
@@ -999,7 +1048,19 @@ h1,h2,h3 {
                         <h1 class="hero-title">{{ $displayName }}</h1>
                         <div class="hero-btns">
                             <button class="btn btn-play" id="hero-play">Play</button>
-                            <button class="btn btn-outline" id="subscribeBtnHero" type="button">Subscribe</button>
+                            <button class="btn btn-outline {{ isset($isSubscribed) && $isSubscribed ? 'following' : '' }}" id="subscribeBtnHero" type="button">
+                                @if(isset($isSubscribed) && $isSubscribed)
+                                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                                    </svg>
+                                    <span>Subscribed</span>
+                                @else
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                                    </svg>
+                                    <span>Subscribe</span>
+                                @endif
+                            </button>
                             {{-- <a href="/tip-artist">
                                 <button class="btn btn-outline" type="button">Artist Tip</button>
                             </a> --}}
@@ -1028,7 +1089,11 @@ h1,h2,h3 {
                             <div class="album-card">
                                 <a href="/songs-details">
                                     <div class="album-art"
-                                        style="background: url('{{ $songs->first()->thumbnail_image_url ?? 'https://via.placeholder.com/300x300?text=Release' }}') center/cover;">
+                                        style="background: url('{{ 
+                                            ($songs->first() && $songs->first()->thumbnail_image) 
+                                                ? asset('storage/' . preg_replace('#^(storage/|public/storage/|public/)#', '', $songs->first()->thumbnail_image))
+                                                : 'https://via.placeholder.com/300x300?text=Release' 
+                                        }}') center/cover;">
                                         <span class="duration">{{ $songCount }} tracks</span>
                                     </div>
                                     <p>THE HIGHLIGHTS</p>
@@ -1114,21 +1179,28 @@ h1,h2,h3 {
                                                 </svg>
                                                 <span>Play All</span>
                                             </button> -->
-                                            <button class="btn btn-secondary" id="subscribeBtn">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                                                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                                                </svg>
-                                                <span>Subscribe</span>
+                                            <button class="btn btn-secondary {{ isset($isSubscribed) && $isSubscribed ? 'following' : '' }}" id="subscribeBtn">
+                                                @if(isset($isSubscribed) && $isSubscribed)
+                                                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                                                    </svg>
+                                                    <span>Subscribed</span>
+                                                @else
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                                                    </svg>
+                                                    <span>Subscribe</span>
+                                                @endif
                                             </button>
                                             <div class="dropdown">
-                                                <button class="btn btn-secondary" id="moreBtn">
+                                                {{-- <button class="btn btn-secondary" id="moreBtn">
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                                                         <circle cx="12" cy="12" r="1"/>
                                                         <circle cx="19" cy="12" r="1"/>
                                                         <circle cx="5" cy="12" r="1"/>
                                                     </svg>
                                                     <span>More</span>
-                                                </button>
+                                                </button> --}}
                                                 <div class="dropdown-menu" id="dropdownMenu">
                                                     <a href="#" class="dropdown-item" data-action="share">
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1184,7 +1256,7 @@ h1,h2,h3 {
                             </div>
 
                             <!-- Artist Details -->
-                            <div class="details-grid">
+                            {{-- <div class="details-grid">
                                 <div class="detail-card">
                                     <div class="detail-label">Primary Genre</div>
                                     <div class="detail-value">Various</div>
@@ -1210,10 +1282,10 @@ h1,h2,h3 {
                                     <div class="detail-label">Record Label</div>
                                     <div class="detail-value">SingWithMe Records</div>
                                 </div>
-                            </div>
+                            </div> --}}
 
                             <!-- Social Links -->
-                            <div class="social-section">
+                            {{-- <div class="social-section">
                                 <h2 class="section-title">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="12" cy="12" r="10"/>
@@ -1271,9 +1343,9 @@ h1,h2,h3 {
                                         </div>
                                     </a>
                                 </div>
-                            </div>
+                            </div> --}}
 
-                            <div class="achievements-section">
+                            {{-- <div class="achievements-section">
                                 <h2 class="section-title">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
@@ -1305,7 +1377,7 @@ h1,h2,h3 {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
                         </div>
 
                         <div id="toast" class="toast">
@@ -1359,7 +1431,7 @@ h1,h2,h3 {
                                         @if($artworkCount > 0)
                                             <div class="col-12">
                                                 <div>
-                                                    <a href="/all-artwork">
+                                                    <a href="{{ route('all-artwork') }}">
                                                         <button class="btn btn-play"> View All</button>
                                                     </a>
                                                 </div>
@@ -1398,16 +1470,20 @@ h1,h2,h3 {
                         </p>
 
                         <div class="liked-actions">
-                            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Play All</button>
+                            <button class="btn btn-play" onclick="playAllSongs()"><i class="fa-solid fa-play"></i> Play All</button>
                             {{--<button class="btn btn-outline"><i class="fa-solid fa-shuffle"></i> Shuffle</button>--}}
-                            @if(isset($canTipArtist) && $canTipArtist)
-                                <a href="{{ route('tip-artist') }}"><button class="btn btn-outline"><i class="fa-solid fa-sack-dollar"></i> Artist Tip</button></a>
+                            @if(isset($canTipArtist) && $canTipArtist && isset($artist))
+                                <a href="{{ route('tip-artist', ['artist' => $artist->id]) }}"><button class="btn btn-outline"><i class="fa-solid fa-sack-dollar"></i> Artist Tip</button></a>
                             @elseif(auth()->check())
                                 <button class="btn btn-outline" onclick="alert('This feature is only available for Super Listener subscribers. Please upgrade your plan to tip artists.');" title="Upgrade to Super Listener to tip artists">
                                     <i class="fa-solid fa-sack-dollar"></i> Artist Tip
                                 </button>
                             @else
-                                <a href="{{ route('user.portal') }}"><button class="btn btn-outline"><i class="fa-solid fa-sack-dollar"></i> Artist Tip</button></a>
+                                @if(isset($artist))
+                                    <a href="{{ route('tip-artist', ['artist' => $artist->id]) }}"><button class="btn btn-outline"><i class="fa-solid fa-sack-dollar"></i> Artist Tip</button></a>
+                                @else
+                                    <a href="{{ route('user.portal') }}"><button class="btn btn-outline"><i class="fa-solid fa-sack-dollar"></i> Artist Tip</button></a>
+                                @endif
                             @endif
                         </div>
 
@@ -1426,9 +1502,45 @@ h1,h2,h3 {
                                 @forelse($songs as $index => $song)
                                     @php
                                         /** @var \App\Models\ArtistMusic $song */
-                                        $thumb = $song->thumbnail_image_url ?: 'https://via.placeholder.com/100x100?text=Track';
+                                        // Get thumbnail with proper path handling
+                                        $thumb = 'https://via.placeholder.com/100x100?text=Track';
+                                        if ($song->thumbnail_image) {
+                                            // Remove any existing storage/ or public/ prefix
+                                            $thumbPath = $song->thumbnail_image;
+                                            $thumbPath = preg_replace('#^(storage/|public/storage/|public/)#', '', $thumbPath);
+                                            
+                                            // Ensure it starts with storage/ for proper asset generation
+                                            if (strpos($thumbPath, 'storage/') !== 0) {
+                                                $thumbPath = 'storage/' . $thumbPath;
+                                            }
+                                            $thumb = asset($thumbPath);
+                                        } elseif ($song->thumbnail_image_url) {
+                                            $thumb = $song->thumbnail_image_url;
+                                        }
                                     @endphp
-                                    <tr class="song-row">
+                                    @php
+                                        // Get music file URL
+                                        $musicFileUrl = '#';
+                                        if ($song->music_file) {
+                                            $musicPath = $song->music_file;
+                                            $musicPath = preg_replace('#^(storage/|public/storage/|public/)#', '', $musicPath);
+                                            if (strpos($musicPath, 'storage/') !== 0) {
+                                                $musicPath = 'storage/' . $musicPath;
+                                            }
+                                            $musicFileUrl = asset($musicPath);
+                                        } elseif ($song->music_file_url) {
+                                            $musicFileUrl = $song->music_file_url;
+                                        }
+                                        
+                                        // Get duration
+                                        $duration = '0:00';
+                                        if ($song->duration && $song->duration > 0) {
+                                            $minutes = floor($song->duration / 60);
+                                            $seconds = $song->duration % 60;
+                                            $duration = sprintf('%d:%02d', $minutes, $seconds);
+                                        }
+                                    @endphp
+                                    <tr class="song-row" onclick="playSongFromTable({{ $index }}, {{ $song->id }}, '{{ addslashes($song->name) }}', '{{ addslashes($displayName) }}', '{{ $thumb }}', '{{ $musicFileUrl }}', '{{ $song->isrc_code ?? '' }}');" style="cursor: pointer;">
                                         <td>{{ $index + 1 }}</td>
                                         <td class="song-title-cell">
                                             <img src="{{ $thumb }}" class="song-img">
@@ -1441,19 +1553,9 @@ h1,h2,h3 {
                                         </td>
                                         <td>{{ $displayName }}</td>
                                         <td>Single</td>
-                                        <td>
-                                            @php
-                                                $duration = '0:00';
-                                                if ($song->duration && $song->duration > 0) {
-                                                    $minutes = floor($song->duration / 60);
-                                                    $seconds = $song->duration % 60;
-                                                    $duration = sprintf('%d:%02d', $minutes, $seconds);
-                                                }
-                                            @endphp
-                                            {{ $duration }}
-                                        </td>
-                                        <td onclick="event.stopPropagation(); toggleLike({{ $song->id }});" style="cursor: pointer;">
-                                            <i class="fa-regular fa-heart favorite-icon-{{ $song->id }}" data-song-id="{{ $song->id }}" title="Add to favorites"></i>
+                                        <td>{{ $duration }}</td>
+                                        <td onclick="event.stopPropagation(); if(typeof toggleLike==='function'){toggleLike({{ $song->id }});}else{console.error('toggleLike function not found');}" style="cursor: pointer;">
+                                            <i class="fa-regular fa-heart favorite-icon-{{ $song->id }}" data-song-id="{{ $song->id }}" title="Add to favorites" onclick="event.stopPropagation(); if(typeof toggleLike==='function'){toggleLike({{ $song->id }});}"></i>
                                         </td>
                                     </tr>
                                 @empty
@@ -1605,33 +1707,119 @@ h1,h2,h3 {
         const progressFill = document.getElementById('progress-fill');
 
         function playSong(index) {
+            if (!songs || !songs[index]) {
+                console.error('Song not found at index:', index);
+                return;
+            }
+            
             currentSongIndex = index;
             const song = songs[index];
 
             // Update Player Bar UI
-            document.getElementById('player-title').innerText = song.title;
-            document.getElementById('player-img').style.background = `url('${song.img}') center/cover`;
-            document.getElementById('total-time').innerText = song.time;
+            const playerTitle = document.getElementById('player-title');
+            const playerImg = document.getElementById('player-img');
+            const totalTime = document.getElementById('total-time');
+            
+            if (playerTitle) playerTitle.innerText = song.title || song.name || 'Unknown';
+            if (playerImg) playerImg.style.background = `url('${song.img || song.thumbnail || ''}') center/cover`;
+            if (totalTime) totalTime.innerText = song.time || '0:00';
 
             // Visual updates on song list
             document.querySelectorAll('.song-row').forEach(r => r.classList.remove('playing'));
-            document.querySelectorAll('.song-row')[index].classList.add('playing');
+            const songRows = document.querySelectorAll('.song-row');
+            if (songRows[index]) {
+                songRows[index].classList.add('playing');
+            }
 
-            // Also load into global MusicPlayer if available (for bottom player)
-            if (window.MusicPlayer && song.id) {
+            // Use global MusicPlayer (same as home page)
+            const musicFile = song.music_file || song.music_file_url;
+            if (window.MusicPlayer && musicFile) {
                 const track = {
                     id: song.id,
-                    name: song.title,
-                    artist: song.album,
-                    thumbnail: song.img,
-                    music_file: '', // Will be set if available
+                    name: song.title || song.name,
+                    artist: song.album || song.artist,
+                    thumbnail: song.img || song.thumbnail,
+                    music_file: musicFile,
                     isrc_code: song.isrc_code || null
                 };
                 window.MusicPlayer.loadTrack(track);
+                window.MusicPlayer.play();
+            } else {
+                console.error('MusicPlayer not available or music_file missing:', {
+                    hasMusicPlayer: !!window.MusicPlayer,
+                    musicFile: musicFile
+                });
+                // Fallback to local playback
+                startPlayback();
             }
-
-            startPlayback();
         }
+        
+        // Function to play song from table click (for Songs tab)
+        function playSongFromTable(index, songId, songName, artistName, thumbnail, musicFile, isrcCode) {
+            console.log('playSongFromTable called:', { index, songId, songName, musicFile });
+            
+            // Find the song in the songs array or create a track object
+            let track = null;
+            if (songs && songs[index]) {
+                track = songs[index];
+            } else {
+                // Create track object from parameters
+                track = {
+                    id: songId,
+                    name: songName,
+                    title: songName,
+                    artist: artistName,
+                    album: artistName,
+                    thumbnail: thumbnail,
+                    img: thumbnail,
+                    music_file: musicFile,
+                    music_file_url: musicFile,
+                    isrc_code: isrcCode || null,
+                    time: '0:00'
+                };
+            }
+            
+            // Update Player Bar UI
+            const playerTitle = document.getElementById('player-title');
+            const playerImg = document.getElementById('player-img');
+            const totalTime = document.getElementById('total-time');
+            
+            if (playerTitle) playerTitle.innerText = track.name || track.title || 'Unknown';
+            if (playerImg) playerImg.style.background = `url('${track.thumbnail || track.img || ''}') center/cover`;
+            if (totalTime) totalTime.innerText = track.time || '0:00';
+
+            // Visual updates on song list
+            document.querySelectorAll('.song-row').forEach(r => r.classList.remove('playing'));
+            const songRows = document.querySelectorAll('.song-row');
+            if (songRows[index]) {
+                songRows[index].classList.add('playing');
+            }
+            
+            // Update current song index
+            currentSongIndex = index;
+
+            // Use global MusicPlayer
+            if (window.MusicPlayer && (track.music_file || track.music_file_url)) {
+                const musicFileUrl = track.music_file || track.music_file_url;
+                const trackObj = {
+                    id: track.id,
+                    name: track.name || track.title,
+                    artist: track.artist || track.album,
+                    thumbnail: track.thumbnail || track.img,
+                    music_file: musicFileUrl,
+                    isrc_code: track.isrc_code || null
+                };
+                console.log('Loading track:', trackObj);
+                window.MusicPlayer.loadTrack(trackObj);
+                window.MusicPlayer.play();
+            } else {
+                console.error('MusicPlayer not available or music_file missing');
+                alert('Audio file not available for this song');
+            }
+        }
+        
+        // Make it globally accessible
+        window.playSongFromTable = playSongFromTable;
 
         function startPlayback() {
             if (currentSongIndex < 0 || currentSongIndex >= songs.length) return;
@@ -1644,9 +1832,11 @@ h1,h2,h3 {
             }
             
             isPlaying = true;
-            masterPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            if (masterPlay) {
+                masterPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            }
 
-            // Use the global MusicPlayer if available
+            // Always use the global MusicPlayer (same as home page)
             if (window.MusicPlayer && song.music_file) {
                 const track = {
                     id: song.id,
@@ -1659,32 +1849,7 @@ h1,h2,h3 {
                 window.MusicPlayer.loadTrack(track);
                 window.MusicPlayer.play();
             } else {
-                // Fallback: use local audio element
-                let localAudio = document.getElementById('local-audio-player');
-                if (!localAudio) {
-                    localAudio = new Audio();
-                    localAudio.id = 'local-audio-player';
-                    localAudio.style.display = 'none';
-                    document.body.appendChild(localAudio);
-                    
-                    localAudio.addEventListener('ended', () => {
-                        playSong((currentSongIndex + 1) % songs.length);
-                    });
-                    
-                    localAudio.addEventListener('timeupdate', () => {
-                        if (localAudio.duration) {
-                            const progress = (localAudio.currentTime / localAudio.duration) * 100;
-                            progressFill.style.width = progress + '%';
-                            document.getElementById('curr-time').innerText = formatTime(localAudio.currentTime);
-                        }
-                    });
-                }
-                
-                localAudio.src = song.music_file;
-                localAudio.play().catch(err => {
-                    console.error('Error playing audio:', err);
-                    alert('Error playing audio. Please check if the file exists.');
-                });
+                console.error('MusicPlayer not available or music_file missing');
             }
         }
         
@@ -1781,11 +1946,19 @@ h1,h2,h3 {
                 </td>
                 <td>${song.album}</td>
                 <td class="song-duration">${song.time}</td>
-                <td onclick="event.stopPropagation(); toggleLike(${song.id});" style="cursor: pointer;">
-                    <i class="fa-regular fa-heart favorite-icon-${song.id}" data-song-id="${song.id}" title="Add to favorites"></i>
+                <td onclick="event.stopPropagation(); if(typeof toggleLike==='function'){toggleLike(${song.id});}else{console.error('toggleLike function not found');}" style="cursor: pointer;">
+                    <i class="fa-regular fa-heart favorite-icon-${song.id}" data-song-id="${song.id}" title="Add to favorites" onclick="event.stopPropagation(); if(typeof toggleLike==='function'){toggleLike(${song.id});}"></i>
                 </td>
             `;
-            row.onclick = () => playSong(index);
+            row.onclick = () => {
+                if (typeof playSong === 'function') {
+                    playSong(index);
+                } else if (typeof window.playSongFromTable === 'function') {
+                    window.playSongFromTable(index, song.id, song.title || song.name, song.album || song.artist, song.img || song.thumbnail, song.music_file || song.music_file_url, song.isrc_code || '');
+                } else {
+                    console.error('playSong function not found');
+                }
+            };
             songListBody.appendChild(row);
             
             // Calculate duration if not available
@@ -1794,6 +1967,16 @@ h1,h2,h3 {
         
         // Load favorite status for all songs
         loadFavoriteStatus();
+        
+        // Play All function
+        function playAllSongs() {
+            if (songs.length > 0) {
+                playSong(0);
+            } else {
+                alert('No songs available to play');
+            }
+        }
+        window.playAllSongs = playAllSongs;
 
         // --- Menu Tab Functionality ---
         const tabLinks = document.querySelectorAll('.tab-link');
@@ -1822,19 +2005,62 @@ h1,h2,h3 {
         
         // Toggle like status
         async function toggleLike(songId) {
+            if (!songId) {
+                console.error('toggleLike: songId is required');
+                return;
+            }
+            
             try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                if (!csrfToken) {
+                    console.error('CSRF token not found');
+                    alert('Unable to update favorite. Please refresh the page.');
+                    return;
+                }
+                
+                console.log('Toggling like for song:', songId);
+                
                 const response = await fetch('/api/favorites/toggle', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken.getAttribute('content')
                     },
                     body: JSON.stringify({
                         music_id: songId
                     })
                 });
 
-                const data = await response.json();
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Toggle like error response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.error('Response is not JSON:', contentType);
+                    throw new Error('Invalid response format');
+                }
+
+                let data;
+                try {
+                    const responseText = await response.text();
+                    console.log('Toggle like raw response:', responseText.substring(0, 200));
+                    
+                    // Check if response is HTML instead of JSON
+                    if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+                        console.error('Received HTML instead of JSON');
+                        throw new Error('Server returned HTML instead of JSON');
+                    }
+                    
+                    data = JSON.parse(responseText);
+                    console.log('Toggle like response:', data);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    throw new Error('Invalid JSON response from server');
+                }
                 
                 if (data.success) {
                     // Update all favorite icons for this song (both tables)
@@ -1968,48 +2194,95 @@ h1,h2,h3 {
                             'Accept': 'application/json',
                         },
                         body: JSON.stringify({
-                            artist_id: {{ $artistUser->id ?? 'null' }},
+                            artist_id: {{ $artistUser->id ?? ($artist->id ?? 'null') }},
                         }),
                     })
-                        .then(res => res.json())
+                        .then(async res => {
+                            // Check content type
+                            const contentType = res.headers.get('content-type');
+                            if (!contentType || !contentType.includes('application/json')) {
+                                const text = await res.text();
+                                console.error('Non-JSON response:', text.substring(0, 200));
+                                throw new Error('Invalid response format');
+                            }
+                            return res.json();
+                        })
                         .then(data => {
+                            console.log('Subscription response:', data);
+                            
                             if (!data.success) {
                                 showToast(data.message || 'Unable to update subscription.');
                                 return;
                             }
 
                             const isSubscribed = data.status === 'subscribed';
-                            if (isSubscribed) {
-                                button.classList.add('following');
-                                button.innerHTML = `
-                                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                                    </svg>
-                                    <span>Subscribed</span>`;
-                            } else {
-                                button.classList.remove('following');
-                                button.innerHTML = `
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                                    </svg>
-                                    <span>Subscribe</span>`;
-                            }
+                            
+                            // Update both buttons to keep them in sync
+                            const allSubscribeButtons = [subscribeBtn, subscribeBtnHero].filter(btn => btn !== null);
+                            allSubscribeButtons.forEach(btn => {
+                                if (isSubscribed) {
+                                    btn.classList.add('following');
+                                    btn.innerHTML = `
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                                        </svg>
+                                        <span>Subscribed</span>`;
+                                } else {
+                                    btn.classList.remove('following');
+                                    btn.innerHTML = `
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                                        </svg>
+                                        <span>Subscribe</span>`;
+                                }
+                            });
 
                             showToast(data.message || (isSubscribed
                                 ? 'Subscribed to artist updates.'
                                 : 'Unsubscribed from artist updates.'));
                         })
-                        .catch(() => {
-                            showToast('Unable to update subscription right now.');
+                        .catch((error) => {
+                            console.error('Subscription error:', error);
+                            showToast('Unable to update subscription right now. Please try again.');
                         })
                         .finally(() => {
                             button.disabled = false;
                         });
             }
 
+            // Initialize subscription button state on page load
+            function initializeSubscriptionButtons() {
+                const buttons = [subscribeBtn, subscribeBtnHero].filter(btn => btn !== null);
+                const isSubscribed = @json(isset($isSubscribed) && $isSubscribed);
+                
+                console.log('Initializing subscription buttons, isSubscribed:', isSubscribed);
+                
+                buttons.forEach(button => {
+                    if (isSubscribed) {
+                        button.classList.add('following');
+                        button.innerHTML = `
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <span>Subscribed</span>`;
+                    } else {
+                        button.classList.remove('following');
+                        button.innerHTML = `
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <span>Subscribe</span>`;
+                    }
+                });
+            }
+            
+            // Initialize buttons on page load
+            initializeSubscriptionButtons();
+
             if (subscribeBtn) {
                 subscribeBtn.addEventListener('click', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     handleSubscribeClick(subscribeBtn);
                 });
             }
@@ -2017,6 +2290,7 @@ h1,h2,h3 {
             if (subscribeBtnHero) {
                 subscribeBtnHero.addEventListener('click', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     handleSubscribeClick(subscribeBtnHero);
                 });
             }

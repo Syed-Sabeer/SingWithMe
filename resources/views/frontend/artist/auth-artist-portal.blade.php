@@ -990,7 +990,14 @@ a .payout-btn {
                     @php
                         // Get wallet and earnings data
                         $wallet = \App\Models\ArtistWallet::getOrCreateForArtist(auth()->id());
-                        $totalStreams = \App\Models\StreamStat::where('artist_id', auth()->id())->where('is_complete', true)->count();
+                        // Show all streams (both complete and incomplete) for total count
+                        // Complete streams (30+ seconds) are used for royalty calculation
+                        $totalStreams = \App\Models\StreamStat::where('artist_id', auth()->id())
+                            ->where('stream_duration', '>', 0) // Only count streams with actual duration
+                            ->count();
+                        $completeStreams = \App\Models\StreamStat::where('artist_id', auth()->id())
+                            ->where('is_complete', true)
+                            ->count();
                         $totalEarnings = $wallet->total_earned;
                         $availableBalance = $wallet->available_balance;
                         $lastPayout = \App\Models\PayoutRequest::where('artist_id', auth()->id())
@@ -1397,6 +1404,33 @@ a .payout-btn {
                  <button class="payout-btn mt-4">View All</button>
                 </a>
             </div>
+
+            <!-- Recent Tips Section -->
+            @if(isset($recentTips) && $recentTips->count() > 0)
+            <div class="payout-history mt-4">
+                <h2 style="margin-bottom: 10px;">💝 Recent Tips Received</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>From</th>
+                            <th>Amount</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($recentTips as $tip)
+                        <tr>
+                            <td>{{ $tip->sent_to_artist_at->format('M d, Y') }}</td>
+                            <td>{{ $tip->user->name }}</td>
+                            <td style="color: #9f54f5; font-weight: 600;">£{{ number_format($tip->amount, 2) }}</td>
+                            <td>{{ $tip->user_message ? Str::limit($tip->user_message, 50) : '-' }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
         </section>
         <!-- uplaod section -->
 
@@ -1640,8 +1674,34 @@ a .payout-btn {
         <section class="album-banner mb-5">
             <div class="container-fulid">
                 <div class="album-image">
-                    <div class="back-img" style="background-image: url({{asset('FrontendAssets/images/singWithMe/music&video.jpg')}});">
-
+                    @php
+                        // Get artist profile picture (same logic as profile-settings.blade.php)
+                        $user = auth()->user();
+                        $profile = $user->profile ?? null;
+                        
+                        $avatar = 'https://via.placeholder.com/200x200?text=Artist';
+                        if ($profile && !empty($profile->picture)) {
+                            if (strpos($profile->picture, 'http') === 0) {
+                                $avatar = $profile->picture;
+                            } elseif (strpos($profile->picture, '/') === 0 && strpos($profile->picture, '/storage/') === 0) {
+                                // Already has /storage/ prefix
+                                $avatar = asset($profile->picture);
+                            } elseif (strpos($profile->picture, 'storage/') === 0) {
+                                $avatar = asset($profile->picture);
+                            } elseif (strpos($profile->picture, 'artist_profiles/') === 0) {
+                                // Path stored as artist_profiles/xxx.jpg
+                                $avatar = asset('storage/' . $profile->picture);
+                            } elseif (strpos($profile->picture, 'public/') === 0) {
+                                // Remove public/ prefix if present
+                                $avatar = asset(str_replace('public/', 'storage/', $profile->picture));
+                            } else {
+                                // Default: assume it needs storage/ prefix
+                                $avatar = asset('storage/' . $profile->picture);
+                            }
+                        }
+                    @endphp
+                    <div class="back-img" style="background-image: url({{$avatar}}); position: relative;">
+                        
                     </div>
                 </div>
                 <div class="row">
@@ -1649,15 +1709,29 @@ a .payout-btn {
                     <div class="col-lg-6">
                         <div class="album-details">
                             <div class="title">
-                                @php
-                                    $totalListeners = \App\Models\ArtistMusic::where('driver_id', auth()->id())->sum('listeners');
-                                    $formattedListeners = $totalListeners >= 1000000 ? 
-                                        round($totalListeners / 1000000, 1) . 'M' : 
-                                        ($totalListeners >= 1000 ? round($totalListeners / 1000, 1) . 'K' : $totalListeners);
-                                @endphp
-                                <h2 class="h1-title">{{ auth()->user()->name }}</h2>
-                                <span class="small-text">{{ $formattedListeners }} monthly listeners</span>
-                            </div>
+    @php
+        $totalListeners = \App\Models\ArtistMusic::where('driver_id', auth()->id())->sum('listeners');
+        $formattedListeners = $totalListeners >= 1000000 ? 
+            round($totalListeners / 1000000, 1) . 'M' : 
+            ($totalListeners >= 1000 ? round($totalListeners / 1000, 1) . 'K' : $totalListeners);
+    @endphp
+
+    <h2 class="h1-title">{{ auth()->user()->name }}</h2>
+
+    <!-- Monthly listeners + Edit profile in one line -->
+    <div class="d-flex align-items-center justify-content-between mt-2">
+        <span class="small-text">
+            {{ $formattedListeners }} monthly listeners
+        </span>
+
+        <a href="{{ route('artist.profile.edit') }}"
+           class="btn"
+           style="background: rgba(183,148,246,0.3); color:#b794f6; border:1px solid rgba(183,148,246,0.5); padding:8px 20px; border-radius:8px; text-decoration:none; margin-right:5%;">
+            <i class="fas fa-user-edit"></i> Edit Profile
+        </a>
+    </div>
+</div>
+
 
                             <div class="album-songs-detail">
                                 <div class="popular-songs">
@@ -1973,12 +2047,105 @@ a .payout-btn {
             </div>
         </section>
 
-        <!-- Profile Settings Link -->
-        <div class="text-center mb-4">
-            <a href="{{ route('artist.profile.edit') }}" class="btn" style="background: rgba(183,148,246,0.3); color:#b794f6; border:1px solid rgba(183,148,246,0.5); padding:10px 25px; border-radius:8px; text-decoration:none; display:inline-block;">
-                <i class="fas fa-user-edit"></i> Edit Profile Settings
-            </a>
-        </div>
+        
+
+        <!-- Current Subscription Plan Display -->
+        @if(auth()->check() && auth()->user()->is_artist && isset($artistSubscriptionFeatures) && is_array($artistSubscriptionFeatures))
+        <section class="section" style="margin-bottom: 40px;">
+            <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 20px;">
+                <h3 style="color: #b794f6; margin-bottom: 15px; font-size: 1.2rem;">
+                    <i class="fas fa-star" style="margin-right: 8px;"></i>Your Current Plan Features
+                    @if(isset($currentArtistPlan) && $currentArtistPlan)
+                        <span style="color: #fff; font-size: 0.9rem; font-weight: normal;">({{ $currentArtistPlan->plan_name }})</span>
+                    @else
+                        <span style="color: #fff; font-size: 0.9rem; font-weight: normal;">(Starter Artist - Free)</span>
+                    @endif
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div style="color: #fff;">
+                        <strong style="color: #b794f6;">Uploads:</strong> 
+                        @if($artistSubscriptionFeatures['unlimited_uploads'])
+                            Unlimited
+                        @else
+                            {{ $artistSubscriptionFeatures['songs_per_month'] }} per month
+                        @endif
+                    </div>
+                    @if($artistSubscriptionFeatures['featured_rotation'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Featured Rotation:</strong> 
+                            {{ $artistSubscriptionFeatures['featured_rotation_weeks'] }} week{{ $artistSubscriptionFeatures['featured_rotation_weeks'] > 1 ? 's' : '' }}/month
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['priority_search'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Search:</strong> 
+                            <span style="color: #10b981;">✓ Priority Placement</span>
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['custom_banner'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Banner:</strong> 
+                            <span style="color: #10b981;">✓ Custom Banner</span>
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['isrc_codes'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">ISRC Codes:</strong> 
+                            <span style="color: #10b981;">✓ Enabled</span>
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['early_access_insights'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Insights:</strong> 
+                            <span style="color: #10b981;">✓ Early Access</span>
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['certified_badge'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Badge:</strong> 
+                            <span style="color: #fbbf24;">⭐ Certified Creator</span>
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['showcase_placement'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Showcase:</strong> 
+                            <span style="color: #10b981;">✓ Featured</span>
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['royalty_tracking'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Royalty Tracking:</strong> 
+                            <span style="color: #10b981;">✓ Enabled</span>
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['playlist_highlighted'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Playlists:</strong> 
+                            <span style="color: #10b981;">✓ Highlighted</span>
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['advanced_analytics'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Analytics:</strong> 
+                            <span style="color: #10b981;">✓ Advanced</span>
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['showcase_invitations'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Invitations:</strong> 
+                            <span style="color: #10b981;">✓ Enabled</span>
+                        </div>
+                    @endif
+                    @if($artistSubscriptionFeatures['profile_customization'])
+                        <div style="color: #fff;">
+                            <strong style="color: #b794f6;">Profile:</strong> 
+                            <span style="color: #10b981;">✓ Customization</span>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </section>
+        @endif
 
         <!-- Artist Subscription Plans Section -->
         <section class="artist-subscription-plans-section py-5" style="background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);">
@@ -1990,14 +2157,59 @@ a .payout-btn {
                             <p style="color: #b8a8d0; font-size: 1.1rem;">Choose the perfect plan to grow your music career</p>
                         </div>
 
+                        @if(auth()->check() && auth()->user()->is_artist)
+                            @if(isset($currentArtistPlan) && $currentArtistPlan)
+                                <div class="current-plan-badge" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.2)); border: 2px solid rgba(139, 92, 246, 0.5); border-radius: 12px; padding: 15px 20px; margin-bottom: 30px; text-align: center;">
+                                    <div style="color: #b794f6; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px;">Current Plan</div>
+                                    <div style="color: #fff; font-size: 1.3rem; font-weight: 700;">
+                                        {{ $currentArtistPlan->plan_name ?? 'Starter Artist' }}
+                                        @if(isset($currentArtistPlan->is_certified_badge) && $currentArtistPlan->is_certified_badge)
+                                            <span class="certified-badge" style="display: inline-block; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; margin-left: 8px; font-weight: 600;">
+                                                ⭐ Certified
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            @else
+                                <div class="current-plan-badge" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.2)); border: 2px solid rgba(139, 92, 246, 0.5); border-radius: 12px; padding: 15px 20px; margin-bottom: 30px; text-align: center;">
+                                    <div style="color: #b794f6; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px;">Current Plan</div>
+                                    <div style="color: #fff; font-size: 1.3rem; font-weight: 700;">
+                                        Starter Artist (Free)
+                                    </div>
+                                </div>
+                            @endif
+                        @endif
+
                         <div class="row justify-content-center">
                             @foreach($artist_plans as $index => $plan)
                                 @php
                                     $isPopular = $plan->plan_slug == 'pro-artist';
+                                    // Check if this is the current plan
+                                    $isCurrentPlan = false;
+                                    
+                                    // If we have a current subscription and plan, compare by ID
+                                    if (isset($currentArtistSubscription) && $currentArtistSubscription && isset($currentArtistPlan) && $currentArtistPlan && isset($currentArtistPlan->id)) {
+                                        // User has an active subscription - compare by plan ID
+                                        $isCurrentPlan = ($currentArtistPlan->id == $plan->id);
+                                    } else {
+                                        // No active subscription - check if this is the free/starter plan
+                                        // This handles both cases: when currentArtistPlan is set (free plan found) or when it's null
+                                        if (isset($currentArtistPlan) && $currentArtistPlan && isset($currentArtistPlan->id)) {
+                                            // Free plan was found and set - compare by ID
+                                            $isCurrentPlan = ($currentArtistPlan->id == $plan->id);
+                                        } else {
+                                            // No subscription and free plan not found - check if this plan is free/starter
+                                            $isCurrentPlan = ($plan->monthly_fee == 0 || $plan->plan_slug == 'starter-artist' || (isset($plan->plan_name) && stripos($plan->plan_name, 'Starter') !== false));
+                                        }
+                                    }
                                 @endphp
                                 <div class="col-lg-4 col-md-6 mb-4">
                                     <div class="artist-plan-card" style="background: rgba(45, 27, 78, 0.6); border: 1px solid rgba(183, 148, 246, 0.3); border-radius: 15px; padding: 30px; height: 100%; position: relative; transition: transform 0.3s ease; {{ $isPopular ? 'border: 2px solid #b794f6; transform: scale(1.05);' : '' }}">
-                                        @if($isPopular)
+                                        @if($isCurrentPlan)
+                                            <div style="position: absolute; top: -15px; right: 20px; background: linear-gradient(135deg, #8b5cf6, #a855f7); color: white; padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); z-index: 10;">
+                                                ✓ Current Plan
+                                            </div>
+                                        @elseif($isPopular)
                                             <div style="position: absolute; top: -15px; right: 20px; background: linear-gradient(135deg, #b794f6, #9d50bb); color: white; padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">Most Popular</div>
                                         @endif
                                         
@@ -2123,9 +2335,15 @@ a .payout-btn {
                                         </ul>
 
                                         <div class="text-center mt-4">
-                                            <button onclick="openArtistPortalSubscriptionPopup('{{ $plan->id }}', '{{ $plan->plan_name }}', '{{ $plan->monthly_fee }}', 'per month')" class="btn" style="background: {{ $isPopular ? 'linear-gradient(135deg, #b794f6, #9d50bb)' : 'rgba(183, 148, 246, 0.3)' }}; color: white; border: 1px solid rgba(183, 148, 246, 0.5); padding: 12px 30px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: 600; width: 100%; cursor: pointer;">
-                                                {{ $plan->monthly_fee > 0 ? 'Subscribe Now' : 'Get Started' }}
-                                            </button>
+                                            @if($isCurrentPlan)
+                                                <button class="btn" disabled style="background: rgba(183, 148, 246, 0.2); color: #b794f6; border: 1px solid rgba(183, 148, 246, 0.5); padding: 12px 30px; border-radius: 8px; font-weight: 600; width: 100%; cursor: not-allowed; opacity: 0.7;">
+                                                    <i class="fas fa-check-circle" style="margin-right: 5px;"></i>Current Plan
+                                                </button>
+                                            @else
+                                                <button onclick="openArtistPortalSubscriptionPopup('{{ $plan->id }}', '{{ $plan->plan_name }}', '{{ $plan->monthly_fee }}', 'per month')" class="btn" style="background: {{ $isPopular ? 'linear-gradient(135deg, #b794f6, #9d50bb)' : 'rgba(183, 148, 246, 0.3)' }}; color: white; border: 1px solid rgba(183, 148, 246, 0.5); padding: 12px 30px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: 600; width: 100%; cursor: pointer;">
+                                                    {{ $plan->monthly_fee > 0 ? 'Subscribe Now' : 'Get Started' }}
+                                                </button>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

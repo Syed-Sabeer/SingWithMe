@@ -15,7 +15,7 @@ class NotificationServiceProvider extends ServiceProvider
     {
         $this->app->singleton('notificationService', function () {
             return new class {
-                public function notifyUsers($users, $message, $title = null, $type = null)
+                public function notifyUsers($users, $message, $title = null, $type = null, $actionUrl = null, $metadata = null)
                 {
                     foreach ($users as $user) {
                         $notification = Notification::create([
@@ -23,6 +23,11 @@ class NotificationServiceProvider extends ServiceProvider
                             'message' => $message,
                             'title'   => $title,
                             'type'    => $type,
+                            'notification_type' => 'in_app',
+                            'action_url' => $actionUrl,
+                            'metadata' => $metadata ? (is_array($metadata) ? $metadata : json_decode($metadata, true)) : null,
+                            'is_read' => false,
+                            'sent_at' => now(),
                         ]);
                         broadcast(new NotificationEvent($notification));
                     }

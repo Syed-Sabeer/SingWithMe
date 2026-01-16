@@ -41,6 +41,31 @@ class ArtistMusicController extends Controller
 
     public function store(Request $request)
     {
+        // Check upload limit based on subscription plan
+        $user = Auth::user();
+        if ($user && $user->is_artist) {
+            if (!$user->canUploadSong()) {
+                $limit = $user->getSongUploadLimit();
+                $currentMonthStart = now()->startOfMonth();
+                $currentMonthEnd = now()->endOfMonth();
+                $uploadsThisMonth = \App\Models\ArtistMusic::where('driver_id', $user->id)
+                    ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
+                    ->count();
+                
+                $message = $limit === null 
+                    ? 'Unable to upload song. Please contact support.'
+                    : "You have reached your monthly upload limit of {$limit} songs. You have uploaded {$uploadsThisMonth} songs this month. Please upgrade your plan to upload more songs.";
+                
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message
+                    ], 403);
+                }
+                
+                return redirect()->back()->with('error', $message);
+            }
+        }
 
         $request->validate([
             'name' => 'required|string|max:255',
