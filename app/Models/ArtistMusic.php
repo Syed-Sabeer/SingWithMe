@@ -37,8 +37,12 @@ class ArtistMusic extends Model
     public function getMusicFileUrlAttribute()
     {
         if ($this->music_file) {
-            // Use relative URL to avoid domain issues
-            return '/storage/' . $this->music_file;
+            // Remove any existing storage/ or public/storage/ or public/ prefix to avoid duplication
+            $path = $this->music_file;
+            $path = preg_replace('#^(storage/|public/storage/|public/)#', '', $path);
+            
+            // Return path with /public/storage/ prefix
+            return '/public/storage/' . $path;
         }
         return null;
     }

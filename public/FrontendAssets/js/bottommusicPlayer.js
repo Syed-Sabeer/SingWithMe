@@ -337,8 +337,21 @@ window.MusicPlayer = {
         
         // Show ad between songs if ad system is enabled
         if (window.adInjectionSystem && window.adInjectionSystem.isEnabled) {
-            console.log('MusicPlayer: Showing ad between songs');
-            window.adInjectionSystem.showAdBetweenSongs();
+            console.log('MusicPlayer: Ad system enabled, checking for ad availability');
+            
+            // Check if there's an ad available
+            if (window.adInjectionSystem.currentAd) {
+                console.log('MusicPlayer: Showing ad between songs');
+                // Pause the current track before showing ad
+                if (this.audio) {
+                    this.audio.pause();
+                }
+                window.adInjectionSystem.showAdBetweenSongs();
+                // The ad system will handle proceeding to next track when ad is closed
+            } else {
+                console.log('MusicPlayer: Ad system enabled but no ad available, proceeding to next track');
+                this.nextTrack();
+            }
         } else {
             console.log('MusicPlayer: No ads enabled, proceeding to next track');
             this.nextTrack();

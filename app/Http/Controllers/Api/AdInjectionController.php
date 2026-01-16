@@ -33,16 +33,68 @@ class AdInjectionController extends Controller
             $userId = Auth::id();
             
             if (!$userId) {
-                Log::warning('AdInjectionController: Unauthenticated user requesting ad data');
-                // For testing purposes, use user ID 1 if not authenticated
-                $userId = 1;
-                Log::info('AdInjectionController: Using fallback user ID for testing', ['user_id' => $userId]);
+                Log::warning('AdInjectionController: Unauthenticated user requesting ad data - treating as FREE user (show ads)');
+                // Unauthenticated users = FREE users = show ads
+                // Return ads for unauthenticated users instead of using fallback
+                $ad = $this->adInjectionService->getRandomAd();
+                $timing = $this->adInjectionService->getAdTiming();
+                
+                $adData = [
+                    'show_ads' => true,
+                    'ad' => $ad ? [
+                        'id' => $ad->id,
+                        'title' => $ad->title,
+                        'file_url' => $ad->file_url,
+                        'file' => $ad->file,
+                        'link' => $ad->link,
+                        'type' => $this->getAdType($ad->file)
+                    ] : null,
+                    'message' => $ad ? 'Free user - ads enabled' : 'Free user - no ads available'
+                ];
+                
+                return response()->json([
+                    'success' => true,
+                    'data' => array_merge($adData, $timing)
+                ]);
             }
             
-            Log::info('AdInjectionController: Getting ad data for user', ['user_id' => $userId]);
+            Log::info('AdInjectionController: Getting ad data for authenticated user', [
+                'user_id' => $userId,
+                'auth_user' => Auth::user() ? Auth::user()->email : 'not logged in',
+                'auth_id' => Auth::id()
+            ]);
+            
+            // Direct check for debugging
+            $user = \App\Models\User::find($userId);
+            if ($user) {
+                $subscription = $user->activeUserSubscription;
+                Log::info('AdInjectionController: User subscription check', [
+                    'user_id' => $userId,
+                    'has_subscription' => $subscription ? 'yes' : 'no',
+                    'subscription_id' => $subscription ? $subscription->id : null,
+                    'plan_id' => $subscription ? $subscription->usersubscription_id : null,
+                ]);
+                
+                if ($subscription && $subscription->subscriptionPlan) {
+                    $plan = $subscription->subscriptionPlan;
+                    Log::info('AdInjectionController: Plan details', [
+                        'plan_id' => $plan->id,
+                        'plan_title' => $plan->title,
+                        'plan_price' => $plan->price,
+                        'plan_is_ads' => $plan->is_ads,
+                        'plan_is_ads_raw' => $plan->getRawOriginal('is_ads'),
+                    ]);
+                }
+            }
             
             $adData = $this->adInjectionService->getAdInjectionData($userId);
             $timing = $this->adInjectionService->getAdTiming();
+            
+            Log::info('AdInjectionController: Returning ad data', [
+                'user_id' => $userId,
+                'show_ads' => $adData['show_ads'] ?? 'not set',
+                'message' => $adData['message'] ?? 'no message'
+            ]);
             
             return response()->json([
                 'success' => true,

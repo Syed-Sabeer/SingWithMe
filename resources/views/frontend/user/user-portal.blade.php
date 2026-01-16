@@ -1597,7 +1597,7 @@
                             </div>
 
                             <!-- Create New Playlist Button -->
-                            <button type="button" class="create-btn" id="createPlaylistBtn" onclick="if(typeof window.openPlaylistModal==='function'){window.openPlaylistModal(event);}else{const section=document.querySelector('.playlistSection');if(section){const overlay=section.querySelector('.overlay');if(overlay){overlay.classList.add('active');overlay.setAttribute('aria-hidden','false');overlay.style.display='flex';document.body.style.overflow='hidden';setTimeout(function(){if(typeof window.initializeMusicSearch==='function'){window.initializeMusicSearch();}},200);}}}}" style="pointer-events: auto !important; z-index: 1000 !important; position: relative !important; cursor: pointer !important;">
+                            <button type="button" class="create-btn" id="createPlaylistBtn" onclick="if(typeof window.openPlaylistModalDirect==='function'){window.openPlaylistModalDirect(event);}else if(typeof window.openPlaylistModalSimple==='function'){window.openPlaylistModalSimple(event);}else{alert('Playlist modal not ready. Please refresh the page.');}" style="pointer-events: auto !important; z-index: 1000 !important; position: relative !important; cursor: pointer !important;">
                                 <span>+</span> Create New Playlist
                             </button>
                         </div>
@@ -1896,6 +1896,157 @@
 
             // Global variable for selected songs
             let ps_selectedSongs = new Map();
+            
+            // Simple, direct function to open playlist modal - available immediately
+            function openPlaylistModalDirect(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
+                console.log('openPlaylistModalDirect: Opening playlist modal');
+                
+                const section = document.querySelector('.playlistSection');
+                if (!section) {
+                    console.error('openPlaylistModalDirect: Playlist section not found');
+                    return;
+                }
+                
+                const overlay = section.querySelector('.overlay');
+                if (!overlay) {
+                    console.error('openPlaylistModalDirect: Overlay not found');
+                    return;
+                }
+                
+                overlay.classList.add('active');
+                overlay.setAttribute('aria-hidden', 'false');
+                overlay.style.display = 'flex';
+                overlay.style.zIndex = '10000';
+                document.body.style.overflow = 'hidden';
+                
+                console.log('openPlaylistModalDirect: Modal opened', {
+                    hasActive: overlay.classList.contains('active'),
+                    display: overlay.style.display
+                });
+                
+                // Initialize music search after a short delay
+                setTimeout(function() {
+                    if (typeof window.initializeMusicSearch === 'function') {
+                        window.initializeMusicSearch();
+                    } else if (typeof initializeMusicSearch === 'function') {
+                        initializeMusicSearch();
+                    }
+                }, 200);
+            }
+            
+            // Make it globally available immediately
+            window.openPlaylistModalDirect = openPlaylistModalDirect;
+            
+            // Attach event listener to button immediately if it exists
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    attachPlaylistButtonHandler();
+                });
+            } else {
+                attachPlaylistButtonHandler();
+            }
+            
+            function attachPlaylistButtonHandler() {
+                const btn = document.getElementById('createPlaylistBtn');
+                if (btn) {
+                    // Remove any existing handlers
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    
+                    // Add clean event listener
+                    newBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Create Playlist button clicked (direct handler)');
+                        openPlaylistModalDirect(e);
+                    }, true);
+                    
+                    console.log('Direct playlist button handler attached', {
+                        button: !!newBtn,
+                        buttonId: newBtn.id
+                    });
+                } else {
+                    // Try again after a short delay if button not found
+                    setTimeout(attachPlaylistButtonHandler, 500);
+                }
+            }
+            
+            // Define openPlaylistModalSimple early to ensure it's available
+            window.openPlaylistModalSimple = function(e) {
+                try {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    
+                    console.log('openPlaylistModalSimple: Opening playlist modal');
+                    
+                    // Try multiple ways to find the overlay
+                    let overlay = null;
+                    let section = document.querySelector('.playlistSection');
+                    
+                    if (section) {
+                        overlay = section.querySelector('.overlay');
+                        console.log('openPlaylistModalSimple: Found section and overlay', {
+                            section: !!section,
+                            overlay: !!overlay
+                        });
+                    }
+                    
+                    // If not found, try direct query
+                    if (!overlay) {
+                        overlay = document.querySelector('.playlistSection .overlay');
+                        console.log('openPlaylistModalSimple: Trying direct query', {
+                            overlay: !!overlay
+                        });
+                    }
+                    
+                    // If still not found, try just .overlay
+                    if (!overlay) {
+                        overlay = document.querySelector('.overlay');
+                        console.log('openPlaylistModalSimple: Trying generic overlay', {
+                            overlay: !!overlay
+                        });
+                    }
+                    
+                    if (overlay) {
+                        overlay.classList.add('active');
+                        overlay.setAttribute('aria-hidden', 'false');
+                        overlay.style.display = 'flex';
+                        overlay.style.zIndex = '10000';
+                        document.body.style.overflow = 'hidden';
+                        console.log('openPlaylistModalSimple: Modal opened successfully', {
+                            hasActive: overlay.classList.contains('active'),
+                            display: overlay.style.display,
+                            ariaHidden: overlay.getAttribute('aria-hidden')
+                        });
+                        
+                        // Initialize music search if available
+                        setTimeout(function() {
+                            if (typeof window.initializeMusicSearch === 'function') {
+                                window.initializeMusicSearch();
+                            } else if (typeof initializeMusicSearch === 'function') {
+                                initializeMusicSearch();
+                            }
+                        }, 200);
+                    } else {
+                        console.error('openPlaylistModalSimple: Overlay not found. Available elements:', {
+                            playlistSection: !!document.querySelector('.playlistSection'),
+                            overlay: !!document.querySelector('.overlay'),
+                            allOverlays: document.querySelectorAll('.overlay').length
+                        });
+                        alert('Unable to open playlist creation modal. Please refresh the page.');
+                    }
+                } catch (error) {
+                    console.error('openPlaylistModalSimple: Error opening modal', error);
+                    alert('Error opening playlist modal: ' + error.message);
+                }
+            };
 
             function initializePlaylistModal() {
                 console.log('initializePlaylistModal: Starting initialization...');
@@ -2041,18 +2192,43 @@
                     }
                 }
                 
-                // Add event listener directly to the button
-                openBtn.addEventListener('click', openPlaylistModal, true);
-                
-                // Also add direct onclick as fallback
-                openBtn.onclick = function(e) {
+                // Simple, direct event handler
+                function handleCreatePlaylistClick(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Create Playlist button clicked (from initializePlaylistModal)');
                     openPlaylistModal(e);
-                };
+                }
+                
+                // Use the direct handler if available, otherwise use the local one
+                if (typeof window.openPlaylistModalDirect === 'function') {
+                    openBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.openPlaylistModalDirect(e);
+                    }, true);
+                    openBtn.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.openPlaylistModalDirect(e);
+                    };
+                } else {
+                    // Fallback to local handler
+                    openBtn.addEventListener('click', handleCreatePlaylistClick, true);
+                    openBtn.onclick = handleCreatePlaylistClick;
+                }
                 
                 // Make it globally accessible for debugging
                 window.openPlaylistModal = openPlaylistModal;
                 window.playlistModalOverlay = overlay;
                 window.playlistModalOpenBtn = openBtn;
+                
+                console.log('Playlist modal button initialized', {
+                    button: !!openBtn,
+                    buttonId: openBtn.id,
+                    hasOverlay: !!overlay,
+                    hasDirectHandler: typeof window.openPlaylistModalDirect === 'function'
+                });
                 
                 console.log('Playlist modal initialized successfully. Button:', openBtn);
 
@@ -2613,25 +2789,131 @@
             document.addEventListener('click', function(e) {
                 if (e.target.id === 'createPlaylistBtn' || e.target.closest('#createPlaylistBtn')) {
                     console.log('ID-based fallback handler triggered');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Try using the direct function first
+                    if (typeof window.openPlaylistModalDirect === 'function') {
+                        window.openPlaylistModalDirect(e);
+                        return;
+                    }
+                    
+                    // Try using the simple function
+                    if (typeof window.openPlaylistModalSimple === 'function') {
+                        window.openPlaylistModalSimple(e);
+                        return;
+                    }
+                    
+                    // Fallback: Direct overlay manipulation
                     const playlistSection = document.querySelector('.playlistSection');
                     if (playlistSection) {
                         const overlay = playlistSection.querySelector('.overlay');
                         if (overlay) {
-                            e.preventDefault();
-                            e.stopPropagation();
                             overlay.classList.add('active');
                             overlay.setAttribute('aria-hidden', 'false');
                             overlay.style.display = 'flex';
+                            overlay.style.zIndex = '10000';
                             document.body.style.overflow = 'hidden';
                             console.log('ID-based fallback: Modal opened');
+                            
+                            // Initialize music search
+                            setTimeout(function() {
+                                if (typeof window.initializeMusicSearch === 'function') {
+                                    window.initializeMusicSearch();
+                                }
+                            }, 200);
                         } else {
                             console.error('ID-based fallback: Overlay not found');
+                            alert('Unable to open playlist modal. Please refresh the page.');
                         }
                     } else {
                         console.error('ID-based fallback: Playlist section not found');
+                        alert('Playlist section not found. Please refresh the page.');
                     }
                 }
             }, true);
+            
+            // Simple function to open playlist modal - works as standalone
+            function openPlaylistModalSimple(e) {
+                try {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    
+                    console.log('openPlaylistModalSimple: Opening playlist modal');
+                    
+                    // Try multiple ways to find the overlay
+                    let overlay = null;
+                    let section = document.querySelector('.playlistSection');
+                    
+                    if (section) {
+                        overlay = section.querySelector('.overlay');
+                        console.log('openPlaylistModalSimple: Found section and overlay', {
+                            section: !!section,
+                            overlay: !!overlay
+                        });
+                    }
+                    
+                    // If not found, try direct query
+                    if (!overlay) {
+                        overlay = document.querySelector('.playlistSection .overlay');
+                        console.log('openPlaylistModalSimple: Trying direct query', {
+                            overlay: !!overlay
+                        });
+                    }
+                    
+                    // If still not found, try just .overlay
+                    if (!overlay) {
+                        overlay = document.querySelector('.overlay');
+                        console.log('openPlaylistModalSimple: Trying generic overlay', {
+                            overlay: !!overlay
+                        });
+                    }
+                    
+                    if (overlay) {
+                        overlay.classList.add('active');
+                        overlay.setAttribute('aria-hidden', 'false');
+                        overlay.style.display = 'flex';
+                        overlay.style.zIndex = '10000';
+                        document.body.style.overflow = 'hidden';
+                        console.log('openPlaylistModalSimple: Modal opened successfully', {
+                            hasActive: overlay.classList.contains('active'),
+                            display: overlay.style.display,
+                            ariaHidden: overlay.getAttribute('aria-hidden')
+                        });
+                        
+                        // Initialize music search if available
+                        setTimeout(function() {
+                            if (typeof window.initializeMusicSearch === 'function') {
+                                window.initializeMusicSearch();
+                            } else if (typeof initializeMusicSearch === 'function') {
+                                initializeMusicSearch();
+                            }
+                        }, 200);
+                    } else {
+                        console.error('openPlaylistModalSimple: Overlay not found. Available elements:', {
+                            playlistSection: !!document.querySelector('.playlistSection'),
+                            overlay: !!document.querySelector('.overlay'),
+                            allOverlays: document.querySelectorAll('.overlay').length
+                        });
+                        alert('Unable to open playlist creation modal. Please refresh the page.');
+                    }
+                } catch (error) {
+                    console.error('openPlaylistModalSimple: Error opening modal', error);
+                    alert('Error opening playlist modal: ' + error.message);
+                }
+            }
+            
+            // Make it globally available immediately
+            window.openPlaylistModalSimple = openPlaylistModalSimple;
+            
+            // Also ensure it's available on DOM ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    window.openPlaylistModalSimple = openPlaylistModalSimple;
+                });
+            }
         </script>
         <script>
 

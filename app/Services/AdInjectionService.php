@@ -15,14 +15,60 @@ class AdInjectionService
     public function shouldShowAds($userId)
     {
         try {
-            // Get user's active subscription
+            Log::warning('AdInjectionService: shouldShowAds called', ['user_id' => $userId]);
+            
+            // DIRECT DATABASE CHECK: Verify user exists and has no subscriptions
+            $user = \App\Models\User::find($userId);
+            if (!$user) {
+                Log::error('AdInjectionService: User not found in database', ['user_id' => $userId]);
+                return true; // Default to showing ads if user not found
+            }
+            
+            // Direct check: count active subscriptions from database
+            $activeSubscriptionsCount = \App\Models\UserSubscription::where('user_id', $userId)
+                ->get()
+                ->filter(function($sub) {
+                    return $sub->isActive();
+                })
+                ->count();
+            
+            Log::warning('AdInjectionService: Direct database check', [
+                'user_id' => $userId,
+                'active_subscriptions_count' => $activeSubscriptionsCount,
+                'user_email' => $user->email ?? 'no email'
+            ]);
+            
+            // If no active subscriptions, user is FREE = ALWAYS show ads
+            if ($activeSubscriptionsCount === 0) {
+                Log::warning('AdInjectionService: User has ZERO active subscriptions - FORCING ads to show', [
+                    'user_id' => $userId,
+                    'active_count' => 0,
+                    'decision' => 'RETURNING TRUE - FREE USER'
+                ]);
+                return true; // Free users always see ads - RETURN IMMEDIATELY
+            }
+            
+            // Get user's active subscription (only if we have active subscriptions)
             $activeSubscription = $this->getActiveSubscription($userId);
             
+            // CRITICAL: If no active subscription, user is FREE = ALWAYS show ads
             if (!$activeSubscription) {
-                // No active subscription = free user = show ads
-                Log::info('AdInjectionService: User has no active subscription, showing ads', ['user_id' => $userId]);
-                return true;
+                Log::warning('AdInjectionService: User has NO active subscription - FORCING ads to show', [
+                    'user_id' => $userId,
+                    'subscription' => 'null',
+                    'decision' => 'RETURNING TRUE - FREE USER'
+                ]);
+                // Double-check: make absolutely sure we return true
+                return true; // Free users always see ads
             }
+            
+            Log::info('AdInjectionService: User has active subscription', [
+                'user_id' => $userId,
+                'subscription_id' => $activeSubscription->id,
+                'plan_id' => $activeSubscription->usersubscription_id,
+                'subscription_date' => $activeSubscription->usersubscription_date,
+                'duration' => $activeSubscription->usersubscription_duration
+            ]);
             
             // Get subscription plan details
             $plan = UserSubscriptionPlan::find($activeSubscription->usersubscription_id);
@@ -35,24 +81,57 @@ class AdInjectionService
                 return true; // Default to showing ads if plan not found
             }
             
-            // Check if this is a free plan (price = 0) or if ads are enabled
-            $isFreePlan = $plan->price == 0;
-            // is_ads: 0 = show ads, 1 = ad-free (no ads)
-            $hasAdsEnabled = $plan->is_ads == 0; // 0 means ads are shown
+            // CRITICAL: Check if this is a free plan FIRST (price = 0 or "0")
+            // Price is stored as string in database, so check all formats
+            $priceValue = is_numeric($plan->price) ? (float)$plan->price : 0;
+            $isFreePlan = ($priceValue == 0 || $plan->price === '0' || $plan->price === 0 || trim($plan->price) === '0');
             
-            // Show ads if it's a free plan OR if ads are explicitly enabled (is_ads = 0)
-            // Hide ads if user has ad-free subscription (is_ads = 1)
-            $showAds = $isFreePlan || $hasAdsEnabled;
+            // If it's a free plan, ALWAYS show ads - no exceptions
+            if ($isFreePlan || stripos($plan->title, 'Free Listener') !== false) {
+                Log::info('AdInjectionService: Free plan detected - FORCING ads to show', [
+                    'plan_title' => $plan->title,
+                    'price' => $plan->price,
+                    'price_value' => $priceValue,
+                    'plan_id' => $plan->id
+                ]);
+                return true; // Return immediately - free plans always show ads
+            }
+            
+            // For paid plans, check is_ads field
+            // is_ads field meaning in database:
+            // - 1 = no ads (ad-free subscription)
+            // - 0 = with ads (show ads)
+            // - NULL = default to showing ads
+            
+            // Get raw value to handle NULL and type conversion properly
+            $isAdsRaw = $plan->getRawOriginal('is_ads');
+            if ($isAdsRaw === null) {
+                // If raw is null, try the attribute (might be cast to boolean)
+                $isAdsRaw = $plan->is_ads;
+            }
+            
+            // Check if plan is ad-free: is_ads = 1 means ad-free (no ads)
+            // is_ads = 0 or NULL means show ads
+            // Handle both integer and boolean comparisons
+            $isAdFree = ($isAdsRaw === 1 || $isAdsRaw === '1' || $isAdsRaw === true || $isAdsRaw === 'true');
+            
+            // For paid plans: Show ads if plan is NOT ad-free (is_ads != 1)
+            // Hide ads only if user explicitly has ad-free subscription (is_ads = 1)
+            $showAds = !$isAdFree;
             
             Log::info('AdInjectionService: Subscription plan ad setting', [
                 'user_id' => $userId,
                 'plan_id' => $plan->id,
                 'plan_name' => $plan->title,
                 'price' => $plan->price,
+                'price_value' => $priceValue,
                 'is_free_plan' => $isFreePlan,
-                'is_ads' => $plan->is_ads,
-                'has_ads_enabled' => $hasAdsEnabled,
-                'show_ads' => $showAds
+                'is_ads_raw_value' => $isAdsRaw,
+                'is_ads_original' => $plan->getRawOriginal('is_ads'),
+                'is_ads_attribute' => $plan->is_ads,
+                'is_ad_free' => $isAdFree,
+                'show_ads' => $showAds,
+                'final_decision' => $showAds ? 'SHOW ADS' : 'HIDE ADS'
             ]);
             
             return $showAds;
@@ -110,6 +189,14 @@ class AdInjectionService
                 return null;
             }
             
+            // Get all subscriptions for this user
+            $allSubscriptions = $user->userSubscriptions()->get();
+            Log::info('AdInjectionService: All user subscriptions', [
+                'user_id' => $userId,
+                'total_subscriptions' => $allSubscriptions->count(),
+                'subscription_ids' => $allSubscriptions->pluck('id')->toArray()
+            ]);
+            
             $subscription = $user->activeUserSubscription;
                 
             if ($subscription) {
@@ -118,10 +205,14 @@ class AdInjectionService
                     'subscription_id' => $subscription->id,
                     'plan_id' => $subscription->usersubscription_id,
                     'start_date' => $subscription->usersubscription_date,
-                    'duration' => $subscription->usersubscription_duration
+                    'duration' => $subscription->usersubscription_duration,
+                    'is_active_check' => $subscription->isActive() ? 'yes' : 'no'
                 ]);
             } else {
-                Log::info('AdInjectionService: No active subscription found', ['user_id' => $userId]);
+                Log::info('AdInjectionService: No active subscription found - user is FREE', [
+                    'user_id' => $userId,
+                    'all_subscriptions_count' => $allSubscriptions->count()
+                ]);
             }
             
             return $subscription;
@@ -141,23 +232,49 @@ class AdInjectionService
     public function getAdInjectionData($userId)
     {
         try {
+            Log::warning('AdInjectionService: getAdInjectionData START', ['user_id' => $userId]);
+            
             $shouldShowAds = $this->shouldShowAds($userId);
             
+            Log::warning('AdInjectionService: getAdInjectionData - shouldShowAds result', [
+                'user_id' => $userId,
+                'should_show_ads' => $shouldShowAds,
+                'type' => gettype($shouldShowAds)
+            ]);
+            
             if (!$shouldShowAds) {
+                Log::warning('AdInjectionService: User has ad-free subscription, not showing ads', [
+                    'user_id' => $userId,
+                    'should_show_ads_value' => $shouldShowAds,
+                    'should_show_ads_type' => gettype($shouldShowAds)
+                ]);
                 return [
                     'show_ads' => false,
                     'message' => 'Premium user - no ads'
                 ];
             }
             
+            Log::warning('AdInjectionService: User SHOULD see ads, getting ad data', ['user_id' => $userId]);
+            
+            // User should see ads - get a random ad
             $ad = $this->getRandomAd();
             
             if (!$ad) {
+                // Even if no ads are available, we should still indicate that ads should be shown
+                // This allows the frontend to handle the "no ads available" case gracefully
+                Log::warning('AdInjectionService: User should see ads but no ads available in database', ['user_id' => $userId]);
                 return [
-                    'show_ads' => false,
-                    'message' => 'No ads available'
+                    'show_ads' => true, // Still return true so system knows to show ads
+                    'ad' => null,
+                    'message' => 'No ads available at the moment'
                 ];
             }
+            
+            Log::info('AdInjectionService: Returning ad data', [
+                'user_id' => $userId,
+                'ad_id' => $ad->id,
+                'ad_title' => $ad->title
+            ]);
             
             return [
                 'show_ads' => true,
@@ -174,11 +291,14 @@ class AdInjectionService
         } catch (\Exception $e) {
             Log::error('AdInjectionService: Error getting ad injection data', [
                 'user_id' => $userId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             
+            // On error, default to showing ads (safer for free users)
             return [
-                'show_ads' => false,
+                'show_ads' => true,
+                'ad' => null,
                 'message' => 'Error loading ads'
             ];
         }

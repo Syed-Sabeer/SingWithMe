@@ -370,8 +370,9 @@ Route::get('allblogs', function () {
     return view('frontend.allblogs');
 })->name('allblogs');
 
-// artist profile page (public, dynamic)
+// artist profile page (public, dynamic) - requires authentication
 Route::get('artist-profile', [ArtistController::class, 'publicProfile'])
+    ->middleware('auth')
     ->name('artist-profile');
 
 // allartist detail page

@@ -1738,8 +1738,13 @@ a .payout-btn {
                                     <h4>popular songs</h4>
                                     <ul class="single-albums-list-box">
                                         @php
+                                            // Get songs with most streams based on stream_stats table
                                             $topMusics = \App\Models\ArtistMusic::where('driver_id', auth()->id())
-                                                ->orderBy('listeners', 'desc')
+                                                ->withCount(['streamStats as total_streams' => function($query) {
+                                                    $query->where('is_complete', 1);
+                                                }])
+                                                ->orderBy('total_streams', 'desc')
+                                                ->orderBy('created_at', 'desc') // Secondary sort by date
                                                 ->take(3)
                                                 ->get();
                                         @endphp
@@ -1791,51 +1796,61 @@ a .payout-btn {
                                     @endif
                                 </div>
                                 <div class="similar-artists">
-                                    <h4>similar artists</h4>
-                                    <ul>
-                                        <li>
-                                            <div class="songs-name similar-artists-box">
-                                                <a href="javascript:void(0)">
-                                                    <div class="back-img"
-                                                        style="background-image: url({{asset('FrontendAssets/images/vishnu-r-nair.jpg')}});">
-                                                    </div>
-                                                    <div class="similar-artists-text">
-                                                        <h3 class="h3-title">vishnu r nair</h3>
-                                                        <span class="small-text">1.9M monthly listeners</span>
-                                                    </div>
-                                                </a>
+                                    <h4>latest songs</h4>
+                                    <ul class="single-albums-list-box">
+                                        @php
+                                            // Get latest songs uploaded by the artist
+                                            $latestMusics = \App\Models\ArtistMusic::where('driver_id', auth()->id())
+                                                ->latest('created_at')
+                                                ->take(3)
+                                                ->get();
+                                        @endphp
+                                        
+                                        @forelse($latestMusics as $index => $music)
+                                            <li class="music-list-box {{ $index === 0 ? 'current_play' : '' }}">
+                                            <div class="songs-name">
+                                                <div class="back-img"
+                                                        style="background-image: url({{ $music->thumbnail_image_url ?: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5NdXNpYzwvdGV4dD48L3N2Zz4=' }});">
+                                                </div>
+                                                <h3 class="h3-title">
+                                                        {{ $music->name }}
+                                                </h3>
                                             </div>
-
-                                        </li>
-                                        <li>
-                                            <div class="songs-name similar-artists-box">
-                                                <a href="javascript:void(0)">
-                                                    <div class="back-img"
-                                                        style="background-image: url({{asset('FrontendAssets/images/slim-emcee.jpg')}});">
-                                                    </div>
-                                                    <div class="similar-artists-text">
-                                                        <h3 class="h3-title">slim emcee</h3>
-                                                        <span class="small-text">1.8M monthly listeners</span>
-                                                    </div>
-                                                </a>
+                                            <div class="audio-box ">
+                                                <div class="music-controls play play_btn">
+                                                        <div data-id="{{ $music->id }}" class="music-controls-item">
+                                                        <i class="fas fa-play music-controls-item--icon play-icon"></i>
+                                                        </div>
+                                                </div>
                                             </div>
-
                                         </li>
-                                        <li>
-                                            <div class="songs-name similar-artists-box">
-                                                <a href="javascript:void(0)">
-                                                    <div class="back-img"
-                                                        style="background-image: url({{asset('FrontendAssets/images/joshua-fuller.jpg')}});">
+                                        @empty
+                                        <li class="music-list-box">
+                                            <div class="songs-name">
+                                                <div class="back-img"
+                                                        style="background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5NdXNpYzwvdGV4dD48L3N2Zz4=');">
                                                     </div>
-                                                    <div class="similar-artists-text">
-                                                        <h3 class="h3-title">joshua fuller</h3>
-                                                        <span class="small-text">1.7M monthly listeners</span>
-                                                    </div>
-                                                </a>
+                                                    <h3 class="h3-title">
+                                                        No music uploaded yet
+                                                    </h3>
                                             </div>
-
+                                            <div class="audio-box ">
+                                                <div class="music-controls play play_btn">
+                                                        <div class="music-controls-item">
+                                                            <i class="fas fa-plus music-controls-item--icon play-icon"></i>
+                                                        </div>
+                                                </div>
+                                            </div>
                                         </li>
+                                        @endforelse
                                     </ul>
+                                    @if($latestMusics->count() > 0)
+                                    <div class="mt-3 text-end">
+                                        <a href="{{ route('artist.my-music') }}" class="btn btn-sm" style="background: rgba(183,148,246,0.25); color:#b794f6; border-radius:20px; padding:6px 16px; text-decoration:none;">
+                                            View All Songs
+                                        </a>
+                                    </div>
+                                    @endif
                                 </div>
                             </div>
                             <div class="music_content ">

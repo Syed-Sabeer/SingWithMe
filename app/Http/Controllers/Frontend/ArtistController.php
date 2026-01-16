@@ -275,9 +275,16 @@ class ArtistController extends Controller
      * ?artist={id} is used to decide which artist to show.
      * If no query is provided and the logged-in user is an artist,
      * we show their own public profile.
+     * 
+     * Requires authentication - unauthenticated users will be redirected to login.
      */
     public function publicProfile(Request $request)
     {
+        // Ensure user is authenticated (middleware handles this, but adding extra check for safety)
+        if (!Auth::check()) {
+            return redirect()->route('user.login')->with('error', 'Please login to view artist profiles.');
+        }
+
         try {
             $artistId = $request->query('artist');
 
@@ -285,7 +292,7 @@ class ArtistController extends Controller
                 $artist = User::where('is_artist', true)
                     ->with('profile')
                     ->findOrFail($artistId);
-            } elseif (Auth::check() && Auth::user()->is_artist) {
+            } elseif (Auth::user()->is_artist) {
                 $artist = Auth::user()->load('profile');
             } else {
                 abort(404);

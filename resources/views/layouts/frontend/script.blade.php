@@ -459,6 +459,7 @@
                 nextAdTime: 30,
                 midSongAdShown: false,
                 countdownInterval: null,
+                adShownBetweenSongs: false, // Track if ad was shown between songs
 
                 // Initialize the ad injection system
                 init() {
@@ -492,16 +493,25 @@
                             this.isEnabled = true;
                             this.currentAd = data.data.ad;
                             this.nextAdTime = data.data.next_ad_in_seconds || 30;
+                            
+                            if (!this.currentAd) {
+                                console.warn('Global AdInjectionSystem: Ads enabled but no ad available', {
+                                    message: data.data.message || 'No ads available at the moment'
+                                });
+                                // Still enable the system, but we'll skip showing ads if none are available
+                            }
+                            
                             console.log('Global AdInjectionSystem: Ads enabled', {
                                 ad: this.currentAd,
-                                nextAdIn: this.nextAdTime
+                                nextAdIn: this.nextAdTime,
+                                hasAd: !!this.currentAd
                             });
                         } else {
                             this.isEnabled = false;
                             console.log('Global AdInjectionSystem: Ads disabled', {
                                 success: data.success,
                                 show_ads: data.data ? data.data.show_ads : 'no data',
-                                message: data.message
+                                message: data.data ? data.data.message : 'Unknown error'
                             });
                         }
                     } catch (error) {
@@ -524,8 +534,25 @@
                 
                 // Show ad between songs
                 showAdBetweenSongs() {
-                    if (!this.isEnabled || this.isShowingAd) return;
+                    if (!this.isEnabled || this.isShowingAd) {
+                        console.log('Global AdInjectionSystem: Cannot show ad - system disabled or already showing', {
+                            isEnabled: this.isEnabled,
+                            isShowingAd: this.isShowingAd
+                        });
+                        return;
+                    }
+                    
+                    if (!this.currentAd) {
+                        console.log('Global AdInjectionSystem: No ad available, skipping ad display');
+                        // If no ad is available, trigger next track
+                        if (window.MusicPlayer && typeof window.MusicPlayer.nextTrack === 'function') {
+                            window.MusicPlayer.nextTrack();
+                        }
+                        return;
+                    }
+                    
                     console.log('Global AdInjectionSystem: Showing ad between songs');
+                    this.adShownBetweenSongs = true; // Mark that this ad is between songs
                     this.showAd();
                 },
                 
@@ -533,6 +560,7 @@
                 showAdDuringPlayback() {
                     if (!this.isEnabled || this.isShowingAd) return;
                     console.log('Global AdInjectionSystem: Showing ad during playback');
+                    this.adShownBetweenSongs = false; // Mark that this is during playback, not between songs
                     this.showAd();
                 },
                 
@@ -665,6 +693,9 @@
                         this.countdownInterval = null;
                     }
                     
+                    // Reset mid-song ad flag
+                    this.midSongAdShown = false;
+                    
                     const adOverlay = document.getElementById('ad-overlay');
                     if (adOverlay) {
                         adOverlay.remove();
@@ -672,9 +703,21 @@
                     
                     this.isShowingAd = false;
                     
-                    // Resume music if it was playing
-                    if (window.MusicPlayer && window.MusicPlayer.isPlaying) {
-                        window.MusicPlayer.audio.play().catch(e => console.error('Error resuming audio:', e));
+                    // If ad was shown between songs, proceed to next track
+                    // Otherwise, resume the current track
+                    if (this.adShownBetweenSongs) {
+                        console.log('Global AdInjectionSystem: Ad was between songs, proceeding to next track');
+                        this.adShownBetweenSongs = false; // Reset flag
+                        if (window.MusicPlayer && typeof window.MusicPlayer.nextTrack === 'function') {
+                            setTimeout(() => {
+                                window.MusicPlayer.nextTrack();
+                            }, 300);
+                        }
+                    } else {
+                        // Resume music if it was playing (during playback ad)
+                        if (window.MusicPlayer && window.MusicPlayer.isPlaying) {
+                            window.MusicPlayer.audio.play().catch(e => console.error('Error resuming audio:', e));
+                        }
                     }
                 }
             };
