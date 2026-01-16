@@ -84,12 +84,12 @@
                                 </div>
                             </div>
                         </div>
-                         <div class="navSearchBar">
+                         {{-- <div class="navSearchBar">
                         <div class="search-box">
                             <button class="btn-search"><i class="fas fa-search"></i></button>
                             <input type="text" class="input-search" placeholder="Search...">
                         </div>
-                        </div>
+                        </div> --}}
                         <div class="notification-parent">
                                         <div class="nav-actions">
                                             <!-- Notification Bell -->
