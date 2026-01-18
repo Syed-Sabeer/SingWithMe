@@ -1741,54 +1741,10 @@
                                                                 functionType: typeof window.addSongToPlaylist
                                                             });
                                                             
+                                                            // Don't create fallback if function already exists - it should be available
                                                             if (!funcAvailable) {
-                                                                console.warn('addSongToPlaylist not available, creating simple fallback');
-                                                                // Store reference to any existing function before creating fallback
-                                                                const existingFunc = window.addSongToPlaylist;
-                                                                
-                                                                // Create a simple fallback that manually adds songs
-                                                                window.addSongToPlaylist = function(id, name, artist, thumb) {
-                                                                    console.log('Fallback addSongToPlaylist called:', {id, name, artist, thumb});
-                                                                    
-                                                                    // Initialize ps_selectedSongs if needed
-                                                                    if (typeof window.ps_selectedSongs === 'undefined') {
-                                                                        window.ps_selectedSongs = new Map();
-                                                                    }
-                                                                    
-                                                                    const songs = window.ps_selectedSongs;
-                                                                    if (songs.has(id)) {
-                                                                        alert('This song is already in the playlist');
-                                                                        return;
-                                                                    }
-                                                                    
-                                                                    songs.set(id, {id: id, name: name, artist: artist, thumbnail: thumb});
-                                                                    console.log('Song added via fallback. Count:', songs.size);
-                                                                    
-                                                                    // Try to update UI if functions are available
-                                                                    if (typeof window.updateSelectedSongsGrid === 'function') {
-                                                                        try {
-                                                                            window.updateSelectedSongsGrid();
-                                                                        } catch (e) {
-                                                                            console.warn('Error updating grid:', e);
-                                                                        }
-                                                                    }
-                                                                    
-                                                                    if (typeof window.updateSelectedCount === 'function') {
-                                                                        try {
-                                                                            window.updateSelectedCount();
-                                                                        } catch (e) {
-                                                                            console.warn('Error updating count:', e);
-                                                                        }
-                                                                    }
-                                                                    
-                                                                    // Clear search input if available
-                                                                    const musicSearchInput = document.getElementById('musicSearchInput');
-                                                                    if (musicSearchInput) {
-                                                                        musicSearchInput.value = '';
-                                                                    }
-                                                                    
-                                                                    console.log('Song successfully added via fallback');
-                                                                };
+                                                                console.error('addSongToPlaylist not available when generating search results!');
+                                                                console.error('This should not happen - function should be defined early in the script');
                                                             }
                                                             
                                                             const html = data.data.map(song => {
@@ -1797,14 +1753,15 @@
                                                                 const escapedArtist = String(song.artist || 'Unknown Artist').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, ' ').replace(/\r/g, '');
                                                                 const escapedThumbnail = String(song.thumbnail || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, ' ').replace(/\r/g, '');
                                                                 const songId = parseInt(song.id) || 0;
+                                                                // Use data attributes and event delegation instead of inline onclick
                                                                 return `
-                                                                    <div class="search-result-item" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; background: #fff; cursor: pointer;" onclick="if(typeof window.addSongToPlaylist==='function'){window.addSongToPlaylist(${songId}, '${escapedName}', '${escapedArtist}', '${escapedThumbnail}');}else{console.error('Function check failed');alert('Function not available');}">
+                                                                    <div class="search-result-item" data-song-id="${songId}" data-song-name="${escapedName.replace(/"/g, '&quot;')}" data-song-artist="${escapedArtist.replace(/"/g, '&quot;')}" data-song-thumbnail="${escapedThumbnail.replace(/"/g, '&quot;')}" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; background: #fff; cursor: pointer;">
                                                                         <img src="${escapedThumbnail || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAxMkgxNlYyOEgxNlYxMloiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTI0IDEySDI0VjI4SDI0VjEyWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'}" alt="Cover" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #f3f4f6;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAxMkgxNlYyOEgxNlYxMloiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTI0IDEySDI0VjI4SDI0VjEyWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'">
                                                                         <div style="flex: 1;">
                                                                             <h5 style="margin: 0; font-size: 15px; font-weight: 600; color: #111827;">${escapedName}</h5>
                                                                             <p style="margin: 0; font-size: 13px; color: #6b7280;">${escapedArtist}</p>
                                                                         </div>
-                                                                        <button onclick="event.stopPropagation(); (function(){try{console.log('Button clicked, checking function...');console.log('Function type:', typeof window.addSongToPlaylist);if(typeof window.addSongToPlaylist==='function'){console.log('Calling addSongToPlaylist with:', {id:${songId}, name:'${escapedName}', artist:'${escapedArtist}'});window.addSongToPlaylist(${songId}, '${escapedName}', '${escapedArtist}', '${escapedThumbnail}');}else{console.error('addSongToPlaylist not available');alert('Function not available. Please refresh the page.');}}catch(e){console.error('Error adding song:',e);alert('Error: '+e.message);}})();" style="background: #6b7280; color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;" title="Add to playlist">
+                                                                        <button class="add-song-btn" data-song-id="${songId}" data-song-name="${escapedName.replace(/"/g, '&quot;')}" data-song-artist="${escapedArtist.replace(/"/g, '&quot;')}" data-song-thumbnail="${escapedThumbnail.replace(/"/g, '&quot;')}" style="background: #6b7280; color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;" title="Add to playlist">
                                                                             <i class="fas fa-plus"></i>
                                                                         </button>
                                                                     </div>
@@ -1814,6 +1771,59 @@
                                                             if (html) {
                                                                 grid.innerHTML = html;
                                                                 console.log('Results displayed inline', { songCount: data.data.length });
+                                                                
+                                                                // Attach event listeners using event delegation (remove old listeners first)
+                                                                const oldHandler = grid._addSongHandler;
+                                                                if (oldHandler) {
+                                                                    grid.removeEventListener('click', oldHandler);
+                                                                }
+                                                                
+                                                                const clickHandler = function(e) {
+                                                                    const addBtn = e.target.closest('.add-song-btn');
+                                                                    const resultItem = e.target.closest('.search-result-item');
+                                                                    
+                                                                    if (addBtn) {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        
+                                                                        const songId = parseInt(addBtn.getAttribute('data-song-id')) || 0;
+                                                                        const songName = addBtn.getAttribute('data-song-name') || '';
+                                                                        const songArtist = addBtn.getAttribute('data-song-artist') || '';
+                                                                        const songThumbnail = addBtn.getAttribute('data-song-thumbnail') || '';
+                                                                        
+                                                                        console.log('Add button clicked via delegation:', { songId, songName, songArtist });
+                                                                        
+                                                                        if (typeof window.addSongToPlaylist === 'function') {
+                                                                            try {
+                                                                                window.addSongToPlaylist(songId, songName, songArtist, songThumbnail);
+                                                                            } catch (err) {
+                                                                                console.error('Error calling addSongToPlaylist:', err);
+                                                                                alert('Error adding song: ' + err.message);
+                                                                            }
+                                                                        } else {
+                                                                            console.error('addSongToPlaylist function not available');
+                                                                            alert('Function not available. Please refresh the page.');
+                                                                        }
+                                                                        return false;
+                                                                    } else if (resultItem && !e.target.closest('button')) {
+                                                                        // Click on the item itself (not the button)
+                                                                        const songId = parseInt(resultItem.getAttribute('data-song-id')) || 0;
+                                                                        const songName = resultItem.getAttribute('data-song-name') || '';
+                                                                        const songArtist = resultItem.getAttribute('data-song-artist') || '';
+                                                                        const songThumbnail = resultItem.getAttribute('data-song-thumbnail') || '';
+                                                                        
+                                                                        if (typeof window.addSongToPlaylist === 'function') {
+                                                                            try {
+                                                                                window.addSongToPlaylist(songId, songName, songArtist, songThumbnail);
+                                                                            } catch (err) {
+                                                                                console.error('Error calling addSongToPlaylist:', err);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                };
+                                                                
+                                                                grid._addSongHandler = clickHandler;
+                                                                grid.addEventListener('click', clickHandler);
                                                             } else {
                                                                 grid.innerHTML = '<div style="text-align: center; padding: 20px; color: #ef4444;">Error displaying results.</div>';
                                                             }
@@ -2177,7 +2187,18 @@
             let ps_selectedSongs = new Map();
             
             // Define addSongToPlaylist function EARLY so it's always available
+            // Use a flag to prevent recursive calls
+            let isAddingSong = false;
+            
             window.addSongToPlaylist = function(musicId, name, artist, thumbnail) {
+                // Prevent recursive calls
+                if (isAddingSong) {
+                    console.warn('addSongToPlaylist already executing, ignoring duplicate call');
+                    return;
+                }
+                
+                isAddingSong = true;
+                
                 try {
                     console.log('Adding song to playlist (global):', { musicId, name, artist, thumbnail });
                     console.log('Current selected songs count:', ps_selectedSongs ? ps_selectedSongs.size : 0);
@@ -2189,6 +2210,7 @@
                     
                     if (ps_selectedSongs.has(musicId)) {
                         alert('This song is already in the playlist');
+                        isAddingSong = false;
                         return;
                     }
                     
@@ -2201,21 +2223,21 @@
                     
                     console.log('Song added. New count:', ps_selectedSongs.size);
                     
-                    // Update UI if functions are available
-                    if (typeof window.updateSelectedCount === 'function') {
+                    // Update UI if functions are available (use setTimeout to prevent recursion)
+                    setTimeout(() => {
                         try {
-                            window.updateSelectedCount();
+                            if (typeof window.updateSelectedCount === 'function') {
+                                window.updateSelectedCount();
+                            }
+                            if (typeof window.updateSelectedSongsGrid === 'function') {
+                                window.updateSelectedSongsGrid();
+                            }
                         } catch (e) {
-                            console.warn('Error updating selected count:', e);
+                            console.warn('Error updating UI:', e);
+                        } finally {
+                            isAddingSong = false;
                         }
-                    }
-                    if (typeof window.updateSelectedSongsGrid === 'function') {
-                        try {
-                            window.updateSelectedSongsGrid();
-                        } catch (e) {
-                            console.warn('Error updating selected songs grid:', e);
-                        }
-                    }
+                    }, 0);
                     
                     // Clear search input if available
                     const musicSearchInput = document.getElementById('musicSearchInput');
@@ -2228,6 +2250,7 @@
                 } catch (error) {
                     console.error('Error in addSongToPlaylist:', error);
                     alert('Error adding song to playlist. Please try again.');
+                    isAddingSong = false;
                 }
             };
             
@@ -2239,15 +2262,68 @@
                 ps_selectedSongs: typeof ps_selectedSongs !== 'undefined'
             });
             
+            // Set up global event delegation for add-song buttons (works even if HTML is generated dynamically)
+            function setupGlobalAddSongDelegation() {
+                // Use document-level delegation so it works for dynamically added elements
+                document.addEventListener('click', function(e) {
+                    const addBtn = e.target.closest('.add-song-btn');
+                    const resultItem = e.target.closest('.search-result-item');
+                    
+                    if (addBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const songId = parseInt(addBtn.getAttribute('data-song-id')) || 0;
+                        const songName = addBtn.getAttribute('data-song-name') || '';
+                        const songArtist = addBtn.getAttribute('data-song-artist') || '';
+                        const songThumbnail = addBtn.getAttribute('data-song-thumbnail') || '';
+                        
+                        console.log('Global delegation: Add button clicked', { songId, songName, songArtist });
+                        
+                        if (typeof window.addSongToPlaylist === 'function') {
+                            try {
+                                window.addSongToPlaylist(songId, songName, songArtist, songThumbnail);
+                            } catch (err) {
+                                console.error('Error calling addSongToPlaylist:', err);
+                                alert('Error adding song: ' + err.message);
+                            }
+                        } else {
+                            console.error('addSongToPlaylist function not available in global delegation');
+                            alert('Function not available. Please refresh the page.');
+                        }
+                        return false;
+                    } else if (resultItem && !e.target.closest('button') && resultItem.hasAttribute('data-song-id')) {
+                        // Click on the item itself (not a button)
+                        const songId = parseInt(resultItem.getAttribute('data-song-id')) || 0;
+                        const songName = resultItem.getAttribute('data-song-name') || '';
+                        const songArtist = resultItem.getAttribute('data-song-artist') || '';
+                        const songThumbnail = resultItem.getAttribute('data-song-thumbnail') || '';
+                        
+                        if (typeof window.addSongToPlaylist === 'function') {
+                            try {
+                                window.addSongToPlaylist(songId, songName, songArtist, songThumbnail);
+                            } catch (err) {
+                                console.error('Error calling addSongToPlaylist:', err);
+                            }
+                        }
+                    }
+                }, true); // Use capture phase
+                
+                console.log('Global add-song delegation handler attached');
+            }
+            
+            // Set up delegation immediately
+            setupGlobalAddSongDelegation();
+            
             // Also make it available on window load as backup
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', function() {
                     console.log('DOMContentLoaded: Verifying addSongToPlaylist', typeof window.addSongToPlaylist === 'function');
+                    setupGlobalAddSongDelegation(); // Set up again in case it wasn't set up before
                 });
             } else {
                 console.log('DOM already loaded: Verifying addSongToPlaylist', typeof window.addSongToPlaylist === 'function');
             }
-            console.log('addSongToPlaylist function initialized:', typeof window.addSongToPlaylist === 'function');
             
             // Define searchMusic function EARLY so it's available when modal opens
             window.searchMusic = async function(query, songsGrid = null) {
@@ -2298,23 +2374,24 @@
                     if (data.success && data.data && Array.isArray(data.data) && data.data.length > 0) {
                         console.log('Displaying', data.data.length, 'search results');
                         
-                        // Display results directly
+                        // Display results directly using event delegation
                         const html = data.data.map(song => {
                             if (!song || !song.id || !song.name) {
                                 console.warn('Invalid song object:', song);
                                 return '';
                             }
-                            const escapedName = String(song.name || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
-                            const escapedArtist = String(song.artist || 'Unknown Artist').replace(/'/g, "\\'").replace(/"/g, '\\"');
-                            const escapedThumbnail = String(song.thumbnail || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+                            const escapedName = String(song.name || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, ' ').replace(/\r/g, '');
+                            const escapedArtist = String(song.artist || 'Unknown Artist').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, ' ').replace(/\r/g, '');
+                            const escapedThumbnail = String(song.thumbnail || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, ' ').replace(/\r/g, '');
+                            const songId = parseInt(song.id) || 0;
                             return `
-                                <div class="search-result-item" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; background: #fff; cursor: pointer;" onclick="if(typeof window.addSongToPlaylist==='function'){window.addSongToPlaylist(${song.id}, '${escapedName}', '${escapedArtist}', '${escapedThumbnail}');}">
+                                <div class="search-result-item" data-song-id="${songId}" data-song-name="${escapedName.replace(/"/g, '&quot;')}" data-song-artist="${escapedArtist.replace(/"/g, '&quot;')}" data-song-thumbnail="${escapedThumbnail.replace(/"/g, '&quot;')}" style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; background: #fff; cursor: pointer;">
                                     <img src="${escapedThumbnail || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAxMkgxNlYyOEgxNlYxMloiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTI0IDEySDI0VjI4SDI0VjEyWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'}" alt="Cover" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #f3f4f6;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAxMkgxNlYyOEgxNlYxMloiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTI0IDEySDI0VjI4SDI0VjEyWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'">
                                     <div style="flex: 1;">
                                         <h5 style="margin: 0; font-size: 15px; font-weight: 600; color: #111827;">${escapedName}</h5>
                                         <p style="margin: 0; font-size: 13px; color: #6b7280;">${escapedArtist}</p>
                                     </div>
-                                    <button onclick="event.stopPropagation(); try{if(typeof window.addSongToPlaylist==='function'){window.addSongToPlaylist(${song.id}, '${escapedName}', '${escapedArtist}', '${escapedThumbnail}');}else{console.error('addSongToPlaylist not available');alert('Please wait for the page to fully load, then try again.');}}catch(e){console.error('Error adding song:',e);alert('Error adding song. Please try again.');}" style="background: #6b7280; color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;" title="Add to playlist">
+                                    <button class="add-song-btn" data-song-id="${songId}" data-song-name="${escapedName.replace(/"/g, '&quot;')}" data-song-artist="${escapedArtist.replace(/"/g, '&quot;')}" data-song-thumbnail="${escapedThumbnail.replace(/"/g, '&quot;')}" style="background: #6b7280; color: white; border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;" title="Add to playlist">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
@@ -2324,6 +2401,58 @@
                         if (html) {
                             grid.innerHTML = html;
                             console.log('Results displayed', { songCount: data.data.length });
+                            
+                            // Attach event delegation (remove old handler first)
+                            const oldHandler = grid._addSongHandler;
+                            if (oldHandler) {
+                                grid.removeEventListener('click', oldHandler);
+                            }
+                            
+                            const clickHandler = function(e) {
+                                const addBtn = e.target.closest('.add-song-btn');
+                                const resultItem = e.target.closest('.search-result-item');
+                                
+                                if (addBtn) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    const songId = parseInt(addBtn.getAttribute('data-song-id')) || 0;
+                                    const songName = addBtn.getAttribute('data-song-name') || '';
+                                    const songArtist = addBtn.getAttribute('data-song-artist') || '';
+                                    const songThumbnail = addBtn.getAttribute('data-song-thumbnail') || '';
+                                    
+                                    console.log('Add button clicked via delegation:', { songId, songName, songArtist });
+                                    
+                                    if (typeof window.addSongToPlaylist === 'function') {
+                                        try {
+                                            window.addSongToPlaylist(songId, songName, songArtist, songThumbnail);
+                                        } catch (err) {
+                                            console.error('Error calling addSongToPlaylist:', err);
+                                            alert('Error adding song: ' + err.message);
+                                        }
+                                    } else {
+                                        console.error('addSongToPlaylist function not available');
+                                        alert('Function not available. Please refresh the page.');
+                                    }
+                                    return false;
+                                } else if (resultItem && !e.target.closest('button')) {
+                                    const songId = parseInt(resultItem.getAttribute('data-song-id')) || 0;
+                                    const songName = resultItem.getAttribute('data-song-name') || '';
+                                    const songArtist = resultItem.getAttribute('data-song-artist') || '';
+                                    const songThumbnail = resultItem.getAttribute('data-song-thumbnail') || '';
+                                    
+                                    if (typeof window.addSongToPlaylist === 'function') {
+                                        try {
+                                            window.addSongToPlaylist(songId, songName, songArtist, songThumbnail);
+                                        } catch (err) {
+                                            console.error('Error calling addSongToPlaylist:', err);
+                                        }
+                                    }
+                                }
+                            };
+                            
+                            grid._addSongHandler = clickHandler;
+                            grid.addEventListener('click', clickHandler);
                         } else {
                             grid.innerHTML = '<div style="text-align: center; padding: 20px; color: #ef4444;">Error displaying results.</div>';
                         }
@@ -3264,33 +3393,52 @@
                     }
                 };
 
+                // Flag to prevent recursive updates
+                let isUpdatingGrid = false;
+                
                 function updateSelectedSongsGrid() {
-                    const grid = selectedSongsGrid || document.getElementById('selectedSongsGrid');
-                    if (!grid) {
-                        console.warn('Selected songs grid not found in updateSelectedSongsGrid');
+                    // Prevent recursive calls
+                    if (isUpdatingGrid) {
+                        console.warn('updateSelectedSongsGrid already executing, ignoring duplicate call');
                         return;
                     }
                     
-                    if (ps_selectedSongs.size === 0) {
-                        grid.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px;">No songs selected. Search and add songs to your playlist.</div>';
-                        return;
-                    }
+                    isUpdatingGrid = true;
                     
-                    grid.innerHTML = Array.from(ps_selectedSongs.values()).map(song => {
-                        const escapedName = String(song.name || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/`/g, '\\`');
-                        const escapedArtist = String(song.artist || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/`/g, '\\`');
-                        const escapedThumbnail = String(song.thumbnail || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/`/g, '\\`');
-                        return `
-                        <div class="selected-song-item">
-                            <img src="${escapedThumbnail || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMyAxMEgxM1YyMkgxM1YxMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTE5IDEwSDE5VjIySDE5VjEwWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'}" alt="Album Cover" class="selected-song-thumbnail" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMyAxMEgxM1YyMkgxM1YxMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTE5IDEwSDE5VjIySDE5VjEwWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'">
-                            <div class="selected-song-info">
-                                <h6>${escapedName}</h6>
-                                <p>${escapedArtist}</p>
+                    try {
+                        const grid = selectedSongsGrid || document.getElementById('selectedSongsGrid');
+                        if (!grid) {
+                            console.warn('Selected songs grid not found in updateSelectedSongsGrid');
+                            isUpdatingGrid = false;
+                            return;
+                        }
+                        
+                        if (ps_selectedSongs.size === 0) {
+                            grid.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px;">No songs selected. Search and add songs to your playlist.</div>';
+                            isUpdatingGrid = false;
+                            return;
+                        }
+                        
+                        grid.innerHTML = Array.from(ps_selectedSongs.values()).map(song => {
+                            const escapedName = String(song.name || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/`/g, '\\`');
+                            const escapedArtist = String(song.artist || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/`/g, '\\`');
+                            const escapedThumbnail = String(song.thumbnail || '').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/`/g, '\\`');
+                            return `
+                            <div class="selected-song-item">
+                                <img src="${escapedThumbnail || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMyAxMEgxM1YyMkgxM1YxMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTE5IDEwSDE5VjIySDE5VjEwWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'}" alt="Album Cover" class="selected-song-thumbnail" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMyAxMEgxM1YyMkgxM1YxMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHBhdGggZD0iTTE5IDEwSDE5VjIySDE5VjEwWiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K'">
+                                <div class="selected-song-info">
+                                    <h6>${escapedName}</h6>
+                                    <p>${escapedArtist}</p>
+                                </div>
+                                <button class="remove-song-btn" onclick="if(typeof window.removeSongFromPlaylist==='function'){window.removeSongFromPlaylist(${song.id});}else{alert('Remove function not available');}" title="Remove song">×</button>
                             </div>
-                            <button class="remove-song-btn" onclick="if(typeof window.removeSongFromPlaylist==='function'){window.removeSongFromPlaylist(${song.id});}else{alert('Remove function not available');}" title="Remove song">×</button>
-                        </div>
-                    `;
-                    }).join('');
+                        `;
+                        }).join('');
+                    } catch (error) {
+                        console.error('Error in updateSelectedSongsGrid:', error);
+                    } finally {
+                        isUpdatingGrid = false;
+                    }
                 }
                 
                 // Make updateSelectedSongsGrid globally accessible
