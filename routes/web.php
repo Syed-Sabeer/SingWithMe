@@ -6,6 +6,8 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Admin\AdminFaqController;
+use App\Http\Controllers\Admin\AdminFAQQuestionController;
+use App\Http\Controllers\Admin\AdminChatbotController;
 use App\Http\Controllers\Admin\AdminPartnerController;
 use App\Http\Controllers\Admin\AdminBlogController;
 use App\Http\Controllers\Admin\AdminTetherWorkController;
@@ -50,6 +52,7 @@ use App\Http\Controllers\Frontend\WebsiteController;
 use App\Http\Controllers\Frontend\UserPortalController;
 use App\Http\Controllers\ArtistMusicController;
 use App\Http\Controllers\ArtworkPhotoController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ArtistFollowController;
 // use App\Http\Controllers\LocationController;
 use Illuminate\Http\Request;
@@ -62,6 +65,9 @@ use Illuminate\Support\Facades\Broadcast;
 use Pusher\Pusher;
 
 
+// Customer Chat Routes
+Route::post('/chat/send', [ChatController::class, 'sendMessage']);
+Route::get('/chat/history', [ChatController::class, 'getChatHistory']);
 
 
 Route::get('/storage-link', function () {
@@ -481,6 +487,20 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('faq/{id}', [AdminFaqController::class, 'update'])->name('faq.update');
     Route::delete('faq/{id}', [AdminFaqController::class, 'destroy'])->name('faq.destroy');
     Route::post('faq/{id}/toggle-visibility', [AdminFaqController::class, 'toggleVisibility'])->name('faq.toggleVisibility');
+
+    // Chatbot QnA (FAQ Questions) Routes
+    Route::get('faq-question', [AdminFAQQuestionController::class, 'index'])->name('faq-question.index');
+    Route::get('faq-question/create', [AdminFAQQuestionController::class, 'create'])->name('faq-question.create');
+    Route::post('faq-question/store', [AdminFAQQuestionController::class, 'store'])->name('faq-question.store');
+    Route::get('faq-question/{id}/edit', [AdminFAQQuestionController::class, 'edit'])->name('faq-question.edit');
+    Route::put('faq-question/{id}', [AdminFAQQuestionController::class, 'update'])->name('faq-question.update');
+    Route::delete('faq-question/{id}', [AdminFAQQuestionController::class, 'destroy'])->name('faq-question.destroy');
+    Route::post('faq-question/{id}/toggle-status', [AdminFAQQuestionController::class, 'toggleStatus'])->name('faq-question.toggleStatus');
+
+    // Chatbot Conversations Routes
+    Route::get('chatbot', [AdminChatbotController::class, 'index'])->name('chatbot.index');
+    Route::get('chatbot/users', [AdminChatbotController::class, 'getUsersList'])->name('chatbot.users');
+    Route::get('chatbot/conversation', [AdminChatbotController::class, 'getUserConversation'])->name('chatbot.conversation');
 
     // Partner Routes
     Route::get('partner', [AdminPartnerController::class, 'index'])->name('partner.index');

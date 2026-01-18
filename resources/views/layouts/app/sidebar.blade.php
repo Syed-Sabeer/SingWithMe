@@ -54,6 +54,7 @@
                       </svg><span class="lan-3">CMS Crud</span></a>
                     <ul class="sidebar-submenu">
                       <li><a class="lan-4" href="{{route('admin.faq.index')}}">FAQs</a></li>
+                    
                     <!--  <li><a class="lan-5" href="{{route('admin.newsletter.index')}}">Newsletter</a></li> -->
                       <li><a class="lan-5" href="{{route('admin.newsbar.index')}}">Newsbar</a></li>
                       <li><a class="lan-5" href="{{route('admin.ads.index')}}">Ads</a></li>
@@ -97,6 +98,25 @@
                     <ul class="sidebar-submenu">
                       <li><a class="lan-4" href="{{route('admin.newsletterlist')}}">Newsletter</a></li>
                       <li><a class="lan-4" href="{{route('admin.contactlist')}}">Contact</a></li>
+
+
+
+
+                    </ul>
+                  </li>
+
+                  <li class="sidebar-list"><i class="fa-solid fa-thumbtack"></i>
+                
+                    <a class="sidebar-link sidebar-title" href="#">
+                      <svg class="stroke-icon">
+                        <use href="{{asset('AdminAssets/svg/icon-sprite.svg#stroke-chat')}}"></use>
+                      </svg>
+                      <svg class="fill-icon">
+                        <use href="{{asset('AdminAssets/svg/icon-sprite.svg#fill-chat')}}"></use>
+                      </svg><span class="lan-3">ChatBot</span></a>
+                    <ul class="sidebar-submenu">
+                      <li><a class="lan-4" href="{{route('admin.faq-question.index')}}">Chatbot QnA</a></li>
+                      <li><a class="lan-4" href="{{route('admin.chatbot.index')}}">Chatbot Conversations</a></li>
 
 
 

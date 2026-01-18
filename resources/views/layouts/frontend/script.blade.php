@@ -156,7 +156,7 @@
         });
     </script>
 
-    {{--garph js--}}
+  
 
   <script>
         const CSRF_TOKEN = '{{ csrf_token() }}';
@@ -223,8 +223,13 @@
             const quickNotifications = notificationsData.slice(0, 5);
             
             quickList.innerHTML = quickNotifications.map(notif => {
+                // Escape HTML to prevent XSS and syntax errors
+                const escapedTitle = String(notif.title || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                const escapedMessage = String(notif.message || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                const escapedActionUrl = notif.action_url ? String(notif.action_url).replace(/"/g, '&quot;').replace(/'/g, '&#39;') : '';
+                
                 const clickHandler = notif.action_url 
-                    ? `onclick="markAsRead(${notif.id}); window.location.href='${notif.action_url}';"`
+                    ? `onclick="markAsRead(${notif.id}); window.location.href='${escapedActionUrl}';"`
                     : `onclick="markAsRead(${notif.id})"`;
                 return `
                 <div class="notification-item ${notif.unread ? 'unread' : ''}" ${clickHandler} tabindex="0" style="cursor: pointer;">
@@ -233,8 +238,8 @@
                             ${getNotificationIcon(notif.type)}
                         </div>
                         <div class="notification-body">
-                            <div class="notification-title">${notif.title}</div>
-                            <div class="notification-message" style="font-size: 0.85em; color: #b8b8d4; margin-top: 4px;">${notif.message}</div>
+                            <div class="notification-title">${escapedTitle}</div>
+                            <div class="notification-message" style="font-size: 0.85em; color: #b8b8d4; margin-top: 4px;">${escapedMessage}</div>
                             <div class="notification-time">
                                 ${notif.unread ? '<span class="unread-dot"></span>' : ''}
                                 ${notif.time}
@@ -251,6 +256,8 @@
         // Render full notifications list
         function renderFullNotifications() {
             const fullList = document.getElementById('fullNotificationsList');
+            if (!fullList) return;
+            
             let filteredNotifications = notificationsData;
 
             if (currentFilter === 'unread') {
@@ -268,8 +275,13 @@
             }
 
             fullList.innerHTML = filteredNotifications.map(notif => {
+                // Escape HTML to prevent XSS and syntax errors
+                const escapedTitle = String(notif.title || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                const escapedMessage = String(notif.message || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                const escapedActionUrl = notif.action_url ? String(notif.action_url).replace(/"/g, '&quot;').replace(/'/g, '&#39;') : '';
+                
                 const clickHandler = notif.action_url 
-                    ? `onclick="markAsRead(${notif.id}); window.location.href='${notif.action_url}';"`
+                    ? `onclick="markAsRead(${notif.id}); window.location.href='${escapedActionUrl}';"`
                     : `onclick="markAsRead(${notif.id})"`;
                 return `
                 <div class="full-notification-item ${notif.unread ? 'unread' : ''}" ${clickHandler} tabindex="0" style="cursor: pointer;">
@@ -279,10 +291,10 @@
                         </div>
                         <div class="full-notification-body">
                             <div class="full-notification-header">
-                                <div class="full-notification-title">${notif.title}</div>
+                                <div class="full-notification-title">${escapedTitle}</div>
                                 ${notif.unread ? '<span class="unread-dot"></span>' : ''}
                             </div>
-                            <div class="full-notification-message">${notif.message}</div>
+                            <div class="full-notification-message">${escapedMessage}</div>
                             <div class="full-notification-date">${notif.date}</div>
                         </div>
                     </div>
@@ -297,10 +309,14 @@
             const badge = document.getElementById('notificationBadge');
             const headerBadge = document.getElementById('headerBadge');
             
-            badge.textContent = unreadCount;
-            badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+            if (badge) {
+                badge.textContent = unreadCount;
+                badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+            }
             
-            headerBadge.textContent = unreadCount > 0 ? `${unreadCount} New` : '0 New';
+            if (headerBadge) {
+                headerBadge.textContent = unreadCount > 0 ? `${unreadCount} New` : '0 New';
+            }
         }
 
         // Toggle quick notifications popup
@@ -417,7 +433,7 @@
             const popup = document.getElementById('quickNotifications');
             const bell = document.querySelector('.notification-bell');
             
-            if (!popup.contains(e.target) && !bell.contains(e.target)) {
+            if (popup && bell && !popup.contains(e.target) && !bell.contains(e.target)) {
                 popup.classList.remove('active');
                 bell.classList.remove('active');
                 bell.setAttribute('aria-expanded', 'false');
@@ -428,14 +444,17 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 const modal = document.getElementById('fullNotificationsModal');
-                if (modal.classList.contains('active')) {
+                if (modal && modal.classList.contains('active')) {
                     closeFullNotifications();
                 }
                 
                 const popup = document.getElementById('quickNotifications');
-                if (popup.classList.contains('active')) {
+                if (popup && popup.classList.contains('active')) {
                     popup.classList.remove('active');
-                    document.querySelector('.notification-bell').classList.remove('active');
+                    const bell = document.querySelector('.notification-bell');
+                    if (bell) {
+                        bell.classList.remove('active');
+                    }
                 }
             }
         });
@@ -623,14 +642,16 @@
                     if (this.currentAd.file_url) {
                         const fileUrl = this.currentAd.file_url;
                         const fileExtension = fileUrl.split('.').pop().toLowerCase();
+                        const escapedFileUrl = String(fileUrl).replace(/"/g, '&quot;');
+                        const escapedAdTitle = this.currentAd.title ? String(this.currentAd.title).replace(/"/g, '&quot;') : 'Advertisement';
                         
                         if (['mp4', 'webm', 'ogg', 'avi', 'mov'].includes(fileExtension)) {
                             adMedia = `<video controls autoplay muted loop style="max-width: 100%; height: 400px; margin-bottom: 1rem; border-radius: 8px; background: #000;">
-                                <source src="${fileUrl}" type="video/${fileExtension}">
+                                <source src="${escapedFileUrl}" type="video/${fileExtension}">
                                 Your browser does not support the video tag.
                             </video>`;
                         } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension)) {
-                            adMedia = `<img src="${fileUrl}" alt="${this.currentAd.title}" style="max-width: 100%; height: 400px; object-fit: cover; margin-bottom: 1rem; border-radius: 8px;">`;
+                            adMedia = `<img src="${escapedFileUrl}" alt="${escapedAdTitle}" style="max-width: 100%; height: 400px; object-fit: cover; margin-bottom: 1rem; border-radius: 8px;">`;
                         }
                     }
                     
@@ -656,8 +677,10 @@
                     `;
                     skipButton.onclick = () => this.hideAd();
                     
+                    const escapedLink = this.currentAd.link ? String(this.currentAd.link).replace(/"/g, '&quot;').replace(/'/g, '&#39;') : '';
+                    const escapedAdTitle = this.currentAd.title ? String(this.currentAd.title).replace(/"/g, '&quot;').replace(/'/g, '&#39;') : 'Advertisement';
                     const clickLink = this.currentAd.link ? 
-                        `<a href="${this.currentAd.link}" target="_blank" style="color: #4ecdc4; text-decoration: none; font-size: 1.1rem; display: block; margin-top: 1rem;">Visit ${this.currentAd.title}</a>` : '';
+                        `<a href="${escapedLink}" target="_blank" style="color: #4ecdc4; text-decoration: none; font-size: 1.1rem; display: block; margin-top: 1rem;">Visit ${escapedAdTitle}</a>` : '';
                     
                     adContent.innerHTML = `
                         ${adMedia}
@@ -733,6 +756,301 @@
         }
     </script>
 
+    <!-- Scripts -->
+    <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+    <script>
+        // Chatbot functionality
+        class ChatBot {
+            constructor() {
+                this.sessionId = this.generateSessionId();
+                this.messages = [];
+                this.isTyping = false;
+                this.userName = null;
+                this.userEmail = null;
+                
+                this.initializeElements();
+                this.checkUserInfo();
+                this.initializePusher();
+                this.bindEvents();
+            }
+            
+            initializeElements() {
+                this.toggle = document.getElementById('chatbotToggle');
+                this.widget = document.getElementById('chatbotWidget');
+                this.closeBtn = document.getElementById('closeChatbot');
+                this.closeBtnForm = document.getElementById('closeChatbotForm');
+                this.userInfoForm = document.getElementById('userInfoForm');
+                this.userInfoSection = document.getElementById('chatbotUserInfo');
+                this.chatInterface = document.getElementById('chatbotChatInterface');
+                this.body = document.getElementById('chatbotBody');
+                this.messagesContainer = document.getElementById('chatMessages');
+                this.input = document.getElementById('messageInput');
+                this.sendBtn = document.getElementById('sendButton');
+                this.typingIndicator = document.getElementById('typingIndicator');
+            }
+
+            checkUserInfo() {
+                // Check if user info exists in sessionStorage
+                const storedName = sessionStorage.getItem('chatbot_user_name');
+                const storedEmail = sessionStorage.getItem('chatbot_user_email');
+                
+                if (storedName && storedEmail) {
+                    this.userName = storedName;
+                    this.userEmail = storedEmail;
+                    this.showChatInterface();
+                    this.loadChatHistory();
+                } else {
+                    this.showUserInfoForm();
+                }
+            }
+
+            showUserInfoForm() {
+                if (this.userInfoSection) {
+                    this.userInfoSection.style.display = 'block';
+                }
+                if (this.chatInterface) {
+                    this.chatInterface.style.display = 'none';
+                }
+            }
+
+            showChatInterface() {
+                if (this.userInfoSection) {
+                    this.userInfoSection.style.display = 'none';
+                }
+                if (this.chatInterface) {
+                    this.chatInterface.style.display = 'block';
+                }
+            }
+
+            saveUserInfo(name, email) {
+                sessionStorage.setItem('chatbot_user_name', name);
+                sessionStorage.setItem('chatbot_user_email', email);
+                this.userName = name;
+                this.userEmail = email;
+                this.showChatInterface();
+                this.loadChatHistory();
+            }
+            
+            initializePusher() {
+                // Enable pusher logging - don't include this in production
+                Pusher.logToConsole = true;
+                
+                this.pusher = new Pusher('09565a7631534c48bd0e', {
+                    cluster: 'ap1'
+                });
+                
+                this.channel = this.pusher.subscribe('chat-channel');
+                this.channel.bind('new-message', (data) => {
+                    this.handleNewMessage(data);
+                });
+            }
+            
+            bindEvents() {
+                this.toggle.addEventListener('click', () => this.toggleChatbot());
+                this.closeBtn.addEventListener('click', () => this.toggleChatbot());
+                if (this.closeBtnForm) {
+                    this.closeBtnForm.addEventListener('click', () => this.toggleChatbot());
+                }
+                
+                if (this.userInfoForm) {
+                    this.userInfoForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const name = document.getElementById('userName').value.trim();
+                        const email = document.getElementById('userEmail').value.trim();
+                        
+                        if (name && email) {
+                            // Validate email format
+                            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                            if (!emailRegex.test(email)) {
+                                alert('Please enter a valid email address');
+                                return;
+                            }
+                            this.saveUserInfo(name, email);
+                        }
+                    });
+                }
+                
+                this.sendBtn.addEventListener('click', () => this.sendMessage());
+                this.input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendMessage();
+                });
+            }
+            
+            toggleChatbot() {
+                // Check if user info exists before opening chat
+                if (!this.userName || !this.userEmail) {
+                    this.showUserInfoForm();
+                }
+                this.widget.classList.toggle('active');
+                if (this.widget.classList.contains('active')) {
+                    if (this.userName && this.userEmail && this.input) {
+                        this.input.focus();
+                    } else if (document.getElementById('userName')) {
+                        document.getElementById('userName').focus();
+                    }
+                }
+            }
+            
+            generateSessionId() {
+                return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+            
+            async loadChatHistory() {
+                try {
+                    const response = await fetch(`/chat/history?session_id=${this.sessionId}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.messages.length > 0) {
+                        this.messages = data.messages;
+                        this.renderMessages();
+                    }
+                } catch (error) {
+                    console.error('Error loading chat history:', error);
+                }
+            }
+            
+            async sendMessage() {
+                const message = this.input.value.trim();
+                if (!message) return;
+                
+                // Disable input and button
+                this.input.disabled = true;
+                this.sendBtn.disabled = true;
+                
+                // Add user message to UI immediately
+                this.addMessageToUI({
+                    message: message,
+                    type: 'user',
+                    name: 'You',
+                    created_at: new Date()
+                });
+                
+                // Clear input
+                this.input.value = '';
+                
+                // Show typing indicator
+                this.showTypingIndicator();
+                
+                // Ensure user info is available
+                if (!this.userName || !this.userEmail) {
+                    alert('Please provide your name and email to continue chatting.');
+                    this.showUserInfoForm();
+                    this.widget.classList.add('active');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/chat/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            session_id: this.sessionId,
+                            name: this.userName,
+                            email: this.userEmail,
+                            message: message
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Hide typing indicator
+                        this.hideTypingIndicator();
+                        
+                        // Add bot message to UI
+                        this.addMessageToUI({
+                            message: data.bot_message.message,
+                            type: data.bot_message.type,
+                            name: data.bot_message.name,
+                            created_at: new Date()
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    this.hideTypingIndicator();
+                    
+                    // Show error message
+                    this.addMessageToUI({
+                        message: 'Sorry, there was an error sending your message. Please try again.',
+                        type: 'bot',
+                        name: 'ChatBot',
+                        created_at: new Date()
+                    });
+                }
+                
+                // Re-enable input and button
+                this.input.disabled = false;
+                this.sendBtn.disabled = false;
+                this.input.focus();
+            }
+            
+            handleNewMessage(data) {
+                // This will handle messages from other users in the same session
+                // For now, we'll just add them to the UI
+                if (data.user_message.session_id === this.sessionId) {
+                    this.addMessageToUI({
+                        message: data.user_message.message,
+                        type: data.user_message.type,
+                        name: data.user_message.name,
+                        created_at: new Date(data.user_message.created_at)
+                    });
+                    
+                    if (data.bot_message) {
+                        this.addMessageToUI({
+                            message: data.bot_message.message,
+                            type: data.bot_message.type,
+                            name: data.bot_message.name,
+                            created_at: new Date(data.bot_message.created_at)
+                        });
+                    }
+                }
+            }
+            
+            addMessageToUI(messageData) {
+                this.messages.push(messageData);
+                this.renderMessages();
+                this.scrollToBottom();
+            }
+            
+            renderMessages() {
+                this.messagesContainer.innerHTML = '';
+                
+                this.messages.forEach(message => {
+                    const messageElement = document.createElement('div');
+                    messageElement.className = `message ${message.type}`;
+                    
+                    if (message.type === 'bot') {
+                        messageElement.innerHTML = message.message;
+                    } else {
+                        messageElement.textContent = message.message;
+                    }
+                    
+                    this.messagesContainer.appendChild(messageElement);
+                });
+            }
+            
+            showTypingIndicator() {
+                this.typingIndicator.style.display = 'block';
+                this.scrollToBottom();
+            }
+            
+            hideTypingIndicator() {
+                this.typingIndicator.style.display = 'none';
+            }
+            
+            scrollToBottom() {
+                this.body.scrollTop = this.body.scrollHeight;
+            }
+        }
+        
+        // Initialize chatbot when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ChatBot();
+        });
+    </script>
 @yield('script')
 @yield('js')
 

@@ -222,10 +222,10 @@
 
 
 
-            <div class="parent-chatBot">
-                <img id="chatbotGif" onclick="showBox()" style="cursor:pointer;" src="{{asset('FrontendAssets/images/singWithMe/chatbott.gif')}}" alt="" width="100px">
+            {{-- <div class="parent-chatBot"> --}}
+                {{-- <img id="chatbotGif" onclick="showBox()" style="cursor:pointer;" src="{{asset('FrontendAssets/images/singWithMe/chatbott.gif')}}" alt="" width="100px"> --}}
 
-                <div class="chat-box" id="chatBox" style="display: none;">
+                {{-- <div class="chat-box" id="chatBox" style="display: none;">
                     <div class="chat-header">
                         <div class="title">
                             <img src="{{asset('FrontendAssets/images/singWithMe/bot.png')}}" alt="bot" />
@@ -258,6 +258,6 @@
                         <button>End Chat</button>
                     </div>
                 </div>
-            </div>
+            </div> --}}
 
 
