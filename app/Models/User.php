@@ -192,7 +192,6 @@ class User  extends Authenticatable implements MustVerifyEmail
         // Features that should always be accessible (as per user request)
         $alwaysAccessible = [
             'profile_customization',
-            'isrc_codes',
             'royalty_tracking'
         ];
         
@@ -206,6 +205,7 @@ class User  extends Authenticatable implements MustVerifyEmail
             'featured_rotation' => 'is_featured_rotation',
             'priority_search' => 'is_priority_search',
             'custom_banner' => 'is_custom_banner',
+            'isrc_codes' => 'is_isrc_codes',
             'early_access_insights' => 'is_early_access_insights',
             'certified_badge' => 'is_certified_badge',
             'showcase_placement' => 'is_showcase_placement',

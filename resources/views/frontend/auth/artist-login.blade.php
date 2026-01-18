@@ -159,6 +159,10 @@
                             <label for="remember">Remember me</label>
                         </div>
 
+                        <div style="text-align: right; margin-bottom: 16px;">
+                            <a href="{{ route('password.forgot', ['is_artist' => 1]) }}" style="color: #667eea; text-decoration: none; font-size: 14px;">Forgot Password?</a>
+                        </div>
+
                         <button type="submit" class="sign_up_btn">Login as Artist</button>
                     </form>
 

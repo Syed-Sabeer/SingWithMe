@@ -82,7 +82,7 @@ class ArtistController extends Controller
                     'featured_rotation_weeks' => $currentArtistPlan->featured_rotation_weeks ?? 0,
                     'priority_search' => (bool) $currentArtistPlan->is_priority_search,
                     'custom_banner' => (bool) $currentArtistPlan->is_custom_banner,
-                    'isrc_codes' => (bool) ($currentArtistPlan->is_isrc_codes ?? true), // Always accessible
+                    'isrc_codes' => (bool) ($currentArtistPlan->is_isrc_codes ?? false),
                     'early_access_insights' => (bool) $currentArtistPlan->is_early_access_insights,
                     'certified_badge' => (bool) $currentArtistPlan->is_certified_badge,
                     'showcase_placement' => (bool) $currentArtistPlan->is_showcase_placement,
@@ -125,7 +125,7 @@ class ArtistController extends Controller
                     'featured_rotation_weeks' => 0,
                     'priority_search' => false,
                     'custom_banner' => false,
-                    'isrc_codes' => true, // Always accessible
+                    'isrc_codes' => false, // Only available for Pro Artist and Certified Creator
                     'early_access_insights' => false,
                     'certified_badge' => false,
                     'showcase_placement' => false,

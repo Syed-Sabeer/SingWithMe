@@ -98,8 +98,16 @@ Route::group(['middleware' => ['guest']], function () {
 
     Route::get('register', [RegisterController::class, 'register'])->name('register');
     Route::post('registration-attempt', [RegisterController::class, 'registerAttempt'])->name('register.attempt');
-Route::get('reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+Route::get('reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset.token');
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+
+// Forgot Password with OTP Routes
+Route::get('forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.forgot');
+Route::post('forgot-password', [AuthController::class, 'sendOtp'])->name('password.send-otp');
+Route::get('verify-otp', [AuthController::class, 'showVerifyOtpForm'])->name('password.verify-otp');
+Route::post('verify-otp', [AuthController::class, 'verifyOtp'])->name('password.verify-otp.post');
+Route::get('reset-password-otp', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
+Route::post('reset-password-otp', [AuthController::class, 'resetPasswordWithOtp'])->name('password.reset.post');
 
 
     Route::get('/artist/login', [LoginController::class, 'artistLogin'])->name('artist.login');

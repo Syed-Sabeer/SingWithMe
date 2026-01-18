@@ -4119,6 +4119,18 @@ function switchToLogin() {
         termsCheckbox.required = false;
     }
 
+    // Add forgot password link if it doesn't exist
+    let forgotPasswordLink = form.querySelector('.forgot-password-link');
+    if (!forgotPasswordLink) {
+        forgotPasswordLink = document.createElement('div');
+        forgotPasswordLink.className = 'forgot-password-link';
+        forgotPasswordLink.style.cssText = 'text-align: right; margin-bottom: 16px; margin-top: -10px;';
+        forgotPasswordLink.innerHTML = '<a href="{{ route("password.forgot") }}" style="color: #667eea; text-decoration: none; font-size: 14px;">Forgot Password?</a>';
+        passwordField.closest('.form-group').insertAdjacentElement('afterend', forgotPasswordLink);
+    } else {
+        forgotPasswordLink.style.display = 'block';
+    }
+
     // Clear form and errors
     form.reset();
     clearFormErrors();
@@ -4150,6 +4162,12 @@ function switchToRegister() {
     nameField.closest('.form-group').style.display = 'block';
     passwordConfirmationField.closest('.form-group').style.display = 'block';
         checkboxGroups.forEach(group => group.style.display = 'flex');
+    
+    // Hide forgot password link in register mode
+    const forgotPasswordLink = form.querySelector('.forgot-password-link');
+    if (forgotPasswordLink) {
+        forgotPasswordLink.style.display = 'none';
+    }
     
     // Update email field placeholder for registration
     const emailField = form.querySelector('input[name="email_username"]');

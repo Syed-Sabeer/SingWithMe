@@ -1496,7 +1496,15 @@ a .payout-btn {
                         </div>
                 </div>
 
-                {{-- ISRC Code Field (Optional) --}}
+                {{-- ISRC Code Field (Only for Pro Artist and Certified Creator plans) --}}
+                @php
+                    $hasIsrcAccess = false;
+                    if (Auth::check() && Auth::user()->is_artist) {
+                        $hasIsrcAccess = Auth::user()->hasArtistFeature('isrc_codes');
+                    }
+                @endphp
+                
+                @if($hasIsrcAccess)
                 <div class="row justify-content-center mb-4">
                     <div class="col-md-8">
                         <div class="upload-box" style="text-align: center; padding: 20px;">
@@ -1523,6 +1531,21 @@ a .payout-btn {
                         </div>
                     </div>
                 </div>
+                @else
+                {{-- Show upgrade message for Starter Artist plan --}}
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-8">
+                        <div class="upload-box" style="text-align: center; padding: 20px; background: rgba(183, 148, 246, 0.1); border: 1px dashed rgba(183, 148, 246, 0.5);">
+                            <div style="color: #b8a8d0; margin-bottom: 10px; font-size: 14px;">
+                                🎼 <strong>ISRC Codes</strong> are available for Pro Artist and Certified Creator plans
+                            </div>
+                            <a href="#subscription-plans" style="color: #b794f6; text-decoration: underline; font-size: 14px;">
+                                Upgrade your plan to get ISRC codes assigned to your releases
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endif
 
                 <div class="row justify-content-center">
                     <div class="col-xxl-4 col-xl-4 col-lg-6 col-md-6 col-sm-12 py-4">

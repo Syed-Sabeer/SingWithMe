@@ -75,6 +75,22 @@ class ArtistMusicController extends Controller
             'isrc_code' => 'nullable|string|max:20',
         ]);
 
+        // Check if user has ISRC code access
+        $user = Auth::user();
+        if ($request->filled('isrc_code') && $user && $user->is_artist) {
+            if (!$user->hasArtistFeature('isrc_codes')) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'ISRC codes are only available for Pro Artist and Certified Creator plans. Please upgrade your plan to use ISRC codes.'
+                    ], 403);
+                }
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'ISRC codes are only available for Pro Artist and Certified Creator plans. Please upgrade your plan to use ISRC codes.');
+            }
+        }
+
         $data = [
             'name' => $request->input('name'),
             'driver_id' => Auth::id(),
