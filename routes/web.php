@@ -138,6 +138,11 @@ Route::get('previews', [\App\Http\Controllers\FanInteractionController::class, '
 
 Route::get('/user-portal', [UserPortalController::class, 'index'])->name('user.portal');
 
+// Playlist routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/playlist/create', [\App\Http\Controllers\Frontend\PlaylistController::class, 'showCreatePlaylist'])->name('playlist.create');
+});
+
 // Artist subscription purchase route (web route for CSRF protection)
 Route::post('/api/artist-subscription/purchase', [\App\Http\Controllers\Frontend\PlaylistController::class, 'purchaseArtistSubscription'])
     ->middleware(['auth'])

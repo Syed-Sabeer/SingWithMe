@@ -97,29 +97,34 @@ class AdInjectionService
                 return true; // Return immediately - free plans always show ads
             }
             
-            // For paid plans, check is_ads field
+            // For paid plans, check is_ads field using User model's hasUserFeature method
+            // This is more reliable as it uses the same logic as the rest of the app
             // is_ads field meaning in database:
             // - 1 = no ads (ad-free subscription)
             // - 0 = with ads (show ads)
             // - NULL = default to showing ads
             
-            // Get raw value to handle NULL and type conversion properly
+            // Use User model's hasUserFeature method for consistency
+            $isAdFreeFromFeature = $user->hasUserFeature('ad_free');
+            
+            // Also check the plan's is_ads field directly as a fallback
             $isAdsRaw = $plan->getRawOriginal('is_ads');
             if ($isAdsRaw === null) {
-                // If raw is null, try the attribute (might be cast to boolean)
                 $isAdsRaw = $plan->is_ads;
             }
             
             // Check if plan is ad-free: is_ads = 1 means ad-free (no ads)
             // is_ads = 0 or NULL means show ads
-            // Handle both integer and boolean comparisons
-            $isAdFree = ($isAdsRaw === 1 || $isAdsRaw === '1' || $isAdsRaw === true || $isAdsRaw === 'true');
+            $isAdFreeFromRaw = ($isAdsRaw === 1 || $isAdsRaw === '1' || $isAdsRaw === true || $isAdsRaw === 'true');
+            
+            // Use either method - if either says ad-free, then it's ad-free
+            $isAdFree = $isAdFreeFromFeature || $isAdFreeFromRaw;
             
             // For paid plans: Show ads if plan is NOT ad-free (is_ads != 1)
             // Hide ads only if user explicitly has ad-free subscription (is_ads = 1)
             $showAds = !$isAdFree;
             
-            Log::info('AdInjectionService: Subscription plan ad setting', [
+            Log::warning('AdInjectionService: Subscription plan ad setting - DETAILED CHECK', [
                 'user_id' => $userId,
                 'plan_id' => $plan->id,
                 'plan_name' => $plan->title,
@@ -129,7 +134,9 @@ class AdInjectionService
                 'is_ads_raw_value' => $isAdsRaw,
                 'is_ads_original' => $plan->getRawOriginal('is_ads'),
                 'is_ads_attribute' => $plan->is_ads,
-                'is_ad_free' => $isAdFree,
+                'hasUserFeature_ad_free' => $isAdFreeFromFeature,
+                'isAdFreeFromRaw' => $isAdFreeFromRaw,
+                'is_ad_free_final' => $isAdFree,
                 'show_ads' => $showAds,
                 'final_decision' => $showAds ? 'SHOW ADS' : 'HIDE ADS'
             ]);

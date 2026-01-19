@@ -1601,9 +1601,9 @@
                             </div>
 
                             <!-- Create New Playlist Button -->
-                            <button type="button" class="create-btn" id="createPlaylistBtn" style="pointer-events: auto !important; z-index: 1000 !important; position: relative !important; cursor: pointer !important;">
+                            <a href="{{ route('playlist.create') }}" class="create-btn" style="pointer-events: auto !important; z-index: 1000 !important; position: relative !important; cursor: pointer !important; text-decoration: none; display: inline-block;">
                                 <span>+</span> Create New Playlist
-                            </button>
+                            </a>
                             
                             <script>
                                 // Simple, reliable function to open playlist modal
@@ -4701,7 +4701,7 @@ function displayPlaylists(playlists) {
                 <div class="playlist-info-top">
                     <div>
                         <div class="playlist-title">${playlist.playlist_name}</div>
-                        <div class="playlist-stats">${playlist.songs_count} songs • ${playlist.duration}</div>
+                        <div class="playlist-stats">${playlist.songs_count} songs </div>
                     </div>
                     <div class="Parent-visualizerDots">
                         <div class="music-visualizerDots">
@@ -5076,10 +5076,11 @@ let adInjectionSystem = {
             const data = await response.json();
             console.log('AdInjectionSystem: API response data:', data);
             
-            if (data.success && data.show_ads) {
+            // Fix: Check data.data.show_ads instead of data.show_ads (API returns nested structure)
+            if (data.success && data.data && data.data.show_ads) {
                 this.isEnabled = true;
-                this.currentAd = data.ad;
-                this.nextAdTime = data.next_ad_in_seconds || 30; // Default 30 seconds
+                this.currentAd = data.data.ad;
+                this.nextAdTime = data.data.next_ad_in_seconds || 30; // Default 30 seconds
                 console.log('AdInjectionSystem: Ads enabled - will show during playback and between songs', {
                     ad: this.currentAd,
                     showAdsBetweenSongs: this.showAdsBetweenSongs,
@@ -5090,10 +5091,15 @@ let adInjectionSystem = {
                 this.startAdTimer();
             } else {
                 this.isEnabled = false;
+                // Clear any existing ad timer if ads are disabled
+                if (this.adTimer) {
+                    clearTimeout(this.adTimer);
+                    this.adTimer = null;
+                }
                 console.log('AdInjectionSystem: Ads disabled - Premium user or no ads available', {
                     success: data.success,
-                    show_ads: data.show_ads,
-                    message: data.message
+                    show_ads: data.data ? data.data.show_ads : 'no data',
+                    message: data.data ? data.data.message : 'Unknown error'
                 });
             }
         } catch (error) {
@@ -5315,8 +5321,9 @@ let adInjectionSystem = {
             
             const data = await response.json();
             
-            if (data.success && data.show_ads && data.ad) {
-                this.currentAd = data.ad;
+            // Fix: Check data.data.show_ads instead of data.show_ads (API returns nested structure)
+            if (data.success && data.data && data.data.show_ads && data.data.ad) {
+                this.currentAd = data.data.ad;
                 console.log('AdInjectionSystem: New ad loaded for next song', {
                     ad: this.currentAd
                 });

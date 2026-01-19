@@ -1741,18 +1741,30 @@ a .payout-btn {
 
     <h2 class="h1-title">{{ auth()->user()->name }}</h2>
 
-    <!-- Monthly listeners + Edit profile in one line -->
+    <!-- Monthly listeners + Edit profile + Logout in one line -->
     <div class="d-flex align-items-center justify-content-between mt-2">
         <span class="small-text">
             {{ $formattedListeners }} monthly listeners
         </span>
 
-        <a href="{{ route('artist.profile.edit') }}"
-           class="btn"
-           style="background: rgba(183,148,246,0.3); color:#b794f6; border:1px solid rgba(183,148,246,0.5); padding:8px 20px; border-radius:8px; text-decoration:none; margin-right:5%;">
-            <i class="fas fa-user-edit"></i> Edit Profile
-        </a>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('artist.profile.edit') }}"
+               class="btn"
+               style="background: rgba(183,148,246,0.3); color:#b794f6; border:1px solid rgba(183,148,246,0.5); padding:8px 20px; border-radius:8px; text-decoration:none;">
+                <i class="fas fa-user-edit"></i> Edit Profile
+            </a>
+            <a href="{{ route('logout') }}" 
+               class="btn" 
+               onclick="event.preventDefault(); document.getElementById('artist-logout-form').submit();"
+               style="background: rgba(220,53,69,0.3); color:#dc3545; border:1px solid rgba(220,53,69,0.5); padding:8px 20px; border-radius:8px; text-decoration:none; margin-right:5%;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
     </div>
+    
+    <form id="artist-logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
 </div>
 
 

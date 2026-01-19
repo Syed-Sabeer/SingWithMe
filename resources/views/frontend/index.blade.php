@@ -349,8 +349,12 @@
                                     : 'https://img.freepik.com/premium-photo/musician-recording-song-home-studio_919955-56272.jpg';
                                 $name = $artist->name ?? $artist->username ?? 'Artist';
                                 $genre = 'Various';
-                                $followers = '0';
-                                $listeners = '0';
+                                
+                                // Get total songs count
+                                $totalSongs = \App\Models\ArtistMusic::where('driver_id', $artist->id)->count();
+                                
+                                // Get subscribers count
+                                $subscribers = $artist->artistFollowers()->count();
                             @endphp
                             <a href="{{ route('artist-profile', ['artist' => $artist->id]) }}">
                                 <div class="artist-card">
@@ -362,8 +366,8 @@
                                         <div class="artist-name">{{ $name }}</div>
                                         <div class="artist-genre">{{ $genre }}</div>
                                         <div class="artist-stats">
-                                            <span>{{ $followers }} Followers</span>
-                                            <span>{{ $listeners }} Monthly Listeners</span>
+                                            <span>{{ $totalSongs }} {{ $totalSongs == 1 ? 'Song' : 'Songs' }}</span>
+                                            <span>{{ $subscribers }} {{ $subscribers == 1 ? 'Subscriber' : 'Subscribers' }}</span>
                                         </div>
                                         <span class="genre-tag">New</span>
                                     </div>

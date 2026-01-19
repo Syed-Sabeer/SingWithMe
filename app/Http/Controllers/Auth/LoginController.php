@@ -128,8 +128,9 @@ class LoginController extends Controller
                             Log::info('Redirecting to customer home', ['user_id' => $userfind->id]);
                             return redirect()->route('home')->with('success', "Login successfully!");
                         } else {
-                            Log::info('Redirecting to default home', ['user_id' => $userfind->id]);
-                            return redirect()->route('frontend.home')->with('success', "Login successfully!");
+                            // Regular user login - redirect to user portal
+                            Log::info('Redirecting to user portal', ['user_id' => $userfind->id]);
+                            return redirect()->route('user.portal')->with('success', "Login successfully!");
                         }
 
                     } else {

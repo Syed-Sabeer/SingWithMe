@@ -19,6 +19,18 @@ use Illuminate\Validation\ValidationException;
 class PlaylistController extends Controller
 {
     /**
+     * Show the create playlist page
+     */
+    public function showCreatePlaylist()
+    {
+        if (!auth()->check()) {
+            return redirect()->route('user.login')->with('error', 'Please login to create a playlist');
+        }
+        
+        return view('frontend.playlist.create');
+    }
+
+    /**
      * Search for music by name (public endpoint)
      */
     public function searchMusic(Request $request): JsonResponse
