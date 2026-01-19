@@ -195,5 +195,8 @@ class LoginController extends Controller
         return view('frontend.auth.artist-login');
     }
 
+    public function userLogin(){
+        return view('frontend.auth.user-login');
+    }
 
 }

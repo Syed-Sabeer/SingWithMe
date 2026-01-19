@@ -158,9 +158,9 @@ use Illuminate\Support\Facades\Storage;
                                                     Complete
                                                 </button>
                                             @endif
-                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#detailsModal{{ $request->id }}">
-                                                Details
-                                            </button>
+                                            <a href="{{ route('admin.royalty.payout.show', $request->id) }}" class="btn btn-sm btn-info">
+                                                <i class="fa fa-eye"></i> Details
+                                            </a>
                                         </td>
                                     </tr>
 
@@ -259,112 +259,6 @@ use Illuminate\Support\Facades\Storage;
                                         </div>
                                     </div>
 
-                                    <!-- Details Modal -->
-                                    <div class="modal fade" id="detailsModal{{ $request->id }}" tabindex="-1">
-                                        <div class="modal-dialog modal-lg">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Payout Request Details</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <table class="table table-bordered">
-                                                        <tr>
-                                                            <th>Request ID</th>
-                                                            <td>#{{ $request->id }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Artist</th>
-                                                            <td>{{ $request->artist->name }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Requested Amount</th>
-                                                            <td>${{ number_format($request->requested_amount, 2) }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Available Balance (at request)</th>
-                                                            <td>${{ number_format($request->available_balance, 2) }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Payment Method</th>
-                                                            <td>{{ ucfirst(str_replace('_', ' ', $request->payout_method)) }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Account Details</th>
-                                                            <td>
-                                                                @php
-                                                                    $accountDetails = json_decode($request->account_details, true);
-                                                                @endphp
-                                                                @if($accountDetails && is_array($accountDetails))
-                                                                    @if($request->payout_method === 'bank_transfer')
-                                                                        <div class="account-details-display">
-                                                                            <p><strong>Account Holder Name:</strong> {{ $accountDetails['account_name'] ?? 'N/A' }}</p>
-                                                                            <p><strong>Bank Name:</strong> {{ $accountDetails['bank_name'] ?? 'N/A' }}</p>
-                                                                            <p><strong>Account Number:</strong> {{ $accountDetails['account_number'] ?? 'N/A' }}</p>
-                                                                            @if(!empty($accountDetails['routing_number']))
-                                                                                <p><strong>Routing/SWIFT Code:</strong> {{ $accountDetails['routing_number'] }}</p>
-                                                                            @endif
-                                                                        </div>
-                                                                    @elseif($request->payout_method === 'paypal')
-                                                                        <div class="account-details-display">
-                                                                            <p><strong>PayPal Email:</strong> {{ $accountDetails['paypal_email'] ?? 'N/A' }}</p>
-                                                                        </div>
-                                                                    @elseif($request->payout_method === 'wise')
-                                                                        <div class="account-details-display">
-                                                                            <p><strong>Wise Email:</strong> {{ $accountDetails['wise_email'] ?? 'N/A' }}</p>
-                                                                        </div>
-                                                                    @else
-                                                                        <pre class="mb-0">{{ $request->account_details }}</pre>
-                                                                    @endif
-                                                                @else
-                                                                    <pre class="mb-0">{{ $request->account_details }}</pre>
-                                                                @endif
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Status</th>
-                                                            <td><span class="status-badge status-{{ $request->status }}">{{ ucfirst($request->status) }}</span></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Requested Date</th>
-                                                            <td>{{ $request->requested_at->format('M d, Y H:i') }}</td>
-                                                        </tr>
-                                                        @if($request->processed_at)
-                                                        <tr>
-                                                            <th>Processed Date</th>
-                                                            <td>{{ $request->processed_at->format('M d, Y H:i') }}</td>
-                                                        </tr>
-                                                        @endif
-                                                        @if($request->artist_notes)
-                                                        <tr>
-                                                            <th>Artist Notes</th>
-                                                            <td>{{ $request->artist_notes }}</td>
-                                                        </tr>
-                                                        @endif
-                                                        @if($request->admin_notes)
-                                                        <tr>
-                                                            <th>Admin Notes</th>
-                                                            <td>{{ $request->admin_notes }}</td>
-                                                        </tr>
-                                                        @endif
-                                                        @if($request->attachment_file)
-                                                        <tr>
-                                                            <th>Attachment</th>
-                                                            <td>
-                                                                <a href="{{ asset('storage/' . $request->attachment_file) }}" target="_blank" class="btn btn-sm btn-info">
-                                                                    <i class="fas fa-download"></i> Download Attachment
-                                                                </a>
-                                                            </td>
-                                                        </tr>
-                                                        @endif
-                                                    </table>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
 
                                     @empty
                                     <tr>

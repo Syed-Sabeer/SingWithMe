@@ -35,9 +35,9 @@
                             @enderror
                   </div>
                   <div class="form-group">
-                    <div class="text-end mb-2">
+                    {{-- <div class="text-end mb-2">
                         <a href="{{ route('password.forgot') }}" style="color: #667eea; text-decoration: none; font-size: 14px;">Forgot Password?</a>
-                    </div>
+                    </div> --}}
                     <label class="col-form-label">Password</label>
                     <div class="form-input position-relative">
                       <input type="password" class="form-control @error('password') is-invalid @enderror" name="password"

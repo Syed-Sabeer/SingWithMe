@@ -24,26 +24,72 @@
 @endif
 
 <style>
+    /* Ensure page is visible and properly positioned */
     .collaboration-detail-section {
-        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-        min-height: 100vh;
-        padding: 40px 0;
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e) !important;
+        min-height: 100vh !important;
+        padding: 40px 0 !important;
+        position: relative !important;
+        z-index: 1 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+    }
+
+    .collaboration-detail-section * {
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .collaboration-detail-section .container {
+        position: relative !important;
+        z-index: 2 !important;
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    .collaboration-detail-section .row {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .collaboration-detail-section .col-12,
+    .collaboration-detail-section .col-md-12,
+    .collaboration-detail-section .col-md-8,
+    .collaboration-detail-section .col-md-6,
+    .collaboration-detail-section .col-md-4 {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .collaboration-header-card {
-        background: rgba(45, 27, 78, 0.6);
-        border: 1px solid rgba(183, 148, 246, 0.3);
-        border-radius: 15px;
-        padding: 30px;
-        margin-bottom: 30px;
+        background: rgba(45, 27, 78, 0.6) !important;
+        border: 1px solid rgba(183, 148, 246, 0.3) !important;
+        border-radius: 15px !important;
+        padding: 30px !important;
+        margin-bottom: 30px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
     }
     
     .collaboration-card {
-        background: rgba(45, 27, 78, 0.6);
-        border: 1px solid rgba(183, 148, 246, 0.3);
-        border-radius: 15px;
-        padding: 25px;
-        margin-bottom: 20px;
+        background: rgba(45, 27, 78, 0.6) !important;
+        border: 1px solid rgba(183, 148, 246, 0.3) !important;
+        border-radius: 15px !important;
+        padding: 25px !important;
+        margin-bottom: 20px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
     }
     
     .ownership-badge {
@@ -57,38 +103,127 @@
     }
     
     .revenue-table {
-        width: 100%;
-        color: #fbfbfb;
-        background: rgba(183, 148, 246, 0.05);
-        border-radius: 10px;
-        overflow: hidden;
+        width: 100% !important;
+        color: #fbfbfb !important;
+        background: rgba(183, 148, 246, 0.05) !important;
+        border-radius: 10px !important;
+        overflow: hidden !important;
+        display: table !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .revenue-table thead {
-        background: rgba(183, 148, 246, 0.2);
+        background: rgba(183, 148, 246, 0.2) !important;
+        display: table-header-group !important;
+        visibility: visible !important;
     }
     
     .revenue-table th {
-        padding: 15px;
-        color: #b794f6;
-        font-weight: 600;
-        text-align: left;
+        padding: 15px !important;
+        color: #b794f6 !important;
+        font-weight: 600 !important;
+        text-align: left !important;
+        display: table-cell !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .revenue-table td {
-        padding: 15px;
-        border-top: 1px solid rgba(183, 148, 246, 0.1);
+        padding: 15px !important;
+        border-top: 1px solid rgba(183, 148, 246, 0.1) !important;
+        display: table-cell !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #fbfbfb !important;
+    }
+    
+    .revenue-table tbody {
+        display: table-row-group !important;
+        visibility: visible !important;
+    }
+
+    .revenue-table tr {
+        display: table-row !important;
+        visibility: visible !important;
     }
     
     .revenue-table tbody tr:hover {
-        background: rgba(183, 148, 246, 0.1);
+        background: rgba(183, 148, 246, 0.1) !important;
+    }
+
+    .ownership-badge {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* Ensure all headings and paragraphs are visible */
+    .collaboration-detail-section h1,
+    .collaboration-detail-section h2,
+    .collaboration-detail-section h3,
+    .collaboration-detail-section h4,
+    .collaboration-detail-section p,
+    .collaboration-detail-section span,
+    .collaboration-detail-section div,
+    .collaboration-detail-section ul,
+    .collaboration-detail-section li {
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* Override any global hiding styles */
+    .collaboration-detail-section {
+        overflow: visible !important;
+    }
+
+    /* Ensure Bootstrap classes work properly */
+    .collaboration-detail-section .container {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* Fix for any potential overlay issues */
+    body:has(.collaboration-detail-section) {
+        overflow-x: hidden !important;
+    }
+
+    /* Ensure proper spacing from header */
+    .collaboration-detail-section {
+        margin-top: 20px !important;
+        padding-top: 60px !important;
+    }
+
+    /* Ensure alerts are visible */
+    .alert {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
+    }
+
+    /* Ensure buttons are visible */
+    .btn {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
+    }
+
+    /* Ensure badges are visible */
+    .badge {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 </style>
 
-<section class="collaboration-detail-section">
-    <div class="container">
-        <div class="row">
-            <div class="col-12">
+<section class="collaboration-detail-section" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+    <div class="container" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+        <div class="row" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+            <div class="col-12" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
                 <!-- Back Button -->
                 <a href="{{ route('artist.portal') }}" class="btn mb-4" style="background: rgba(183, 148, 246, 0.3); color: #b794f6; border: 1px solid rgba(183, 148, 246, 0.5); padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block;">
                     <i class="fas fa-arrow-left"></i> Back to Portal
@@ -105,10 +240,10 @@
                 @else
 
                 <!-- Collaboration Header -->
-                <div class="collaboration-header-card">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h1 style="color: #fbfbfb; font-size: 2.5rem; margin-bottom: 15px;">
+                <div class="collaboration-header-card" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+                    <div class="row align-items-center" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">
+                        <div class="col-md-8" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+                            <h1 style="color: #fbfbfb !important; font-size: 2.5rem !important; margin-bottom: 15px !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
                                 <i class="fas fa-music" style="color: #b794f6; margin-right: 15px;"></i>
                                 {{ $collaboration->music->name ?? 'Unknown Track' }}
                             </h1>
@@ -124,7 +259,7 @@
                                 Primary Artist: <strong style="color: #fbfbfb;">{{ $collaboration->primaryArtist->name ?? 'Unknown Artist' }}</strong>
                             </p>
                         </div>
-                        <div class="col-md-4 text-end">
+                        <div class="col-md-4 text-end" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
                             @php
                                 $userOwnership = $collaboration->ownershipSplits->where('artist_id', auth()->id())->first()->ownership_percentage ?? 0;
                                 $totalEarnings = $collaboration->revenueDistributions->where('artist_id', auth()->id())->sum('artist_share_after_split') ?? 0;
@@ -144,15 +279,15 @@
                 </div>
 
                 <!-- Ownership Distribution -->
-                <div class="collaboration-card">
-                    <h2 style="color: #fbfbfb; font-size: 1.8rem; margin-bottom: 20px;">
+                <div class="collaboration-card" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+                    <h2 style="color: #fbfbfb !important; font-size: 1.8rem !important; margin-bottom: 20px !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
                         <i class="fas fa-users" style="color: #b794f6; margin-right: 10px;"></i>
                         Ownership Distribution
                     </h2>
                     @if($collaboration->ownershipSplits && $collaboration->ownershipSplits->count() > 0)
-                        <div class="row">
+                        <div class="row" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">
                             @foreach($collaboration->ownershipSplits as $split)
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-6 mb-3" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
                                     <div style="background: rgba(183, 148, 246, 0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(183, 148, 246, 0.3);">
                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                             <div>
@@ -196,8 +331,8 @@
                 </div>
 
                 <!-- Revenue Distribution History -->
-                <div class="collaboration-card">
-                    <h2 style="color: #fbfbfb; font-size: 1.8rem; margin-bottom: 20px;">
+                <div class="collaboration-card" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+                    <h2 style="color: #fbfbfb !important; font-size: 1.8rem !important; margin-bottom: 20px !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
                         <i class="fas fa-chart-line" style="color: #b794f6; margin-right: 10px;"></i>
                         Your Revenue Distribution History
                     </h2>
@@ -259,8 +394,8 @@
                 </div>
 
                 <!-- Revenue Calculation Info -->
-                <div class="collaboration-card" style="background: rgba(0, 242, 254, 0.05); border-color: rgba(0, 242, 254, 0.3);">
-                    <h3 style="color: #00f2fe; font-size: 1.4rem; margin-bottom: 15px;">
+                <div class="collaboration-card" style="background: rgba(0, 242, 254, 0.05) !important; border-color: rgba(0, 242, 254, 0.3) !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
+                    <h3 style="color: #00f2fe !important; font-size: 1.4rem !important; margin-bottom: 15px !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
                         <i class="fas fa-info-circle" style="margin-right: 10px;"></i>
                         How Revenue is Calculated
                     </h3>

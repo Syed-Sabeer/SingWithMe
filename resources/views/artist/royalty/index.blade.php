@@ -2,26 +2,68 @@
 
 @section('css')
 <style>
+    /* Ensure page is visible and properly positioned */
     .royalty-dashboard {
-        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-        min-height: 100vh;
-        padding: 40px 0;
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e) !important;
+        min-height: 100vh !important;
+        padding: 40px 0 !important;
+        position: relative !important;
+        z-index: 1 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
+        margin-top: 0 !important;
+    }
+
+    .royalty-dashboard * {
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .royalty-dashboard .container {
+        position: relative !important;
+        z-index: 2 !important;
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    .royalty-dashboard .row {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .royalty-dashboard .col-12,
+    .royalty-dashboard .col-md-12 {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin-bottom: 40px;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+        gap: 20px !important;
+        margin-bottom: 40px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
     }
 
     .stat-card {
-        background: rgba(45, 27, 78, 0.6);
-        border: 1px solid rgba(183, 148, 246, 0.3);
-        border-radius: 15px;
-        padding: 25px;
-        text-align: center;
-        transition: transform 0.3s ease;
+        background: rgba(45, 27, 78, 0.6) !important;
+        border: 1px solid rgba(183, 148, 246, 0.3) !important;
+        border-radius: 15px !important;
+        padding: 25px !important;
+        text-align: center !important;
+        transition: transform 0.3s ease !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
     }
 
     .stat-card:hover {
@@ -30,54 +72,96 @@
     }
 
     .stat-card h3 {
-        color: #b8a8d0;
-        font-size: 0.9rem;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        color: #b8a8d0 !important;
+        font-size: 0.9rem !important;
+        margin-bottom: 10px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     .stat-card .value {
-        color: #fbfbfb;
-        font-size: 2rem;
-        font-weight: 700;
-        margin: 0;
+        color: #fbfbfb !important;
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .stat-card p {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     .earnings-table {
-        background: rgba(45, 27, 78, 0.6);
-        border: 1px solid rgba(183, 148, 246, 0.3);
-        border-radius: 15px;
-        padding: 30px;
-        margin-bottom: 30px;
+        background: rgba(45, 27, 78, 0.6) !important;
+        border: 1px solid rgba(183, 148, 246, 0.3) !important;
+        border-radius: 15px !important;
+        padding: 30px !important;
+        margin-bottom: 30px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
     }
 
     .earnings-table h3 {
-        color: #fbfbfb;
-        font-size: 1.5rem;
-        margin-bottom: 20px;
+        color: #fbfbfb !important;
+        font-size: 1.5rem !important;
+        margin-bottom: 20px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     .table {
-        width: 100%;
-        color: #fbfbfb;
+        width: 100% !important;
+        color: #fbfbfb !important;
+        display: table !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     .table thead {
-        background: rgba(183, 148, 246, 0.2);
+        background: rgba(183, 148, 246, 0.2) !important;
+        display: table-header-group !important;
+        visibility: visible !important;
     }
 
     .table th {
-        padding: 15px;
-        text-align: left;
-        color: #b794f6;
-        font-weight: 600;
-        border-bottom: 2px solid rgba(183, 148, 246, 0.3);
+        padding: 15px !important;
+        text-align: left !important;
+        color: #b794f6 !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid rgba(183, 148, 246, 0.3) !important;
+        display: table-cell !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     .table td {
-        padding: 15px;
-        border-bottom: 1px solid rgba(183, 148, 246, 0.1);
+        padding: 15px !important;
+        border-bottom: 1px solid rgba(183, 148, 246, 0.1) !important;
+        display: table-cell !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #fbfbfb !important;
+    }
+
+    .table tbody {
+        display: table-row-group !important;
+        visibility: visible !important;
+    }
+
+    .table tr {
+        display: table-row !important;
+        visibility: visible !important;
     }
 
     .table tbody tr:hover {
@@ -85,15 +169,19 @@
     }
 
     .btn-export {
-        background: linear-gradient(135deg, #b794f6, #9d50bb);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        text-decoration: none;
-        display: inline-block;
-        margin-right: 10px;
-        transition: all 0.3s;
+        background: linear-gradient(135deg, #b794f6, #9d50bb) !important;
+        color: white !important;
+        border: none !important;
+        padding: 10px 20px !important;
+        border-radius: 8px !important;
+        text-decoration: none !important;
+        display: inline-block !important;
+        margin-right: 10px !important;
+        transition: all 0.3s !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
     }
 
     .btn-export:hover {
@@ -102,14 +190,19 @@
     }
 
     .payout-btn {
-        background: linear-gradient(135deg, #1db954, #1ed760);
-        color: white;
-        border: none;
-        padding: 12px 30px;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
+        background: linear-gradient(135deg, #1db954, #1ed760) !important;
+        color: white !important;
+        border: none !important;
+        padding: 12px 30px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: all 0.3s !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
     }
 
     .payout-btn:hover:not(:disabled) {
@@ -123,11 +216,16 @@
     }
 
     .per-track-section {
-        background: rgba(45, 27, 78, 0.6);
-        border: 1px solid rgba(183, 148, 246, 0.3);
-        border-radius: 15px;
-        padding: 30px;
-        margin-bottom: 30px;
+        background: rgba(45, 27, 78, 0.6) !important;
+        border: 1px solid rgba(183, 148, 246, 0.3) !important;
+        border-radius: 15px !important;
+        padding: 30px !important;
+        margin-bottom: 30px !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
     }
 
     .track-earning-item {
@@ -152,9 +250,63 @@
     }
 
     .track-earnings {
-        color: #1db954;
-        font-weight: 700;
-        font-size: 1.1rem;
+        color: #1db954 !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .track-name {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .track-stats {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .track-earning-item {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* Ensure all headings and paragraphs are visible */
+    .royalty-dashboard h1,
+    .royalty-dashboard h2,
+    .royalty-dashboard h3,
+    .royalty-dashboard p,
+    .royalty-dashboard span,
+    .royalty-dashboard div {
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* Override any global hiding styles */
+    .royalty-dashboard {
+        overflow: visible !important;
+    }
+
+    /* Ensure Bootstrap classes work properly */
+    .royalty-dashboard .container {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* Fix for any potential overlay issues */
+    body:has(.royalty-dashboard) {
+        overflow-x: hidden !important;
+    }
+
+    /* Ensure proper spacing from header */
+    .royalty-dashboard {
+        margin-top: 20px !important;
+        padding-top: 60px !important;
     }
 </style>
 @endsection
@@ -162,10 +314,10 @@
 @section('content')
 <div class="royalty-dashboard">
     <div class="container">
-        <div class="row mb-4">
-            <div class="col-12">
-                <h1 style="color: #fbfbfb; font-size: 2.5rem; margin-bottom: 10px;">Royalty & Earnings Dashboard</h1>
-                <p style="color: #b8a8d0; font-size: 1.1rem;">Track your earnings, streams, and request payouts</p>
+        <div class="row mb-4" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+            <div class="col-12" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+                <h1 style="color: #fbfbfb !important; font-size: 2.5rem !important; margin-bottom: 10px !important; display: block !important; visibility: visible !important; opacity: 1 !important;">Royalty & Earnings Dashboard</h1>
+                <p style="color: #b8a8d0 !important; font-size: 1.1rem !important; display: block !important; visibility: visible !important; opacity: 1 !important;">Track your earnings, streams, and request payouts</p>
             </div>
         </div>
 
@@ -215,9 +367,9 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <div class="row mb-4" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+            <div class="col-12" style="display: block !important; visibility: visible !important; opacity: 1 !important;">
+                <div style="display: flex !important; gap: 15px; flex-wrap: wrap; visibility: visible !important; opacity: 1 !important;">
                     @if($availableBalance >= 50)
                         <button class="payout-btn" onclick="openPayoutModal()">Request Payout</button>
                     @else

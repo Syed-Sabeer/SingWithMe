@@ -81,6 +81,12 @@ class AdminRoyaltyController extends Controller
         return view('admin.royalty.payout-requests', compact('requests', 'artists'));
     }
 
+    public function showPayoutRequest($id)
+    {
+        $payoutRequest = PayoutRequest::with(['artist', 'approver', 'rejector'])->findOrFail($id);
+        return view('admin.royalty.payout-show', compact('payoutRequest'));
+    }
+
     public function approvePayout($id, Request $request)
     {
         $payoutRequest = PayoutRequest::findOrFail($id);

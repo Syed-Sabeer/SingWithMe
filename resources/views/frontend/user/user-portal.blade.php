@@ -1031,12 +1031,16 @@
                     <div class="right-panel">
                         <div class="form-header">
                             <div class="form-title" id="formTitle">Create an account</div>
-                            <div class="form-subtitle" id="formSubtitle">Already have an account? <a href="#"
-                                    onclick="switchToLogin()">Log in</a>
+                            <div class="form-subtitle" id="formSubtitle">Already have an account? <a href="{{ route('user.login') }}">Log in</a>
                             </div>
                         </div>
 
-                        <form id="authForm" action="{{ route('register.attempt') }}" method="POST">
+                        <div style="text-align: center; padding: 20px;">
+                            <a href="{{ route('user.register') }}" class="submit-btn" style="text-decoration: none; display: inline-block; width: 100%; text-align: center; margin-bottom: 10px;">Go to Registration Page</a>
+                            <a href="{{ route('user.login') }}" class="submit-btn" style="text-decoration: none; display: inline-block; width: 100%; text-align: center; background-color: #6c757d;">Go to Login Page</a>
+                        </div>
+
+                        <form id="authForm" action="{{ route('register.attempt') }}" method="POST" style="display: none;">
                             @csrf
                             <div class="form-group">
                                 <input type="text" name="name" class="form-input" placeholder="Full Name" required value="{{ old('name') }}">
@@ -1077,7 +1081,7 @@
                                 </label>
                             </div>
 
-                            <button type="submit" class="submit-btn" id="submitBtn">Sign Up</button>
+                            <button type="submit" class="submit-btn" id="submitBtn" onclick="return false;">Sign Up</button>
                         </form>
 
                         {{-- <div class="divider">
@@ -1137,7 +1141,7 @@
                     </h1>
                     <p class="welcome-subtitle">Ready to discover new music and manage your collections? Here's your
                         music journey overview.</p>
-                    <button class="open-popup-btn" onclick="openModal()">Login & Unlock Features</button>
+                    <a href="{{ route('user.login') }}" class="open-popup-btn" style="text-decoration: none; display: inline-block;">Login & Unlock Features</a>
                     @endauth
 
                     <div class="stats-grid pt-4">
@@ -2004,7 +2008,7 @@
                         </lord-icon>
                         <h2 style="color: #fff; margin-bottom: 15px;">My Playlists</h2>
                         <p style="color: #b8a8d0; margin-bottom: 25px;">Organize your favorite tracks into custom playlists</p>
-                        <button class="open-popup-btn" onclick="openModal()">Login to Create Playlists</button>
+                        <a href="{{ route('user.login') }}" class="open-popup-btn" style="text-decoration: none; display: inline-block;">Login to Create Playlists</a>
                     </div>
                 </section>
                 @endauth
@@ -2099,7 +2103,7 @@
                     </lord-icon>
                     <h1 class="section-title" style="margin-bottom: 15px;">Favorite Collection</h1>
                     <p class="section-subtitle" style="margin-bottom: 25px;">Your curated music collections</p>
-                    <button class="open-popup-btn" onclick="openModal()">Login to View Favorites</button>
+                    <a href="{{ route('user.login') }}" class="open-popup-btn" style="text-decoration: none; display: inline-block;">Login to View Favorites</a>
                 </div>
             </div>
         </section>
@@ -4085,10 +4089,11 @@ function switchToLogin() {
     const nameField = form.querySelector('input[name="name"]');
     const passwordConfirmationField = form.querySelector('input[name="password_confirmation"]');
 
-        formTitle.textContent = 'Welcome back';
-    formSubtitle.innerHTML = 'Don\'t have an account? <a href="#" onclick="switchToRegister()">Sign up</a>';
-        submitBtn.textContent = 'Log In';
+    formTitle.textContent = 'Welcome back';
+    formSubtitle.innerHTML = 'Don\'t have an account? <a href="#" onclick="switchToRegister(); return false;">Sign up</a>';
+    submitBtn.textContent = 'Log In';
     form.action = '{{ route("login.attempt") }}';
+    form.setAttribute('action', '{{ route("login.attempt") }}');
     form.classList.add('login-form');
     
     // Hide fields not needed for login
@@ -4152,10 +4157,11 @@ function switchToRegister() {
     const nameField = form.querySelector('input[name="name"]');
     const passwordConfirmationField = form.querySelector('input[name="password_confirmation"]');
 
-        formTitle.textContent = 'Create an account';
-        formSubtitle.innerHTML = 'Already have an account? <a href="#" onclick="switchToLogin()">Log in</a>';
-        submitBtn.textContent = 'Sign Up';
+    formTitle.textContent = 'Create an account';
+    formSubtitle.innerHTML = 'Already have an account? <a href="#" onclick="switchToLogin(); return false;">Log in</a>';
+    submitBtn.textContent = 'Sign Up';
     form.action = '{{ route("register.attempt") }}';
+    form.setAttribute('action', '{{ route("register.attempt") }}');
     form.classList.remove('login-form');
     
     // Show all fields for registration
@@ -4229,53 +4235,58 @@ function showFormErrors(errors) {
 
 // Function to validate form based on current mode
 function validateForm() {
-    const emailField = document.getElementById('emailField') || document.querySelector('input[name="email"], input[name="email_username"]');
-    const passwordField = document.getElementById('passwordField') || document.querySelector('input[name="password"]');
+    const form = document.getElementById('authForm');
+    if (!form) return false;
+    
+    // Find fields by name (they don't have IDs)
+    const emailField = form.querySelector('input[name="email"]') || form.querySelector('input[name="email_username"]');
+    const passwordField = form.querySelector('input[name="password"]');
     
     let isValid = true;
+    clearFormErrors(); // Clear previous errors first
     
     if (isLoginMode) {
         // For login, only validate email/username and password
-        if (!emailField.value.trim()) {
-            showFieldError(emailField, 'Email or username is required');
+        if (!emailField || !emailField.value.trim()) {
+            if (emailField) showFieldError(emailField, 'Email or username is required');
             isValid = false;
         }
         
-        if (!passwordField.value.trim()) {
-            showFieldError(passwordField, 'Password is required');
+        if (!passwordField || !passwordField.value.trim()) {
+            if (passwordField) showFieldError(passwordField, 'Password is required');
             isValid = false;
         }
     } else {
         // For registration, validate all fields
-        const nameField = document.getElementById('nameField') || document.querySelector('input[name="name"]');
-        const confirmPasswordField = document.getElementById('confirmPasswordField') || document.querySelector('input[name="password_confirmation"]');
-        const termsCheckbox = document.getElementById('terms');
+        const nameField = form.querySelector('input[name="name"]');
+        const confirmPasswordField = form.querySelector('input[name="password_confirmation"]');
+        const termsCheckbox = form.querySelector('input[name="terms"]') || form.querySelector('#terms');
         
-        if (!nameField.value.trim()) {
-            showFieldError(nameField, 'Full name is required');
+        if (!nameField || !nameField.value.trim()) {
+            if (nameField) showFieldError(nameField, 'Full name is required');
             isValid = false;
         }
         
-        if (!emailField.value.trim()) {
-            showFieldError(emailField, 'Email is required');
+        if (!emailField || !emailField.value.trim()) {
+            if (emailField) showFieldError(emailField, 'Email is required');
             isValid = false;
-        } else if (!isValidEmail(emailField.value)) {
+        } else if (emailField && !isValidEmail(emailField.value)) {
             showFieldError(emailField, 'Please enter a valid email address');
             isValid = false;
         }
         
-        if (!passwordField.value.trim()) {
-            showFieldError(passwordField, 'Password is required');
+        if (!passwordField || !passwordField.value.trim()) {
+            if (passwordField) showFieldError(passwordField, 'Password is required');
             isValid = false;
-        } else if (passwordField.value.length < 8) {
+        } else if (passwordField && passwordField.value.length < 8) {
             showFieldError(passwordField, 'Password must be at least 8 characters');
             isValid = false;
         }
         
-        if (!confirmPasswordField.value.trim()) {
-            showFieldError(confirmPasswordField, 'Please confirm your password');
+        if (!confirmPasswordField || !confirmPasswordField.value.trim()) {
+            if (confirmPasswordField) showFieldError(confirmPasswordField, 'Please confirm your password');
             isValid = false;
-        } else if (passwordField.value !== confirmPasswordField.value) {
+        } else if (passwordField && confirmPasswordField && passwordField.value !== confirmPasswordField.value) {
             showFieldError(confirmPasswordField, 'Passwords do not match');
             isValid = false;
         }
@@ -4318,22 +4329,76 @@ function showFieldError(field, message) {
     field.parentNode.appendChild(errorDiv);
 }
 
-// Add form submission handling
-document.getElementById('authForm').addEventListener('submit', function (e) {
-    e.preventDefault();
+// Add form submission handling - ensure it only runs once
+if (!window.formHandlerAttached) {
+    window.formHandlerAttached = true;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const authForm = document.getElementById('authForm');
+        if (!authForm) {
+            console.error('Auth form not found!');
+            return;
+        }
+        
+        console.log('Form submission handler attached');
+        
+        let isSubmitting = false; // Prevent multiple submissions
+        
+        // Check if form already has a submit handler
+        if (authForm.dataset.handlerAttached === 'true') {
+            console.log('Form handler already attached, skipping...');
+            return;
+        }
+        authForm.dataset.handlerAttached = 'true';
+    
+        authForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        console.log('Form submit event triggered');
 
-    const submitBtn = document.getElementById('submitBtn');
-    const originalText = submitBtn.textContent;
-    const form = this;
+        // Prevent multiple submissions
+        if (isSubmitting) {
+            console.log('Form is already submitting, ignoring...');
+            return;
+        }
 
-    // Debug: Show what mode we're in
-    console.log('Form submitted in mode:', isLoginMode ? 'LOGIN' : 'REGISTER');
-    console.log('Form action URL:', form.action);
+        const submitBtn = document.getElementById('submitBtn');
+        if (!submitBtn) {
+            console.error('Submit button not found!');
+            return;
+        }
+        
+        // Check if button is disabled (already submitting)
+        if (submitBtn.disabled) {
+            console.log('Submit button is disabled, ignoring...');
+            return;
+        }
+        
+        isSubmitting = true;
+        const originalText = submitBtn.textContent;
+        const form = this;
 
-    // Validate form based on current mode
-    if (!validateForm()) {
-        return;
-    }
+        // Double-check form action is set correctly based on mode
+        if (isLoginMode) {
+            form.action = '{{ route("login.attempt") }}';
+            form.setAttribute('action', '{{ route("login.attempt") }}');
+        } else {
+            form.action = '{{ route("register.attempt") }}';
+            form.setAttribute('action', '{{ route("register.attempt") }}');
+        }
+
+        // Debug: Show what mode we're in
+        console.log('Form submitted in mode:', isLoginMode ? 'LOGIN' : 'REGISTER');
+        console.log('Form action URL:', form.action);
+        console.log('Form action attribute:', form.getAttribute('action'));
+
+        // Validate form based on current mode
+        if (!validateForm()) {
+            console.log('Form validation failed');
+            isSubmitting = false;
+            return;
+        }
+        
+        console.log('Form validation passed, proceeding with submission');
 
     // Animate button
     submitBtn.style.transform = 'scale(0.98)';
@@ -4346,38 +4411,72 @@ document.getElementById('authForm').addEventListener('submit', function (e) {
     // Submit form data
     const formData = new FormData(form);
     
+    // Get the current form action URL
+    const formAction = form.getAttribute('action') || form.action;
+    
     // Debug: Log form data
-    console.log('Form action:', form.action);
+    console.log('Form action:', formAction);
+    console.log('Form action attribute:', form.getAttribute('action'));
     console.log('Is login mode:', isLoginMode);
     console.log('Form data entries:');
     for (let [key, value] of formData.entries()) {
         console.log(key, ':', value);
     }
     
-    fetch(form.action, {
+    fetch(formAction, {
         method: 'POST',
         body: formData,
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
             'Accept': 'application/json'
-        }
+        },
+        credentials: 'same-origin'
     })
     .then(response => {
-        console.log('Response status:', response.status);
+        console.log('Response received. Status:', response.status);
+        console.log('Response ok:', response.ok);
         console.log('Response headers:', response.headers);
+        
+        // Check if response is ok
+        if (!response.ok) {
+            console.error('Response not ok, status:', response.status);
+            return response.text().then(text => {
+                console.error('Error response text:', text);
+                try {
+                    const errorData = JSON.parse(text);
+                    return Promise.reject(errorData);
+                } catch (e) {
+                    return Promise.reject({
+                        success: false,
+                        message: `Server error (${response.status}): ${text || 'Unknown error'}`
+                    });
+                }
+            });
+        }
         
         // Check if response is JSON
         const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
+        
         if (contentType && contentType.includes('application/json')) {
             return response.json();
         } else {
             // If not JSON, get text and try to parse
             return response.text().then(text => {
-                console.log('Non-JSON response:', text);
+                console.log('Non-JSON response text:', text.substring(0, 500));
                 try {
-                    return JSON.parse(text);
+                    const parsed = JSON.parse(text);
+                    return parsed;
                 } catch (e) {
+                    console.error('Failed to parse response as JSON:', e);
+                    // If it's HTML (like a redirect or error page), handle it
+                    if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                        return {
+                            success: false,
+                            message: 'Server returned HTML instead of JSON. This might be a redirect or error page.'
+                        };
+                    }
                     return {
                         success: false,
                         message: 'Server returned invalid response. Please try again.'
@@ -4387,41 +4486,59 @@ document.getElementById('authForm').addEventListener('submit', function (e) {
         }
     })
     .then(data => {
-        console.log('Response data:', data);
+        console.log('Response data received:', data);
         console.log('Login success:', data.success);
+        
+        isSubmitting = false;
         submitBtn.style.transform = 'scale(1)';
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
 
-        if (data.success) {
+        if (data && data.success) {
             // Show success message
-            showSuccessMessage(data.message);
-            console.log('Login successful, closing modal...');
+            const successMsg = data.message || (isLoginMode ? 'Login successful!' : 'Registration successful!');
+            showSuccessMessage(successMsg);
+            console.log('Login/Registration successful, closing modal...');
             
             // Close modal after a delay
             setTimeout(() => {
-        closeModal();
+                closeModal();
                 // Reload page to show logged in state
                 window.location.reload();
             }, 1500);
         } else {
-            console.log('Login failed:', data.message);
+            console.log('Login/Registration failed:', data);
             // Show validation errors
-            if (data.errors) {
+            if (data && data.errors) {
                 showFormErrors(data.errors);
             } else {
-                showErrorMessage(data.message || 'An error occurred. Please try again.');
+                const errorMsg = (data && data.message) ? data.message : 'An error occurred. Please try again.';
+                showErrorMessage(errorMsg);
             }
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Fetch error:', error);
+        console.error('Error details:', error.message, error.stack);
+        
+        isSubmitting = false;
         submitBtn.style.transform = 'scale(1)';
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
-        showErrorMessage('Network error. Please try again.');
+        
+        // Check if error has a message
+        if (error && error.message) {
+            showErrorMessage(error.message || 'Network error. Please try again.');
+        } else if (error && typeof error === 'object' && error.success === false) {
+            // Handle error object from response
+            showErrorMessage(error.message || 'An error occurred. Please try again.');
+        } else {
+            showErrorMessage('Network error. Please check your connection and try again.');
+        }
     });
-});
+    });
+    });
+}
 
 // Helper function to show success message
 function showSuccessMessage(message) {

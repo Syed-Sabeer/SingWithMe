@@ -94,9 +94,10 @@ Route::group(['middleware' => ['guest']], function () {
     //User Login Authentication Routes
     Route::get('admin/login', [LoginController::class, 'login'])->name('admin.login');
     Route::post('login-attempt', [LoginController::class, 'loginAttempt'])->name('login.attempt');
-    Route::get('login', [LoginController::class, 'userlogin'])->name('user.login');
+    Route::get('login', [LoginController::class, 'userLogin'])->name('user.login');
 
     Route::get('register', [RegisterController::class, 'register'])->name('register');
+    Route::get('user/register', [RegisterController::class, 'userRegister'])->name('user.register');
     Route::post('registration-attempt', [RegisterController::class, 'registerAttempt'])->name('register.attempt');
 Route::get('reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset.token');
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
@@ -712,6 +713,7 @@ Route::delete('contacts/{id}', [AdminContactController::class, 'destroy'])->name
     // Royalty & Payout Routes
     Route::get('royalty', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'index'])->name('royalty.index');
     Route::get('royalty/payout-requests', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'payoutRequests'])->name('royalty.payout-requests');
+    Route::get('royalty/payout-requests/{id}', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'showPayoutRequest'])->name('royalty.payout.show');
     Route::post('royalty/payout/{id}/approve', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'approvePayout'])->name('royalty.payout.approve');
     Route::post('royalty/payout/{id}/reject', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'rejectPayout'])->name('royalty.payout.reject');
     Route::post('royalty/payout/{id}/complete', [\App\Http\Controllers\Admin\AdminRoyaltyController::class, 'completePayout'])->name('royalty.payout.complete');

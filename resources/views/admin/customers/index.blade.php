@@ -75,24 +75,23 @@
                                 <p class="c-o-light">{{ \Illuminate\Support\Str::limit($customer->address ?? 'N/A', 30, '...') }}</p>
                               </td>
                               <td>
-                                <form method=\"POST\" action=\"{{ route('admin.customer.toggleStatus', $customer->id) }}\" style=\"display:inline;\" class=\"toggle-status-form\">
+                                <form method="POST" action="{{ route('admin.customer.toggleStatus', $customer->id) }}" style="display:inline;" class="toggle-status-form">
                                     @csrf
-                                    <input type=\"hidden\" name=\"status\" value=\"0\">
-                                    <div class=\"form-check form-switch form-check-inline\">
-                                        <input class=\"form-check-input switch-primary check-size\" type=\"checkbox\" role=\"switch\" name=\"status\" value=\"1\" {{ $customer->is_active ? 'checked' : '' }} onchange=\"this.form.submit()\">
+                                    <div class="form-check form-switch form-check-inline">
+                                        <input class="form-check-input switch-primary check-size" type="checkbox" role="switch" name="status" value="1" {{ $customer->is_active ? 'checked' : '' }} onchange="this.form.submit()">
                                     </div>
                                 </form>
                               </td>
                               <td>
                                   @if($customer->is_artist)
-                                  <form method=\"POST\" action=\"{{ route('admin.customer.toggle-featured', $customer->id) }}\" style=\"display:inline;\" class=\"toggle-featured-form\">
+                                  <form method="POST" action="{{ route('admin.customer.toggleFeatured', $customer->id) }}" style="display:inline;" class="toggle-featured-form">
                                       @csrf
-                                      <div class=\"form-check form-switch form-check-inline\">
-                                          <input class=\"form-check-input\" type=\"checkbox\" name=\"is_featured\" value=\"1\" {{ $customer->is_featured ? 'checked' : '' }} onchange=\"this.form.submit()\">
+                                      <div class="form-check form-switch form-check-inline">
+                                          <input class="form-check-input switch-primary check-size" type="checkbox" role="switch" name="is_featured" value="1" {{ $customer->is_featured ? 'checked' : '' }} onchange="this.form.submit()">
                                       </div>
                                   </form>
                                   @else
-                                      <span class=\"badge bg-light text-muted\">N/A</span>
+                                      <span class="badge bg-light text-muted">N/A</span>
                                   @endif
                               </td>
                               <td>

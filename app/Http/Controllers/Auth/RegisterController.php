@@ -16,6 +16,11 @@ class RegisterController extends Controller
     {
         return view('frontend.user.user-portal');
     }
+
+    public function userRegister()
+    {
+        return view('frontend.auth.user-register');
+    }
     public function registerAttempt(Request $request)
     {
 

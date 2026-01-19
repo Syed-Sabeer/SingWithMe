@@ -391,7 +391,7 @@ public function resetPassword(Request $request)
         try {
             Auth::logout();
             Log::info("Logout Successfully!");
-            return Redirect::route('frontend.login')->with('success', 'Logout Successfully!');
+            return Redirect::route('home')->with('success', 'Logout Successfully!');
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
             return Redirect::back()->with('error', "Something went wrong! Please try again later");

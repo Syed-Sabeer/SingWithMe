@@ -182,100 +182,11 @@
                                         <td>{{ $tip->paid_at ? $tip->paid_at->format('M d, Y H:i') : '-' }}</td>
                                         <td>{{ $tip->sent_to_artist_at ? $tip->sent_to_artist_at->format('M d, Y H:i') : '-' }}</td>
                                         <td>
-                                            @if($tip->status === 'pending')
-                                                <span class="badge bg-warning">Awaiting Payment</span>
-                                            @elseif($tip->status === 'sent_to_artist')
-                                                <span class="badge bg-success">Completed</span>
-                                            @elseif($tip->status === 'failed')
-                                                <span class="badge bg-danger">Failed</span>
-                                            @elseif($tip->status === 'cancelled')
-                                                <span class="badge bg-secondary">Cancelled</span>
-                                            @endif
-                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#detailsModal{{ $tip->id }}">
-                                                Details
-                                            </button>
+                                            <a href="{{ route('admin.tips.show', $tip->id) }}" class="btn btn-sm btn-info">
+                                                <i class="fa fa-eye"></i> Details
+                                            </a>
                                         </td>
                                     </tr>
-
-
-                                    <!-- Details Modal -->
-                                    <div class="modal fade" id="detailsModal{{ $tip->id }}" tabindex="-1">
-                                        <div class="modal-dialog modal-lg">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Tip Details</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <table class="table table-bordered">
-                                                        <tr>
-                                                            <th>Tip ID</th>
-                                                            <td>#{{ $tip->id }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>User</th>
-                                                            <td>{{ $tip->user->name }} ({{ $tip->user->email }})</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Artist</th>
-                                                            <td>{{ $tip->artist->name }} ({{ $tip->artist->email }})</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Tip Amount</th>
-                                                            <td>£{{ number_format($tip->amount, 2) }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Platform Fee (5%)</th>
-                                                            <td>£{{ number_format($tip->platform_fee, 2) }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Total Paid</th>
-                                                            <td>£{{ number_format($tip->total_amount, 2) }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Payment Method</th>
-                                                            <td>{{ ucfirst(str_replace('-', ' ', $tip->payment_method)) }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Payment ID</th>
-                                                            <td>{{ $tip->payment_method_id ?? 'N/A' }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Status</th>
-                                                            <td><span class="status-badge status-{{ $tip->status }}">{{ ucfirst(str_replace('_', ' ', $tip->status)) }}</span></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Paid Date</th>
-                                                            <td>{{ $tip->paid_at ? $tip->paid_at->format('M d, Y H:i') : '-' }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Sent to Artist Date</th>
-                                                            <td>{{ $tip->sent_to_artist_at ? $tip->sent_to_artist_at->format('M d, Y H:i') : '-' }}</td>
-                                                        </tr>
-                                                        @if($tip->user_message)
-                                                        <tr>
-                                                            <th>User Message</th>
-                                                            <td>{{ $tip->user_message }}</td>
-                                                        </tr>
-                                                        @endif
-                                                        @if($tip->admin_notes)
-                                                        <tr>
-                                                            <th>Admin Notes</th>
-                                                            <td>{{ $tip->admin_notes }}</td>
-                                                        </tr>
-                                                        @endif
-                                                        <tr>
-                                                            <th>Created At</th>
-                                                            <td>{{ $tip->created_at->format('M d, Y H:i') }}</td>
-                                                        </tr>
-                                                    </table>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
 
                                     @empty
                                     <tr>
